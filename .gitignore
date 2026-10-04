@@ -1,6 +1,6 @@
-   venv/
-   .venv/
-   __pycache__/
-   *.pyc
-   .env
-   
+# This file intentionally untracked files that Git should ignore.
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
