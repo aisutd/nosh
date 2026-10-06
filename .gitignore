@@ -1,0 +1,9 @@
+# Local mock data
+nosh_mock_collection.py
+
+# Python cache
+__pycache__/
+*.pyc
+
+# ignore local testing 
+local_tests/
