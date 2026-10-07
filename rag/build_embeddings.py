@@ -55,7 +55,7 @@ for _, row in df.iterrows():
 
 
 # Add recipes to ChromaDB and ChromaDB creates embeddings
-collection.add(
+collection.upsert(
     ids=ids,
     documents=documents,
     metadatas=metadatas

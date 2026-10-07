@@ -2,3 +2,4 @@
 .venv/
 recording.wav
 __pycache__/
+rag/chroma_db/
