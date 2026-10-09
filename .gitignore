@@ -7,3 +7,8 @@ __pycache__/
 
 # ignore local testing 
 local_tests/
+.env
+.venv/
+recording.wav
+__pycache__/
+rag/chroma_db/
