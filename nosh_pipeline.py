@@ -1,87 +1,122 @@
-"""Retrieve recipes, generate instructions, and validate the LLM output."""
-
-from nosh_retrieval import (
-    get_collection,
+"""Check request scope, retrieve a recipe, generate once, and judge the answer."""
+from retrieval.nosh_retrieval import (
     normalize_ingredients,
-    retrieve_candidate_recipes,
-    rank_by_ingredient_overlap,
+    search_recipes,
     format_recipes_for_llm,
 )
+from llm.nosh_generation import (
+    generate_recipe,
+    evaluate_generation,
+    judge_passed,
+    classify_request,
+    OUT_OF_SCOPE,
+    INSUFFICIENT_CONTEXT,
+    UNSUPPORTED_PREFERENCES,
+)
 
-from nosh_generation import generate_recipe, check_output, evaluate_generation, judge_passed
 
-# Skip recipes where less than this fraction of the recipe's ingredients are in the fridge
-MIN_OVERLAP = 0.5
+def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection=None):
+    """Return only judge-approved generation; refusals use message, not recipe.
 
-
-def run_nosh(detected_ings, dietary=None, max_time=None, budget=None,
-             max_attempts=3, collection=None):
+    Ingredient labels or comma-separated ingredients are accepted. Free-form
+    requests go in user_query. Model-based scope and judgment are fallible.
     """
-    detected_ings: list of labels from YOLOv8, e.g. ["Chicken", "onions", "water"]
-    Returns a dict with the recipe, verdicts, and which recipe was used.
-    """
-    if collection is None:
-        collection = get_collection()
+    if not isinstance(user_query, str):
+        raise ValueError("user_query must be a string")
+    if not isinstance(detected_ings, (str, list, tuple)) or (
+        not isinstance(detected_ings, str) and not all(isinstance(i, str) for i in detected_ings)
+    ):
+        raise ValueError("detected_ings must be ingredient strings")
+    ingredients = normalize_ingredients(detected_ings)
+    if not ingredients and not user_query.strip():
+        return {"status": "no_ingredients", "recipe": None, "recipes": [],
+                "message": "Please provide your available ingredients."}
 
-    ings = normalize_ingredients(detected_ings)
-    if not ings:
-        return {"status": "no_ingredients", "recipe": None}
-    ing_str = ", ".join(ings)
+    # Classify before Chroma: an unrelated question must not retrieve random recipes.
+    scope = classify_request(ingredients, user_query)
+    if scope["status"] != "in_scope":
+        message = {
+            "out_of_scope": OUT_OF_SCOPE,
+            "unsupported_preferences": UNSUPPORTED_PREFERENCES,
+            "insufficient_input": "Please provide ingredients and a clear cooking request.",
+            "guardrail_error": "Could not validate request scope. Please try again.",
+        }[scope["status"]]
+        return {"status": scope["status"], "message": message, "recipe": None, "recipes": []}
+    if not ingredients:
+        return {"status": "no_ingredients", "recipe": None, "recipes": [],
+                "message": "Please provide your available ingredients."}
 
-    # Retrieve, relaxing filters step by step if nothing matches
-    attempts_filters = [
-        (dietary, max_time, budget),
-        (dietary, max_time, None),   # drop budget
-        (dietary, None, None),       # drop time
-    ]
-    results = None
-    for d, t, b in attempts_filters:
-        r = retrieve_candidate_recipes(" ".join(ings), d, t, b, collection=collection)
-        if r["ids"] and r["ids"][0]:
-            results = r
-            break
-    if results is None:
-        return {"status": "no_recipes_found", "recipe": None}
+    available = ", ".join(ingredients)
+    search_query = f"{user_query.strip()} Ingredients: {available}" if user_query.strip() else available
+    recipes = search_recipes(
+        search_query, top_k=top_k, max_time=max_time, collection=collection,
+        available_ingredients=detected_ings,
+    )
+    if not recipes:
+        return {"status": "no_recipes_found", "recipe": None, "recipes": [],
+                "message": "No matching recipes were found for those constraints."}
 
-    ranked = rank_by_ingredient_overlap(results, ings)
+    # Adapt one source recipe so the response has a clear, traceable source.
+    context = format_recipes_for_llm(recipes, top_k=1)
+    answer = generate_recipe(available_ingredients=available, retrieved_context=context,
+                             user_query=user_query, max_time=max_time)
+    if answer in (INSUFFICIENT_CONTEXT, OUT_OF_SCOPE):
+        return {"status": "insufficient_context" if answer == INSUFFICIENT_CONTEXT else "out_of_scope",
+                "message": answer, "recipe": None, "recipes": recipes}
+    verdict = evaluate_generation(available, context, answer,
+                                  user_query=user_query, max_time=max_time)
+    passed = judge_passed(verdict)
 
-    # Drop weak matches so the LLM never gets a recipe it can't realistically make
-    good = [r for r in ranked if r["overlap_score"] >= MIN_OVERLAP]
-    if not good:
-        return {
-            "status": "no_good_match",
-            "recipe": None,
-            "closest": [(r["metadata"].get("title"), round(r["overlap_score"], 2)) for r in ranked[:3]],
+    return {
+        "status": "ok" if passed else "failed_validation",
+        "message": "Recipe validated." if passed else "I could not validate a recipe for this request. Try different ingredients or a simpler request.",
+        "recipe": answer if passed else None,
+        "source_recipe": recipes[0]["title"],
+        "source_url": recipes[0]["url"],
+        "similarity": recipes[0]["similarity"],
+        "judge_verdict": verdict,
+        "recipes": recipes,
+    }
+
+
+def main():
+    import argparse
+    import json
+    import sys
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("ingredients", help='Comma-separated ingredients, e.g. "salmon, lemon, garlic"')
+    parser.add_argument("--chat", action="store_true", help="Ask follow-up questions about the approved recipe")
+    parser.add_argument("--debug", action="store_true", help="Show retrieved titles and judge verdict on stderr")
+    parser.add_argument("--query", default="", help="Optional cooking request")
+    parser.add_argument("--top-k", type=int, default=5)
+    parser.add_argument("--max-time", type=float, help="Maximum total recipe time in minutes")
+    args = parser.parse_args()
+    session = None
+    if args.chat:
+        from cooking_session import CookingSession
+        session = CookingSession()
+    runner = session.start if session else run_nosh
+    result = runner(args.ingredients, user_query=args.query, top_k=args.top_k, max_time=args.max_time)
+    if args.debug:
+        diagnostics = {
+            "status": result["status"],
+            "source_recipe": result.get("source_recipe"),
+            "judge_verdict": result.get("judge_verdict"),
+            "retrieved_recipes": [
+                {"title": recipe["title"], "similarity": recipe["similarity"]}
+                for recipe in result["recipes"]
+            ],
         }
+        print(json.dumps(diagnostics, indent=2), file=sys.stderr)
+    if result["status"] == "ok":
+        print(f"Source: {result['source_recipe']} ({result['source_url']})\n")
+        print(result["recipe"])
+        if session:
+            from cooking_session import chat_loop
+            chat_loop(session)
+    else:
+        print(result["message"])
 
-    # Try the best recipes in order; first one that passes both checks wins
-    attempts = []
-    for candidate in good[:max_attempts]:
-        missing = [i for i in candidate["recipe_ingredients"] if i not in set(ings)]
-        context = format_recipes_for_llm([candidate], top_k=1)
-        output = generate_recipe(ing_str, context, missing_ingredients=missing)
-        problems = check_output(output, ings, candidate["recipe_ingredients"])
 
-        verdict = None
-        if not problems:  # only spend a judge call if the code check passed
-            verdict = evaluate_generation(ing_str, context, output)
-
-        attempt = {
-            "status": "ok" if (not problems and judge_passed(verdict)) else "failed_checks",
-            "recipe": output,
-            "source_recipe": candidate["metadata"].get("title"),
-            "overlap": round(candidate["overlap_score"], 2),
-            "code_problems": problems,
-            "judge_verdict": verdict,
-        }
-        attempts.append(attempt)
-        if attempt["status"] == "ok":
-            attempt["attempts_made"] = len(attempts)
-            return attempt
-
-    # Nothing passed: return the BEST-ranked attempt (not the last), with a log of all tries
-    best = dict(attempts[0])
-    best["attempts_made"] = len(attempts)
-    best["attempt_log"] = [(a["source_recipe"], a["code_problems"] or a["judge_verdict"]) for a in attempts]
-    return best
-
+if __name__ == "__main__":
+    main()

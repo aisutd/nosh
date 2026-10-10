@@ -1,0 +1,39 @@
+Command: HF_HUB_OFFLINE=1 .venv/bin/python -m unittest discover -s tests -v
+test_format_contract (test_generation.JudgeTests.test_format_contract) ... ok
+test_generation_keeps_context_in_data (test_generation.JudgeTests.test_generation_keeps_context_in_data) ... ok
+test_invalid_format_skips_judge (test_generation.JudgeTests.test_invalid_format_skips_judge) ... ok
+test_judge_receives_request_constraints_and_untrusted_output (test_generation.JudgeTests.test_judge_receives_request_constraints_and_untrusted_output) ... ok
+test_missing_context_fails_without_model (test_generation.JudgeTests.test_missing_context_fails_without_model) ... ok
+test_strict_pass_and_fail (test_generation.JudgeTests.test_strict_pass_and_fail) ... ok
+test_debug_explains_rejection_without_returning_failed_recipe (test_generation.PipelineCLITests.test_debug_explains_rejection_without_returning_failed_recipe) ... ok
+test_failed_or_malformed_judge_never_returns_candidate (test_generation.PipelineGuardrailTests.test_failed_or_malformed_judge_never_returns_candidate) ... ok
+test_insufficient_source_response_skips_judge (test_generation.PipelineGuardrailTests.test_insufficient_source_response_skips_judge) ... ok
+test_request_without_ingredients (test_generation.PipelineGuardrailTests.test_request_without_ingredients) ... ok
+test_scope_stops_before_search_and_generation (test_generation.PipelineGuardrailTests.test_scope_stops_before_search_and_generation) ... ok
+test_validated_answer_and_query_forwarding (test_generation.PipelineGuardrailTests.test_validated_answer_and_query_forwarding) ... ok
+test_known_unsupported_preferences_skip_model (test_generation.ScopeTests.test_known_unsupported_preferences_skip_model) ... ok
+test_malformed_scope_fails_closed (test_generation.ScopeTests.test_malformed_scope_fails_closed) ... ok
+test_unrelated_topic_takes_priority_over_price_keyword (test_generation.ScopeTests.test_unrelated_topic_takes_priority_over_price_keyword) ... ok
+test_valid_scope_labels (test_generation.ScopeTests.test_valid_scope_labels) ... ok
+
+test_context_preserves_source (test_retrieval.ChromaIntegrationTests.test_context_preserves_source) ... ok
+test_default_path_independent_of_cwd (test_retrieval.ChromaIntegrationTests.test_default_path_independent_of_cwd) ... ok
+test_empty_collection (test_retrieval.ChromaIntegrationTests.test_empty_collection) ... ok
+test_k_larger_than_index (test_retrieval.ChromaIntegrationTests.test_k_larger_than_index) ... ok
+test_missing_and_incompatible_index (test_retrieval.ChromaIntegrationTests.test_missing_and_incompatible_index) ... ok
+test_pipeline_passes_semantic_result_to_generation (test_retrieval.ChromaIntegrationTests.test_pipeline_passes_semantic_result_to_generation) ... ok
+test_pipeline_skips_llm_for_empty_input (test_retrieval.ChromaIntegrationTests.test_pipeline_skips_llm_for_empty_input) ... ok
+test_pipeline_skips_llm_when_time_filter_has_no_matches (test_retrieval.ChromaIntegrationTests.test_pipeline_skips_llm_when_time_filter_has_no_matches) ... ok
+test_reopen_persistence (test_retrieval.ChromaIntegrationTests.test_reopen_persistence) ... ok
+test_semantic_top_k_and_metadata (test_retrieval.ChromaIntegrationTests.test_semantic_top_k_and_metadata) ... ok
+test_strict_time_filter_and_unknown_excluded (test_retrieval.ChromaIntegrationTests.test_strict_time_filter_and_unknown_excluded) ... ok
+test_z_rebuild_idempotent_and_removes_stale (test_retrieval.ChromaIntegrationTests.test_z_rebuild_idempotent_and_removes_stale) ... ok
+test_dataset_deduplicated_and_source_preserved (test_retrieval.DataTests.test_dataset_deduplicated_and_source_preserved) ... ok
+test_duration_parsing (test_retrieval.DataTests.test_duration_parsing) ... ok
+test_invalid_csv (test_retrieval.DataTests.test_invalid_csv) ... ok
+test_invalid_requests_before_database_access (test_retrieval.DataTests.test_invalid_requests_before_database_access) ... ok
+
+----------------------------------------------------------------------
+Ran 32 tests in 2.991s
+
+OK

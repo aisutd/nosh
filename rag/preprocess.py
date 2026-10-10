@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import kagglehub
 import pandas as pd
@@ -86,7 +87,8 @@ print(df["chunk"].iloc[0])
 
 
 # Save cleaned and chunked dataset
-output_path = "cleaned_recipes.csv"
+output_path = Path(__file__).resolve().parents[1] / "data" / "processed" / "cleaned_recipes.csv"
+output_path.parent.mkdir(parents=True, exist_ok=True)
 df.to_csv(output_path, index=False)
 
 print("\nSaved cleaned dataset to:", output_path)

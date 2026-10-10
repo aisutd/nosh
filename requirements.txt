@@ -1,5 +1,5 @@
 ollama
 pandas
 kagglehub
-chromadb
-sentence-transformers
+chromadb==1.5.9
+sentence-transformers==6.1.0

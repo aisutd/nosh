@@ -1,14 +1,19 @@
-# Local mock data
-nosh_mock_collection.py
-
-# Python cache
-__pycache__/
-*.pyc
-
-# ignore local testing 
-local_tests/
-.env
+# Python environment and generated caches
 .venv/
-recording.wav
 __pycache__/
-rag/chroma_db/
+*.py[cod]
+.pytest_cache/
+
+# Secrets and local recordings
+.env
+recording.wav
+
+# Local experiments and mock data
+local_tests/
+
+# Generated vector databases (current and legacy locations)
+data/chroma_db*/
+rag/chroma_db*/
+
+# macOS metadata
+.DS_Store

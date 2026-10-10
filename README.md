@@ -1,80 +1,75 @@
 # NOSH
 
-## Description
+NOSH finds recipes from your available ingredients using ChromaDB, generates a
+recipe with local Ollama models, and lets you ask follow-up cooking questions.
+The current pipeline accepts typed ingredients. Voice is a separate prototype.
 
-NOSH is an AI-powered student cooking assistant that turns ingredients from a refrigerator photo into practical, budget-friendly meals. It combines ingredient detection, recipe retrieval, and a hands-free voice interface for substitutions, timers, and step-by-step cooking guidance.
+## Setup
 
-## Planned Technologies
-
-- Python and JavaScript/TypeScript
-- React and Tailwind CSS
-- FastAPI or Flask with MongoDB and Redis
-- YOLOv8, OpenCV, LangChain, RAG, vector search, speech-to-text, and text-to-speech
-
-## Docker Setup
-
-Make sure Docker Desktop is installed and running.
+Tested with Python 3.13. Run these commands from the project folder:
 
 ```bash
-docker compose up -d
-docker compose down
-docker compose ps
+python3.13 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m rag.build_embeddings
 ```
 
-This is a generic starter configuration. The team can add project-specific dependencies and startup commands later.
-## Voice Agent
+The recipe CSV is included. Build the local index once; rebuild it when the data
+changes. The first build downloads the embedding model.
 
-The NOSH Voice Agent provides hands-free interaction for students while cooking.
+For recipe generation and chat, install and start Ollama, then download the models:
 
-### Current Prototype
+```bash
+ollama pull llama3.2
+ollama pull gemma2
+```
 
-The current prototype supports:
+## Run
 
-- Speech-to-text using Deepgram Nova-3
-- Text-to-speech using the macOS `say` command
-- Step-by-step recipe navigation
-- Voice commands such as:
-  - Start cooking
-  - Next step
-  - Repeat
-  - Go back
-  - Stop
-- Basic cooking-related questions
-- Spoken recipe instructions
+Generate a recipe and ask follow-up questions (`quit` to exit):
 
-### Voice Agent Flow
+```bash
+python nosh_pipeline.py "lemon, sugar" --query "Make lemonade" --chat
+```
 
-```text
-User Speech
-    |
-    v
-Microphone
-    |
-    v
-Audio Recording
-    |
-    v
-Deepgram Nova-3
-Speech-to-Text
-    |
-    v
-Transcribed Text
-    |
-    v
-NOSH Voice Agent
-    |
-    +---- Voice Command
-    |        |
-    |        v
-    |    Recipe Navigation
-    |
-    +---- Cooking Question
-             |
-             v
-       Recipe Response
-             |
-             v
-       Text-to-Speech
-             |
-             v
-          User
+Leave out `--chat` for a single recipe. Add `--debug` to see retrieved titles and
+the judge's decision.
+
+Search recipes without Ollama:
+
+```bash
+python -m retrieval.nosh_retrieval "coconut rice" --ingredients "basmati rice, coconut milk"
+```
+
+The main pipeline always filters by available ingredients. Direct search only
+applies ingredient filtering when `--ingredients` is supplied.
+
+## Test
+
+```bash
+python -m unittest discover -s tests -v
+python -m evaluation.evaluate_retrieval
+```
+
+Tests use real Chroma retrieval with mocked model responses. To evaluate the live
+Ollama models:
+
+```bash
+python -m evaluation.evaluate_guardrails
+python -m evaluation.evaluate_chat
+```
+
+Evaluation reports are saved in `evaluation/results/`. They are small development
+benchmarks, not guarantees of accuracy; older reports may reflect earlier code.
+
+## Current limits
+
+- Ingredient filtering checks presence, not quantities. Water, salt, and pepper
+  are assumed available. Some ingredient descriptions may exclude valid matches.
+- `--max-time` filters total preparation and cooking time.
+- Dietary and budget filtering are not implemented.
+- Chat explains the current recipe; it does not change ingredients or methods.
+
+See the [retrieval and chat guide](docs/retrieval.md) or the
+[voice prototype guide](docs/voice-agent.md) for more detail.
