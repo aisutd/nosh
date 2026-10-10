@@ -40,6 +40,7 @@ metadatas = []
 for _, row in df.iterrows():
     metadatas.append({
         "recipe_name": str(row["recipe_name"]),
+        "ingredients": str(row["ingredients"]),
         "prep_time": str(row["prep_time"]),
         "cook_time": str(row["cook_time"]),
         "total_time": str(row["total_time"]),
@@ -65,3 +66,10 @@ collection.upsert(
 print("Recipes stored:", collection.count())
 result = collection.get(ids=["0"])
 print(result)
+
+result = collection.get(
+    ids=["0"],
+    include=["embeddings"]
+)
+
+print(result["embeddings"][0])
