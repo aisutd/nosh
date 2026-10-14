@@ -8,7 +8,10 @@ from llm.nosh_generation import OUT_OF_SCOPE, evaluate_generation, judge_passed,
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--generation-only", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--generation-only", action="store_true")
+    mode.add_argument("--conversation-flow", action="store_true")
+    mode.add_argument("--category-regression", action="store_true")
     args = parser.parse_args()
     # Fixed approved recipe isolates follow-up behavior from initial generation.
     context = {
@@ -19,6 +22,45 @@ def main():
     }
     session = CookingSession()
     session._context = context
+    if args.category_regression:
+        from llm.recipe_chat import is_category_only
+        results = []
+        for question in ['How should i juice these lemons', 'what that doesn’t answer my question', 'thansk yous']:
+            reply = session.ask(question)
+            passed = reply['status'] == 'ok' and not is_category_only(reply.get('answer', ''))
+            row = {'question': question, 'reply': reply, 'passed': passed}
+            results.append(row)
+            print(json.dumps(row), flush=True)
+        Path('evaluation/results/chat_category_results.json').write_text(json.dumps(results, indent=2) + '\n')
+        print(f"{sum(r['passed'] for r in results)}/{len(results)} category regression checks passed.")
+        return
+    if args.conversation_flow:
+        cases = [
+            ('how should i juice the lemons', 'ok', None),
+            ('how do I do step 1?', 'ok', None),
+            ('how do I juice 6 lemons?', 'ok', None),
+            ('how do I juice the lemons in this recipe', 'ok', None),
+            ('what if there is no seeds to remove', 'ok', None),
+            ('Can i also substitute the water for carbonated water?', 'ok', None),
+            ('how many lemons do i have to use again?', 'ok', '6'),
+            ('whats the next step?', 'ok', 'Step 2:'),
+            ('ok next?', 'ok', 'Step 3:'),
+            ('whats the next step after that?', 'ok', 'last step'),
+            ('ok thanks', 'ok', "You're welcome"),
+        ]
+        results = []
+        for question, expected, required_text in cases:
+            reply = session.ask(question)
+            passed = reply['status'] == expected and (not required_text or required_text in reply.get('answer', ''))
+            if question == 'what if there is no seeds to remove':
+                passed = passed and 'seeds will be removed' not in reply.get('answer', '').lower()
+            row = {'question': question, 'reply': reply, 'passed': passed}
+            results.append(row)
+            print(json.dumps(row), flush=True)
+        output = Path('evaluation/results/chat_flow_results.json')
+        output.write_text(json.dumps({'description': 'Live conversation regression; inspect answers as well as status.', 'results': results}, indent=2) + '\n')
+        print(f"{sum(r['passed'] for r in results)}/{len(results)} checks passed. Saved {output}")
+        return
     cases = [
         ('How should i juice this lemon?', 'ok'),
         ('how can i juice this lemon?', 'ok'),
@@ -27,7 +69,7 @@ def main():
         ('Am I able to juice this lemon with a fork?', 'ok'),
         ('How much sugar does this recipe use?', 'ok'),
         ('What exact temperature should I chill it to?', 'insufficient_context'),
-        ('Replace the sugar with honey.', 'change_requested'),
+        ('Rewrite and save a different recipe.', 'change_requested'),
     ]
     results = []
     for question, expected in ([] if args.generation_only else cases):

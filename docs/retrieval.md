@@ -233,12 +233,12 @@ if result["status"] == "ok":
 ```
 
 Each session retains the approved recipe, source context, original ingredient list
-and constraints, and the last six approved question/answer pairs. Follow-ups do
+and constraints, and the last six accepted question/answer pairs. Follow-ups do
 not retrieve another recipe. Scope classification receives conversation context so
 short references can be understood. Ordinary cooking-technique explanations (such as juicing a lemon with a fork)
 may use general cooking knowledge, identified as general advice. Recipe-specific
 amounts, temperatures, and timings still require source support. A dedicated
-short-answer judge checks answers before they are returned or saved; the full-recipe format is not required.
+short-answer judge checks recipe facts before they are returned or saved; techniques and optional suggestions bypass that source-grounding judge; the full-recipe format is not required.
 Unrelated questions use `not something I can search about`. Missing source facts
 produce an insufficient-information response. Failed or malformed judgments withhold
 the candidate answer, and model connection failures leave the session available
@@ -247,9 +247,9 @@ Calling `start()` again clears the prior recipe and history even if the new requ
 fails. `run_nosh()` remains the independent, single-request API.
 
 This version explains a fixed recipe, including tools and techniques for its steps.
-Substitutions, changes to cooking methods such as baking versus frying, scaling,
-and new recipe requests are refused with instructions to start a new request;
-they do not modify the current recipe. Voice integration is not included. Scope
+Substitutions and adaptations can be discussed naturally as optional ideas, without an automatic prefix.
+They do not modify the saved recipe or its navigation. Requests to rewrite/save a
+changed recipe or start a new one require a new recipe request. Voice integration is not included. Scope
 and grounding checks use models and remain fallible. Automated chat tests mock
 model responses; they establish routing, context, and rejection behavior, not
 real-model answer accuracy.
@@ -272,3 +272,41 @@ cases plus the contradictory-change check; a separate generation check preserved
 six lemons, one cup sugar, and six cups water. These are small development checks,
 not a guarantee for every recipe or phrasing. See `chat_results.json` and
 `chat_generation_results.json` in `evaluation/results/`.
+
+
+### Step-by-step chat navigation
+
+The session starts at step 1 of the approved recipe. Say `next` when you finish
+that step; it advances to step 2, then step 3, and eventually reports the end of
+the recipe. `back`, `repeat`, `start over`, and `step 2` navigate explicitly.
+Questions and acknowledgments do not advance your position. Saying `step 3` also
+updates the position used for subsequent navigation. Only the approved numbered
+steps are read; the model does not invent additional steps. A new recipe resets
+navigation. Navigation is independent of the six-turn conversation-history limit.
+
+Standalone thanks are acknowledged without model calls. Substitution advice is
+phrased conversationally; general follow-up answers still use the models.
+Run `python -m evaluation.evaluate_chat --conversation-flow` to replay the reported
+lemonade conversation with the local models and save `chat_flow_results.json`.
+
+
+### Advice and draft diagnostics
+
+Chat replies distinguish `technique`, `suggestion`, and `recipe_fact` in
+`answer_kind`. General advice is labeled `validation: general_advice` in the API;
+it is not source-verified. Recipe facts use the judge (`source_checked`). Explicit
+quantity/time questions and numerical technique answers are routed to the judge
+even if the answerer mislabels them. Routing remains heuristic and model-based;
+this is not a guarantee that every factual claim is caught. Scope checks still
+run for all model-generated replies. Suggested ingredients may be unavailable;
+these are conditional ideas, not changes to the saved ingredients or recipe.
+
+```bash
+python nosh_pipeline.py "lemon, sugar" --query "Make lemonade" --chat --show-drafts
+```
+
+`--show-drafts` displays chat drafts, their category, and the judge verdict when
+used. It does not expose initial-generation drafts. API callers can use
+`session.ask(question, show_drafts=True)` and inspect `diagnostics`. Rejected drafts
+are not returned as `answer` or added to conversation history. A scope refusal or
+unparseable model response may have no draft diagnostics. Normal chat hides them.

@@ -143,6 +143,9 @@ UNSUPPORTED_PATTERN = re.compile(
 
 OUT_OF_SCOPE_PATTERN = re.compile(
     r"\b(?:stock (?:prices?|market)|football game|election results)\b"
+    r"|\b(?:who|whos)\b[^\n?.!]*\b(?:president|prime minister)\b"
+    r"|\b(?:president|prime minister)\b[^\n?.!]*\bwho\b"
+    r"|\bcurrent (?:president|prime minister)\b"
     r"|(?:reveal|show|print) (?:your |the )?system prompt"
     r"|ignore (?:all |your |previous )?(?:rules|instructions)", re.I,
 )

@@ -86,11 +86,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("ingredients", help='Comma-separated ingredients, e.g. "salmon, lemon, garlic"')
     parser.add_argument("--chat", action="store_true", help="Ask follow-up questions about the approved recipe")
+    parser.add_argument("--show-drafts", action="store_true", help="Show chat drafts and judge diagnostics; requires --chat")
     parser.add_argument("--debug", action="store_true", help="Show retrieved titles and judge verdict on stderr")
     parser.add_argument("--query", default="", help="Optional cooking request")
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--max-time", type=float, help="Maximum total recipe time in minutes")
     args = parser.parse_args()
+    if args.show_drafts and not args.chat:
+        parser.error("--show-drafts requires --chat")
     session = None
     if args.chat:
         from cooking_session import CookingSession
@@ -113,7 +116,7 @@ def main():
         print(result["recipe"])
         if session:
             from cooking_session import chat_loop
-            chat_loop(session)
+            chat_loop(session, show_drafts=args.show_drafts)
     else:
         print(result["message"])
 

@@ -34,7 +34,7 @@ python nosh_pipeline.py "lemon, sugar" --query "Make lemonade" --chat
 ```
 
 Leave out `--chat` for a single recipe. Add `--debug` to see retrieved titles and
-the judge's decision.
+the judge's decision. Use `--chat --show-drafts` to inspect chat drafts and judgments.
 
 Search recipes without Ollama:
 
@@ -69,7 +69,7 @@ benchmarks, not guarantees of accuracy; older reports may reflect earlier code.
   are assumed available. Some ingredient descriptions may exclude valid matches.
 - `--max-time` filters total preparation and cooking time.
 - Dietary and budget filtering are not implemented.
-- Chat explains the current recipe; it does not change ingredients or methods.
+- Chat explains techniques and offers optional substitution ideas; the saved recipe stays unchanged.
 
 See the [retrieval and chat guide](docs/retrieval.md) or the
 [voice prototype guide](docs/voice-agent.md) for more detail.
