@@ -1,9 +1,9 @@
 """Check request scope, retrieve a recipe, generate once, and judge the answer."""
 from retrieval.nosh_retrieval import (
     normalize_ingredients,
-    search_recipes,
     format_recipes_for_llm,
 )
+from retrieval.hybrid_search import hybrid_search_recipes as search_recipes
 from llm.nosh_generation import (
     generate_recipe,
     evaluate_generation,

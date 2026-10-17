@@ -3,3 +3,9 @@ pandas
 kagglehub
 chromadb==1.5.9
 sentence-transformers==6.1.0
+ragas
+langchain-ollama
+langchain
+langchain-community
+langchain-google-vertexai
+rank-bm25
