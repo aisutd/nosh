@@ -11,25 +11,25 @@ from security import get_current_user
 
 router = APIRouter()
 
-# ---- paste recipes_list() here (the helper that turns Mongo docs into JSON) ----
-
-
+# Find recipes that use the ingredients you send, best matches first
 @router.post("/recipes/find")
 async def find_recipes(req: FindRequest):
     items = [i.strip().lower() for i in req.ingredients if i.strip()]
     if not items:
         return []
+    # "ner" is each recipe's ingredient names. $in = has at least one of these
     recipes = await collection.find({"ner": {"$in": items}}).to_list(length=100)
     s = set(items)
+    # sort by how many of your ingredients each recipe uses (most first)
     recipes.sort(key=lambda r: len(set(r["ner"]) & s), reverse=True)
     return recipes_list(recipes)
 
-
+# Ids of the recipes this user saved (login required)
 @router.get("/recipes/saved-ids")
 async def get_saved_ids(current_user: dict = Depends(get_current_user)):
     return {"saved": current_user.get("saved_recipes", [])}
 
-
+# Full recipes this user saved (login required)
 @router.get("/recipes/saved")
 async def get_saved_recipes(current_user: dict = Depends(get_current_user)):
     ids = []
@@ -41,7 +41,7 @@ async def get_saved_recipes(current_user: dict = Depends(get_current_user)):
     recipes = await collection.find({"_id": {"$in": ids}}).to_list(length=200)
     return recipes_list(recipes)
 
-
+# Save a recipe
 @router.post("/recipes/save/{recipe_id}")
 async def save_recipe(recipe_id: str, current_user: dict = Depends(get_current_user)):
     try:
@@ -54,19 +54,22 @@ async def save_recipe(recipe_id: str, current_user: dict = Depends(get_current_u
     doc = await user.find_one({"_id": current_user["_id"]}, {"saved_recipes": 1})
     return {"saved": doc.get("saved_recipes", [])}
 
-
+# Unsave a recipe
 @router.post("/recipes/unsave/{recipe_id}")
 async def unsave_recipe(recipe_id: str, current_user: dict = Depends(get_current_user)):
     await user.update_one({"_id": current_user["_id"]}, {"$pull": {"saved_recipes": recipe_id}})
     doc = await user.find_one({"_id": current_user["_id"]}, {"saved_recipes": 1})
     return {"saved": doc.get("saved_recipes", [])}
 
+# Public: browse recipes without logging in (used by the landing page and Swipe)
 @router.get("/recipes/browse")
 async def browse_recipes(limit: int = 10, skip: int = 0):
     limit = min(limit, 30)    # cap it so nobody can pull the whole database
-    docs = await collection.find({}).skip(skip).limit(limit).to_list(length=limit)
+    docs = await collection.find({}).skip(skip).limit(limit).to_list(length=limit)   # skip = pagination offset
     return recipes_list(docs)
 
+# Get one recipe by id (used by the Cook page). Keep this LAST, otherwise it catches
+# /recipes/saved and /recipes/browse as if they were ids
 @router.get("/recipes/{recipe_id}")
 async def get_recipe(recipe_id: str):
     try:

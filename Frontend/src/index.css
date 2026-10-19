@@ -1,27 +1,30 @@
-:root {
-  --text: #f5f1ea;
-  --text-h: #121010;
-  --surface: #1c1918;
-  --bg: #121010;
-  --border: #0b0615;
-  --code-bg: #151409;
-  --muted: #a39d96;
-  --accent: #ff7a1a;
-  --accent-dark: #d26619;
-  --blob: #ff7a1a;
-    font-family: "Outfit", system-ui, sans-serif;
-  }
+/* =====================================================================
+   index.css, global styles loaded once for the whole app (via main.jsx)
+   App.css builds on top of these variables.
+   ===================================================================== */
+
+:root {                          /* variables usable anywhere as var(--name) */
+  --text: #f5f1ea;               /* main text (warm white) */
+  --surface: #1c1918;            /* inputs, buttons, cards */
+  --bg: #121010;                 /* page background */
+  --border: #0b0615;            /* borders (almost invisible on the dark bg) */
+  --muted: #a39d96;              /* grey text */
+  --accent: #ff7a1a;             /* orange: buttons, links, active tab */
+  --accent-dark: #d26619;        /* orange on hover */
+  --blob: #ff7a1a;               /* mascot color */
+  font-family: "Outfit", system-ui, sans-serif;   /* app-wide font, falls back to the system font */
+}
 
 * {
-  box-sizing: border-box;
+  box-sizing: border-box;        /* width includes padding, so nothing overflows */
 }
 
 body {
-  margin: 0;
-  min-height: 100vh;
+  margin: 0;                     /* removes the default white edge */
+  min-height: 100vh;             /* at least full screen height */
   background: var(--bg);
   color: var(--text);
 }
 
-button, input { font: inherit; }
-a { color: inherit}
+button, input { font: inherit; } /* buttons/inputs use the page font */
+a { color: inherit; }            /* links use the surrounding text color, not blue */

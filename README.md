@@ -1,5 +1,5 @@
-NOSH
-Description
+# NOSH
+## Description
 NOSH is an AI-powered student cooking assistant that turns ingredients from a refrigerator photo into practical, budget-friendly meals. It combines ingredient detection, recipe retrieval, and a hands-free voice interface for substitutions, timers, and step-by-step cooking guidance.
 Planned Technologies
 
