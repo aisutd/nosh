@@ -9,3 +9,4 @@ load_dotenv()
 client = AsyncMongoClient(os.getenv("MONGO_URI"))
 db = client.recipecluster
 collection = db.recipes
+user = db.user

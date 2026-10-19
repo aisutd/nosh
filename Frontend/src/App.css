@@ -1,0 +1,241 @@
+/* ----- Page + global elements ----- */
+.page { gap: 16px; padding: 24px; width: 100%; text-align: center; padding-bottom: 100px; } /* bottom padding keeps content above the nav bar */
+
+h1 {
+  display: flex;               /* icon and text side by side (affects every h1) */
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 8px 0 0;
+  font-size: 42px;
+}
+
+p { margin: 0; color: var(--muted); }
+
+/* all inputs and buttons */
+input {
+  height: 48px;
+  padding: 0 18px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;        /* pill shape */
+}
+input::placeholder { color: var(--muted); }
+input:focus { outline: none; border-color: var(--accent); }
+
+button {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+button:hover { border-color: var(--accent); }
+
+/* ----- Login page ----- */
+.auth {
+  max-width: 400px;
+  margin: 0 auto;              /* centers it */
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.auth-back { align-self: flex-start; color: var(--muted); text-decoration: none; }
+.auth h1 { margin: 0; font-size: 34px; }
+
+.auth-form { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+.auth-form input {
+  height: 48px;
+  padding: 0 18px;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.auth-form input:focus { outline: none; border-color: var(--accent); }
+.auth-error { margin: 0; color: #ff8a7a; font-size: 14px; text-align: center; }
+
+/* ----- Orange button ----- */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 48px;
+  padding: 0 22px;
+  background: var(--accent);
+  color: #1a1210;
+  border: none;
+  font-weight: 700;
+}
+.btn-primary:hover { background: var(--accent-dark); }
+
+/* ----- Add-ingredient row and chips ----- */
+.add-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+}
+.add-row input { flex: 1; min-width: 0; }    /* input takes the leftover space */
+
+.chips {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;             /* chips wrap to the next line */
+  justify-content: center;
+  gap: 8px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 6px 6px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.chip button {               /* the X button */
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.accent { color: var(--accent); }
+.login-link { color: var(--accent); text-decoration: none; font-weight: 500; }
+
+/* ----- Blob mascot ----- */
+.blob {
+  margin: 24px auto;           /* auto left/right centers it */
+  width: 96px; height: 96px;
+  border-radius: 50%;
+  background: var(--blob);
+  box-shadow: 0 0 40px color-mix(in srgb, var(--blob) 45%, transparent);  /* glow */
+  display: flex; align-items: center; justify-content: center; gap: 16px; /* eyes in the middle */
+  animation: float 3s ease-in-out infinite;
+}
+.eye { width: 10px; height: 14px; border-radius: 50%; background: #1a1210; }
+@keyframes float {             /* moves up 8px and back */
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* ----- Scan button ----- */
+.scan-box {
+  width: 450px;                /* fixed width: add max-width: 100% if it overflows on small phones */
+  height: 160px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px dashed var(--accent);
+  border-radius: 24px;
+  color: var(--text);
+}
+
+/* ----- Bottom nav bar ----- */
+.navbar {
+  position: fixed;             /* stays at the bottom while scrolling */
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%); /* with left: 50%, this centers it */
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0 14px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+
+.nav-item {                    /* one tab; the three lines below undo the global button style */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 16px;
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: var(--muted);
+  font-size: 12px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.nav-item.active { color: var(--accent); }   /* NavLink adds "active" to the current page's tab */
+
+/* ----- Landing page ----- */
+.home { padding: 16px; max-width: 480px; margin: 0 auto; }
+.home-top { display: flex; justify-content: space-between; align-items: center; }
+.logo span { color: #ff7a1a; }
+.signin-link { color: #ff7a1a; text-decoration: none; font-weight: 600; }
+.hero { display: block; text-align: center; font-size: 2.2rem; line-height: 1.1; margin: 32px 0 8px; } /* display: block overrides the global h1 flex */
+.hero span { color: #ff7a1a; }
+.hero-sub { text-align: center; color: #999; }
+.row-title { margin: 28px 0 12px; }
+.row { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }  /* scrolls sideways; scrollbar hidden */
+.row::-webkit-scrollbar { display: none; }    /* hides the scrollbar in Chrome/Safari */
+.card { flex: 0 0 160px; scroll-snap-align: start; }   /* fixed 160px width, never shrinks */
+.card-img { height: 180px; border-radius: 16px; background: linear-gradient(135deg, #ff7a1a, #7a2e00); }
+.card-title { margin: 8px 0 0; font-weight: 600; }
+.cta { display: block; text-align: center; margin: 28px 0; padding: 14px; border: 2px solid #ff7a1a; border-radius: 999px; color: #ff7a1a; text-decoration: none; font-weight: 700; }
+
+/* ----- Cooking page ----- */
+.cook-title { justify-content: center; font-size: 28px; }
+.cook-list { text-align: left; color: var(--muted); max-width: 480px; margin: 0 auto; line-height: 1.6; }
+.talk-btn { background: none; cursor: pointer; margin: 16px auto; max-width: 400px; }
+.blob.talking { animation-duration: 1s; }   /* bounces faster while "listening" */
+
+
+/* ----- Saved page ----- */
+.liked { padding: 24px 16px 100px; max-width: 640px; margin: 0 auto; }
+.liked-title { justify-content: flex-start; margin: 0; }   /* overrides the global h1 centering */
+.liked-sub { margin: 4px 0 16px; }
+.liked-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }   /* two columns */
+.liked-card { background: var(--surface); border-radius: 20px; overflow: hidden; cursor: pointer; }
+.liked-img {
+  position: relative;
+  height: 200px;
+  background: linear-gradient(135deg, #ff7a1a, #7a2e00);   /* shown until a recipe has an image */
+  background-size: cover;
+  background-position: center;
+}
+.liked-trash {
+  position: absolute; top: 10px; right: 10px;
+  width: 32px; height: 32px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: rgba(0, 0, 0, 0.5); border: none;
+}
+.liked-name { margin: 0; padding: 12px; color: var(--text); font-weight: 600; font-size: 14px; text-align: left; }
+
+/* ----- Swipe page ----- */
+.swipe { padding: 24px 16px 100px; max-width: 480px; margin: 0 auto; text-align: center; }
+.swipe-title { justify-content: flex-start; margin: 0 0 16px; }
+.swipe-card {
+  height: 360px;
+  border-radius: 28px;
+  padding: 24px;
+  display: flex; flex-direction: column; justify-content: flex-end; text-align: left;
+  background: linear-gradient(160deg, #ff7a1a, #3a1500);   /* photo goes here later */
+}
+.swipe-card h2 { margin: 0 0 4px; }
+.swipe-card p { color: #eee; }
+.swipe-actions { display: flex; justify-content: center; gap: 24px; margin-top: 20px; }
+.swipe-btn { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; }
+.swipe-like { background: var(--accent); color: #1a1210; border: none; }
