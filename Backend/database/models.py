@@ -9,5 +9,6 @@ def recipe_data(recipe) -> dict:
         "ner": recipe["ner"],
     }
 
+# Converts a whole list of recipe documents (calls recipe_data on each one)
 def recipes_list(recipes) -> list:
     return [recipe_data(recipe) for recipe in recipes]

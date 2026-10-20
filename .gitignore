@@ -1,9 +1,11 @@
-# This file intentionally untracked files that Git should ignore.
 venv/
 .venv/
 __pycache__/
-*.pyc
+*.py[cod]
 .env
-data/chroma_db*/
-rag/chroma_db*/
-models/*.pt
+node_modules/
+dist/
+**/data/chroma_db*/
+**/rag/chroma_db*/
+**/models/*.pt
+.DS_Store
