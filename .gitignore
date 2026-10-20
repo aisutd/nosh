@@ -4,3 +4,6 @@ venv/
 __pycache__/
 *.pyc
 .env
+data/chroma_db*/
+rag/chroma_db*/
+models/*.pt
