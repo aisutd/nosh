@@ -43,8 +43,7 @@ function Saved({ user, savedIds, onToggleSave }) {
           <div className="liked-card" key={r.id} onClick={() => navigate(`/cook/${r.id}`)}>
             <div
               className="liked-img"
-              style={r.image ? { backgroundImage: `url(${r.image})` } : undefined}
-            >
+              style={r.image ? { backgroundImage: `url("${r.image}")` } : undefined}>
               <button
                 className="liked-trash"
                 aria-label="Remove from saved"

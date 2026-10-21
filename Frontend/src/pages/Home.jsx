@@ -35,7 +35,7 @@ function Home() {
         <div className="blob" aria-hidden="true">
         <span className="eye" /><span className="eye" />
         </div>
-      <h1 className="hero">Cook what's already in your fridge.</h1>
+      <h1 className="hero">Let's get cooking.</h1>
       <p className="hero-sub">Scan, swipe, and cook.</p>
 
       <h3 className="row-title">Trending tonight</h3>
@@ -49,7 +49,10 @@ function Home() {
         >
         {[...recipes, ...recipes].map((r, i) => (
             <div className="card" key={`${r.id}-${i}`}>
-            <div className="card-img" />
+            <div
+              className="card-img"
+              style={r.image ? { backgroundImage: `url("${r.image}")` } : undefined}   // quotes needed because the URL has parentheses
+            />
             <p className="card-title">{r.title}</p>
             </div>
         ))}

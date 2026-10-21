@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { LuX, LuHeart } from "react-icons/lu";
 
@@ -9,6 +9,9 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
   const [error, setError] = useState("");
   const [browse, setBrowse] = useState([]);
   const [index, setIndex] = useState(0);
+  const [dragX, setDragX] = useState(0);           // how far the card is dragged
+  const [dragging, setDragging] = useState(false);
+  const startX = useRef(0);                         // where the drag started
 
   useEffect(() => {
     if (ragSearch || recipes.length > 0) return;
@@ -36,6 +39,25 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
     finally { setSaving(false); }
   }
 
+  function onPointerDown(e) {
+    e.currentTarget.setPointerCapture(e.pointerId); // keep tracking even if the pointer leaves the card
+    startX.current = e.clientX;
+    setDragging(true);
+  }
+
+  function onPointerMove(e) {
+    if (dragging) setDragX(e.clientX - startX.current);
+  }
+
+  function onPointerUp() {
+    if (!dragging) return;
+    setDragging(false);
+    const moved = dragX;
+    setDragX(0);                                    // snap back
+    if (moved > 100) like();                        // dragged right = save
+    else if (moved < -100) next();                  // dragged left = skip
+  }
+
   return (
     <main className="swipe">
       <h1 className="swipe-title">Swipe</h1>
@@ -43,8 +65,25 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
 
       {recipe ? (
         <>
-          <div className="swipe-card">
-            <h2>{recipe.title}</h2>
+          <div
+            className="swipe-card"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+            style={{
+              transform: `translateX(${dragX}px) rotate(${dragX / 20}deg)`,   // slides and tilts
+              transition: dragging ? "none" : "transform 0.2s",               // smooth snap-back
+              touchAction: "pan-y",                                           // allow scrolling up/down, but not sideways
+            }}
+          > 
+            {dragX > 40 && (
+              <span className="stamp stamp-yes" style={{ opacity: Math.min(dragX / 100, 1) }}>YESSIR</span>
+            )}
+            {dragX < -40 && (
+              <span className="stamp stamp-no" style={{ opacity: Math.min(-dragX / 100, 1) }}>HECKS NAH</span>
+            )}
+          <h2>{recipe.title}</h2>
             {ragSearch ? <>
               {recipe.image && /^https?:\/\//i.test(recipe.image) && <img src={recipe.image} alt={recipe.title} className="swipe-card-image" />}
               <p>{recipe.total_time || "Time not listed"}</p>

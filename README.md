@@ -35,6 +35,7 @@ pip install -r Backend\requirements.txt
 cd Backend
 copy .env.example .env     # then fill in your values
 uvicorn main:app --reload --host 0.0.0.0
+python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000 # for mobile
 ```
 API docs: http://localhost:8000/docs
 
