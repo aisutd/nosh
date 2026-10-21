@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
+import RagCook from "./RagCook.jsx";
+
 const API = `http://${window.location.hostname}:8000`;
 
 function Cook() {
@@ -21,6 +23,8 @@ function Cook() {
   }
 
   if (!recipe) return <main className="page"><p>Loading...</p></main>;
+
+  if (recipe.kind === "rag") return <RagCook savedId={id} title={recipe.title} />;
 
   return (
     <main className="page cook">

@@ -8,8 +8,10 @@ import Home from "./pages/Home.jsx";
 import Profile from "./pages/Profile.jsx";
 import Cook from "./pages/Cook.jsx";
 import Swipe from "./pages/Swipe.jsx";
-import { BiFoodMenu, BiSearch, BiX, BiPlus } from "react-icons/bi";
+import { BiFoodMenu, BiX, BiPlus } from "react-icons/bi";
 import { LuCamera } from "react-icons/lu";
+import RagCook from "./pages/RagCook.jsx";
+import GenerateRecipe from "./components/GenerateRecipe.jsx";
 
 // Backend address. Uses whatever host the page was opened from, so it works on localhost and on the LAN IP
 const API = `http://${window.location.hostname}:8000`;
@@ -24,6 +26,7 @@ function App() {
   // ----- state: values that make the screen update when they change -----
   const [input, setInput] = useState("");              // text typed in the ingredient box
   const [ingredients, setIngredients] = useState([]);  // the pantry list
+  const [ragSearch, setRagSearch] = useState(null);
   const [recipes, setRecipes] = useState([]);          // results from "Find Recipes" (shown in Swipe)
   const [user, setUser] = useState(null);              // username, or null if logged out
   const navigate = useNavigate();                      // lets us change pages from code
@@ -60,6 +63,7 @@ function handleLogout() {
   setUser(null);
   setIngredients([]);
   setRecipes([]);
+  setRagSearch(null);
   setSavedIds([]);
 }
 
@@ -136,17 +140,23 @@ async function handleAdding(e) {
 }
 
 // Heart button: save or unsave a recipe (login required)
-async function handleToggleSave(recipeId) {
+async function handleToggleSave(recipeId, context = null) {
   if (!user) {
     navigate("/auth");                 // visitors must log in to save
-    return;
+    return false;
   }
   const action = savedIds.includes(recipeId) ? "unsave" : "save";   // already saved? then unsave
   const response = await fetch(`${API}/recipes/${action}/${recipeId}`, {
     method: "POST",
-    headers: authHeaders(),
+    headers: { ...authHeaders(), ...(context ? { "Content-Type": "application/json" } : {}) },
+    ...(context ? { body: JSON.stringify(context) } : {}),
   });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(typeof data?.detail === "string" ? data.detail : "Could not update saved recipes.");
+  }
   if (response.ok) setSavedIds((await response.json()).saved);      // backend returns the updated list
+  return true;
 }
 
 // X on a chip: remove an ingredient
@@ -159,20 +169,6 @@ async function handleRemoving(ingredient) {
     if (response.ok) setIngredients((await response.json()).ingredients);
   } else {
     setIngredients((prev) => prev.filter((i) => i !== ingredient));   // keep everything except this one
-  }
-}
-
-// "Find Recipes" button: send the pantry to the backend, then show the results in Swipe
-async function handleFindingRecipe() {
-  if (ingredients.length === 0) return;      // nothing to match yet
-  const response = await fetch(`${API}/recipes/find`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ingredients }),
-  });
-  if (response.ok) {
-    setRecipes(await response.json());
-    navigate("/swipe");                       // go straight to the cards
   }
 }
 
@@ -275,9 +271,15 @@ async function handleScan(e) {
             </li>
           ))}
         </ul>
-        <button className="btn-primary" onClick={handleFindingRecipe}>
-          Find Recipes <BiSearch />
-        </button>
+        <GenerateRecipe
+          key={JSON.stringify([user, ingredients])}
+          ingredients={ingredients}
+          onOptions={(data, context) => {
+            setRecipes(data.recipes);
+            setRagSearch({ ...context, message: data.message });
+            navigate("/swipe");
+          }}
+        />
     </main>
   )  
 
@@ -293,8 +295,9 @@ async function handleScan(e) {
           element={<Saved user={user} savedIds={savedIds} onToggleSave={handleToggleSave} />}
         />
         <Route path="/profile" element={<Profile user={user} onLogout={handleLogout} />} />
+        <Route path="/cook/rag/:id" element={<RagCook />} />
         <Route path="/cook/:id" element={<Cook />} />          {/* :id = the recipe id from the URL */}
-        <Route path="/swipe" element={<Swipe recipes={recipes} onToggleSave={handleToggleSave} savedIds={savedIds} />} />
+        <Route path="/swipe" element={<Swipe key={JSON.stringify([recipes, ragSearch])} ragSearch={ragSearch} recipes={recipes} onToggleSave={handleToggleSave} savedIds={savedIds} />} />
       </Routes>
       {!hideNav && <NavBar user={user} />}                     {/* bottom nav bar, hidden on login/landing */}
     </>

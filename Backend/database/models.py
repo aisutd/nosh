@@ -7,6 +7,8 @@ def recipe_data(recipe) -> dict:
         "directions": recipe["directions"],
         "link": recipe["link"],
         "ner": recipe["ner"],
+        "image": recipe.get("image"),
+        "kind": recipe.get("kind", "mongo"),
     }
 
 # Converts a whole list of recipe documents (calls recipe_data on each one)

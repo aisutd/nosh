@@ -15,7 +15,7 @@ from llm.nosh_generation import (
 )
 
 
-def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection=None):
+def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection=None, retrieve_only=False, selected_recipe_id=None):
     """Return only judge-approved generation; refusals use message, not recipe.
 
     Ingredient labels or comma-separated ingredients are accepted. Free-form
@@ -48,13 +48,33 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
 
     available = ", ".join(ingredients)
     search_query = f"{user_query.strip()} Ingredients: {available}" if user_query.strip() else available
-    recipes = search_recipes(
-        search_query, top_k=top_k, max_time=max_time, collection=collection,
-        available_ingredients=detected_ings,
-    )
+    if selected_recipe_id is not None:
+        from retrieval.nosh_retrieval import get_collection
+        from retrieval.ingredients import normalize_available, matches_available
+        collection = collection if collection is not None else get_collection()
+        source = collection.get(ids=[selected_recipe_id], include=["documents", "metadatas"])
+        if not source["ids"]:
+            return {"status": "recipe_not_found", "recipe": None, "recipes": [],
+                    "message": "This recipe is no longer available. Search again."}
+        metadata = source["metadatas"][0] or {}
+        if not matches_available(metadata.get("ingredients", ""), normalize_available(detected_ings)):
+            return {"status": "ingredients_changed", "recipe": None, "recipes": [],
+                    "message": "Your pantry no longer covers this recipe. Search again."}
+        recipes = [{"id": source["ids"][0], "title": metadata.get("recipe_name", "Untitled"),
+                    "url": metadata.get("url", ""), "document": source["documents"][0],
+                    "metadata": metadata, "ingredients": metadata.get("ingredients", ""),
+                    "directions": metadata.get("directions", ""), "similarity": None}]
+    else:
+        recipes = search_recipes(
+            search_query, top_k=top_k, max_time=max_time, collection=collection,
+            available_ingredients=detected_ings,
+        )
     if not recipes:
         return {"status": "no_recipes_found", "recipe": None, "recipes": [],
                 "message": "No matching recipes were found for those constraints."}
+
+    if retrieve_only:
+        return {"status": "ok", "message": "Choose a recipe to cook.", "recipe": None, "recipes": recipes}
 
     # Adapt one source recipe so the response has a clear, traceable source.
     context = format_recipes_for_llm(recipes, top_k=1)

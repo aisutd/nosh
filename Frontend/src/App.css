@@ -437,21 +437,50 @@ button:hover {                 /* mouse is over the button */
 /* ----- Swipe page (Swipe.jsx) ----- */
 
 .swipe-card {
-  height: 360px;
+  height: auto;
+  min-width: 0;
+  box-sizing: border-box;
   border-radius: 28px;
-  padding: 24px;
+  padding: clamp(16px, 4vw, 24px);
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;   /* with column direction, this pushes the text to the BOTTOM */
+  gap: 14px;
+  justify-content: flex-start;   /* keep all content inside the growing card */
   text-align: left;
   background: linear-gradient(160deg, #ff7a1a, #3a1500);   /* the recipe photo goes here later */
 }
 
 .swipe-card h2 {
-  margin: 0 0 4px;
+  margin: 0;
+  font-size: clamp(22px, 5vw, 30px);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.swipe-card-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+
+.swipe-card a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+
+.swipe-card .swipe-card-position {
+  font-size: 13px;
+  opacity: 0.8;
 }
 
 .swipe-card p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
   color: #eee;                 /* lighter than the default grey so it reads on the gradient */
 }
 
