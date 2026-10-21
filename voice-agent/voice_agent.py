@@ -43,48 +43,48 @@ deepgram = DeepgramClient(api_key=API_KEY)
 
 
 # -----------------------------------
-# SAMPLE RECIPE / CACHED CONTEXT
+# RECIPE STATE (populated at startup via RAG)
 # -----------------------------------
 
-recipe_name = "Spaghetti Aglio e Olio"
-
-recipe_ingredients = [
-    "spaghetti",
-    "one fourth cup olive oil",
-    "four cloves of garlic",
-    "salt",
-    "optional red pepper flakes"
-]
-
-recipe_steps = [
-    "Bring a large pot of water to a boil.",
-    "Add the pasta and cook for about ten minutes, or until al dente.",
-    "Heat olive oil in a pan over medium heat.",
-    "Add four cloves of chopped garlic and cook until lightly golden.",
-    "Drain the pasta and add it to the pan.",
-    "Toss everything together and serve."
-]
-
-recipe_context = f"""
-Recipe: {recipe_name}
-
-Ingredients:
-- Spaghetti
-- One fourth cup olive oil
-- Four cloves of garlic
-- Salt
-- Optional red pepper flakes
-
-Cooking instructions:
-1. Bring a large pot of water to a boil.
-2. Add the pasta and cook for about ten minutes, or until al dente.
-3. Heat olive oil in a pan over medium heat.
-4. Add four cloves of chopped garlic and cook until lightly golden.
-5. Drain the pasta and add it to the pan.
-6. Toss everything together and serve.
-"""
-
+recipe_name = ""
+recipe_steps = []
+recipe_context = ""
 current_step = 0
+
+
+def parse_recipe(rag_response):
+    """Pull name and steps out of the LLM's structured response.
+
+    Expected format:
+        Recipe Name: <name>
+        Changes:
+        - none
+        Steps:
+        1. <step>
+        2. <step>
+    """
+    import re
+    name = ""
+    steps = []
+
+    name_match = re.search(r"Recipe Name:\s*(.+)", rag_response)
+    if name_match:
+        name = name_match.group(1).strip()
+
+    steps = re.findall(r"^\d+\.\s+(.+)", rag_response, re.MULTILINE)
+
+    return name, steps
+
+
+def fetch_recipe(ingredients):
+    """Call RAG with the user's ingredients and return (name, steps, full_text)."""
+    speak("Looking up a recipe for you, one moment.")
+    response = ask_rag(
+        "Find me a recipe I can make",
+        available_ingredients=ingredients,
+    )
+    name, steps = parse_recipe(response)
+    return name, steps, response
 
 
 # -----------------------------------
@@ -147,59 +147,23 @@ def speak(text):
 # -----------------------------------
 
 def answer_from_recipe_context(question):
-    """
-    Check whether the current recipe already contains
-    enough information to answer the user's question.
-
-    If yes, return an answer.
-
-    If not, return None so we can ask the backend/RAG.
-    """
-
+    """Answer simple questions from the current recipe context without calling RAG."""
     question = question.lower()
 
-    if "ingredient" in question:
-        return (
-            "For this recipe you need spaghetti, "
-            "one fourth cup of olive oil, four cloves of garlic, "
-            "salt, and optional red pepper flakes."
-        )
-
-    if "how much garlic" in question:
-        return "The recipe uses four cloves of garlic."
-
-    if "how much olive oil" in question:
-        return "The recipe uses one fourth cup of olive oil."
-
-    if (
-        "how long" in question
-        or "cooking time" in question
-        or "how many minutes" in question
-    ):
-        return (
-            "Cook the pasta for about ten minutes, "
-            "or until it is al dente."
-        )
-
-    if (
-        "what heat" in question
-        or "what temperature" in question
-    ):
-        return "Use medium heat when cooking the garlic."
-
-    if "what recipe" in question:
+    if "what recipe" in question or "what are we making" in question:
         return f"We are currently making {recipe_name}."
 
-    if "what step" in question:
+    if "ingredient" in question:
+        return f"The recipe context has the full ingredient list: {recipe_context[:300]}"
+
+    if "what step" in question or "current step" in question:
         return (
-            f"You are currently on step {current_step + 1}. "
+            f"You are on step {current_step + 1}. "
             f"{recipe_steps[current_step]}"
         )
 
     if "how many steps" in question:
-        return (
-            f"This recipe has {len(recipe_steps)} steps."
-        )
+        return f"This recipe has {len(recipe_steps)} steps."
 
     return None
 
@@ -222,7 +186,8 @@ def handle_question(question):
 
     rag_answer = ask_rag(
         question,
-        recipe_context=recipe_context
+        available_ingredients=ingredients_input,
+        recipe_context=recipe_context,
     )
 
     return rag_answer
@@ -233,7 +198,20 @@ def handle_question(question):
 # -----------------------------------
 
 speak(
-    "Welcome to Nosh cooking mode. "
+    "Welcome to Nosh. "
+    "Please say the ingredients you have available."
+)
+
+# Listen for ingredients and fetch a recipe before entering the main loop
+ingredients_input = listen()
+recipe_name, recipe_steps, recipe_context = fetch_recipe(ingredients_input)
+
+if not recipe_steps:
+    speak("I could not find a recipe for those ingredients. Please restart and try again.")
+    exit()
+
+speak(
+    f"I found a recipe for {recipe_name}. "
     "Say start cooking when you are ready."
 )
 

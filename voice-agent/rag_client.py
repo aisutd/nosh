@@ -1,56 +1,22 @@
-import os
-import requests
+import sys
 from pathlib import Path
-from dotenv import load_dotenv
+
+# Add repo root to sys.path so we can import retrieval/, llm/, etc.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from nosh_pipeline import run_nosh
 
 
-# Load .env from repository root
-env_path = Path(__file__).resolve().parent.parent / ".env"
-load_dotenv(env_path)
+def ask_rag(question, available_ingredients=None, recipe_context=None):
+    """Call the NOSH RAG pipeline directly (no HTTP backend needed)."""
+    result = run_nosh(
+        available_ingredients or "",
+        user_query=question,
+    )
+    if result["status"] == "ok":
+        return result["recipe"]
+    return result.get("message", "I could not find a recipe for that.")
 
-BACKEND_URL = os.getenv(
-    "BACKEND_URL",
-    "http://127.0.0.1:8000"
-)
 
-
-def ask_rag(question, recipe_context=None):
-    """
-    Sends the user's question to the NOSH backend/RAG system.
-    """
-
-    payload = {
-        "question": question
-    }
-
-    # Include existing recipe context if we already have one
-    if recipe_context:
-        payload["context"] = recipe_context
-
-    try:
-        response = requests.post(
-            f"{BACKEND_URL}/query",
-            json=payload,
-            timeout=15
-        )
-
-        response.raise_for_status()
-
-        data = response.json()
-
-        return data.get(
-            "response",
-            "I could not find an answer."
-        )
-
-    except requests.exceptions.ConnectionError:
-        return "The NOSH backend is currently unavailable."
-
-    except requests.exceptions.Timeout:
-        return "The NOSH backend took too long to respond."
-
-    except Exception as error:
-        print("Backend error:", error)
-        return "Something went wrong while contacting the recipe system."
 if __name__ == "__main__":
-    print(ask_rag("How do I cook pasta?"))
+    print(ask_rag("How do I cook pasta?", available_ingredients="pasta, garlic, olive oil"))
