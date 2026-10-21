@@ -7,10 +7,21 @@ from scipy.io.wavfile import write
 from dotenv import load_dotenv
 from deepgram import DeepgramClient
 
+from rag_client import ask_rag
+
+
+# -----------------------------------
+# SETTINGS
+# -----------------------------------
 
 SAMPLE_RATE = 16000
 DURATION = 5
 AUDIO_FILE = "recording.wav"
+
+
+# -----------------------------------
+# LOAD ENVIRONMENT VARIABLES
+# -----------------------------------
 
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(env_path)
@@ -23,19 +34,62 @@ if not API_KEY:
         "Make sure your .env file is in the repository root."
     )
 
+
+# -----------------------------------
+# DEEPGRAM
+# -----------------------------------
+
 deepgram = DeepgramClient(api_key=API_KEY)
+
+
+# -----------------------------------
+# SAMPLE RECIPE / CACHED CONTEXT
+# -----------------------------------
+
+recipe_name = "Spaghetti Aglio e Olio"
+
+recipe_ingredients = [
+    "spaghetti",
+    "one fourth cup olive oil",
+    "four cloves of garlic",
+    "salt",
+    "optional red pepper flakes"
+]
 
 recipe_steps = [
     "Bring a large pot of water to a boil.",
-    "Add the pasta and cook until al dente.",
+    "Add the pasta and cook for about ten minutes, or until al dente.",
     "Heat olive oil in a pan over medium heat.",
-    "Add chopped garlic and cook until lightly golden.",
+    "Add four cloves of chopped garlic and cook until lightly golden.",
     "Drain the pasta and add it to the pan.",
     "Toss everything together and serve."
 ]
 
+recipe_context = f"""
+Recipe: {recipe_name}
+
+Ingredients:
+- Spaghetti
+- One fourth cup olive oil
+- Four cloves of garlic
+- Salt
+- Optional red pepper flakes
+
+Cooking instructions:
+1. Bring a large pot of water to a boil.
+2. Add the pasta and cook for about ten minutes, or until al dente.
+3. Heat olive oil in a pan over medium heat.
+4. Add four cloves of chopped garlic and cook until lightly golden.
+5. Drain the pasta and add it to the pan.
+6. Toss everything together and serve.
+"""
+
 current_step = 0
 
+
+# -----------------------------------
+# SPEECH TO TEXT
+# -----------------------------------
 
 def listen():
     print("\nListening... Speak now!")
@@ -76,76 +130,231 @@ def listen():
     return command
 
 
+# -----------------------------------
+# TEXT TO SPEECH
+# -----------------------------------
+
 def speak(text):
     print("NOSH:", text)
-    subprocess.run(["say", text])
+
+    subprocess.run(
+        ["say", text]
+    )
 
 
-def answer_cooking_question(command):
-    if "what ingredients" in command:
+# -----------------------------------
+# CHECK CURRENT RECIPE CONTEXT
+# -----------------------------------
+
+def answer_from_recipe_context(question):
+    """
+    Check whether the current recipe already contains
+    enough information to answer the user's question.
+
+    If yes, return an answer.
+
+    If not, return None so we can ask the backend/RAG.
+    """
+
+    question = question.lower()
+
+    if "ingredient" in question:
         return (
-            "You will need spaghetti, olive oil, garlic, salt, "
-            "and optional red pepper flakes."
+            "For this recipe you need spaghetti, "
+            "one fourth cup of olive oil, four cloves of garlic, "
+            "salt, and optional red pepper flakes."
         )
 
-    elif "how much garlic" in command:
-        return "Use about four cloves of garlic."
+    if "how much garlic" in question:
+        return "The recipe uses four cloves of garlic."
 
-    elif "how much olive oil" in command:
-        return "Use about one fourth cup of olive oil."
+    if "how much olive oil" in question:
+        return "The recipe uses one fourth cup of olive oil."
 
-    elif "how long" in command or "cooking time" in command:
-        return "Cook the pasta for about ten minutes, or until al dente."
+    if (
+        "how long" in question
+        or "cooking time" in question
+        or "how many minutes" in question
+    ):
+        return (
+            "Cook the pasta for about ten minutes, "
+            "or until it is al dente."
+        )
 
-    elif "what temperature" in command or "what heat" in command:
+    if (
+        "what heat" in question
+        or "what temperature" in question
+    ):
         return "Use medium heat when cooking the garlic."
+
+    if "what recipe" in question:
+        return f"We are currently making {recipe_name}."
+
+    if "what step" in question:
+        return (
+            f"You are currently on step {current_step + 1}. "
+            f"{recipe_steps[current_step]}"
+        )
+
+    if "how many steps" in question:
+        return (
+            f"This recipe has {len(recipe_steps)} steps."
+        )
 
     return None
 
 
-speak("Welcome to Nosh cooking mode.")
+# -----------------------------------
+# HANDLE USER QUESTION
+# -----------------------------------
+
+def handle_question(question):
+    # First check cached recipe context
+    context_answer = answer_from_recipe_context(question)
+
+    if context_answer:
+        print("Answer found in current recipe context.")
+        return context_answer
+
+    # If not available locally, send question to backend/RAG
+    print("Answer not found in cached context.")
+    print("Sending question to backend/RAG...")
+
+    rag_answer = ask_rag(
+        question,
+        recipe_context=recipe_context
+    )
+
+    return rag_answer
+
+
+# -----------------------------------
+# START VOICE AGENT
+# -----------------------------------
+
+speak(
+    "Welcome to Nosh cooking mode. "
+    "Say start cooking when you are ready."
+)
+
 
 while True:
+
     try:
         command = listen()
 
+        # No speech detected
         if not command:
-            speak("I did not hear anything. Please try again.")
+            speak(
+                "I did not hear anything. Please try again."
+            )
             continue
 
+
+        # -----------------------------------
+        # LOCAL VOICE COMMANDS
+        # -----------------------------------
+
         if "start" in command:
+
             current_step = 0
-            speak(recipe_steps[current_step])
+
+            speak(
+                f"Starting {recipe_name}. "
+                f"Step 1. {recipe_steps[current_step]}"
+            )
+
 
         elif "next" in command:
+
             if current_step < len(recipe_steps) - 1:
+
                 current_step += 1
-                speak(recipe_steps[current_step])
+
+                speak(
+                    f"Step {current_step + 1}. "
+                    f"{recipe_steps[current_step]}"
+                )
+
             else:
-                speak("You have completed the recipe.")
+
+                speak(
+                    "You have completed the recipe."
+                )
+
 
         elif "repeat" in command:
-            speak(recipe_steps[current_step])
 
-        elif "back" in command or "previous" in command:
+            speak(
+                f"Step {current_step + 1}. "
+                f"{recipe_steps[current_step]}"
+            )
+
+
+        elif (
+            "back" in command
+            or "previous" in command
+        ):
+
             if current_step > 0:
-                current_step -= 1
-                speak(recipe_steps[current_step])
-            else:
-                speak("You are already on the first step.")
 
-        elif "stop" in command or "exit" in command:
-            speak("Cooking mode stopped.")
+                current_step -= 1
+
+                speak(
+                    f"Step {current_step + 1}. "
+                    f"{recipe_steps[current_step]}"
+                )
+
+            else:
+
+                speak(
+                    "You are already on the first step."
+                )
+
+
+        elif "help" in command:
+
+            speak(
+                "You can say start cooking, next step, "
+                "repeat, go back, ask a cooking question, "
+                "or say stop cooking."
+            )
+
+
+        elif (
+            "stop" in command
+            or "exit" in command
+        ):
+
+            speak(
+                "Cooking mode stopped."
+            )
+
             break
 
-        else:
-            answer = answer_cooking_question(command)
 
-            if answer:
-                speak(answer)
-            else:
-                speak("Sorry, I did not understand that question.")
+        # -----------------------------------
+        # COOKING QUESTION
+        # -----------------------------------
+
+        else:
+
+            response = handle_question(command)
+
+            speak(response)
+
+
+    except KeyboardInterrupt:
+
+        print("\nVoice agent stopped.")
+
+        break
+
 
     except Exception as error:
+
         print("Error:", error)
-        speak("Something went wrong while processing your voice.")
+
+        speak(
+            "Something went wrong while processing your voice."
+        )
