@@ -21,11 +21,13 @@ class CookingSession:
     A new start clears the old recipe, including when the new request fails.
     """
     def __init__(self):
+        """Set up an empty session with no recipe loaded yet."""
         self._context = None
         self._history = []
         self._step_index = 0
 
     def start(self, ingredients, *, user_query='', top_k=5, max_time=None, collection=None):
+        """Run the RAG pipeline to find and approve a recipe, storing it as the session context."""
         from nosh_pipeline import run_nosh
         self._context = None
         self._history = []
@@ -46,12 +48,14 @@ class CookingSession:
         return result
 
     def _remember(self, question, answer):
+        """Add a question-answer pair to history and return a success result dict."""
         self._history.extend([{'role': 'user', 'content': question},
                               {'role': 'assistant', 'content': answer}])
         self._history = self._history[-12:]
         return {'status': 'ok', 'answer': answer}
 
     def _navigate(self, question):
+        """Handle step navigation commands (next, back, repeat) without calling the LLM."""
         # Match entire commands: mixed requests still go through scope checks.
         text = re.sub(r"[?!.,'’]", '', question.lower()).strip()
         text = re.sub(r"\s+", ' ', text)
@@ -90,6 +94,7 @@ class CookingSession:
         return self._remember(question, f'Step {self._step_index + 1}: {steps[self._step_index]}')
 
     def ask(self, question, *, show_drafts=False):
+        """Answer a user question about the current recipe using scope checks, navigation, and RAG."""
         if not isinstance(question, str):
             raise ValueError('question must be a string')
         if self._context is None:
@@ -155,6 +160,7 @@ class CookingSession:
 
 
 def chat_loop(session, *, show_drafts=False):
+    """Run an interactive text loop where the user can ask questions about the current recipe."""
     print('\nCooking starts at step 1. Say next when you finish a step, back, repeat, or step 2 to navigate. Ask questions anytime. Type quit or exit to finish.')
     while True:
         try:

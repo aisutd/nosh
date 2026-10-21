@@ -1,3 +1,4 @@
+"""Calls the NOSH RAG pipeline directly so the voice agent doesn't need a running backend."""
 import sys
 from pathlib import Path
 

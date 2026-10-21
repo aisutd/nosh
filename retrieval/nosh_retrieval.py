@@ -1,3 +1,4 @@
+"""Vector search, ingredient filtering, and result formatting for the NOSH RAG pipeline."""
 import re
 
 from retrieval.ingredients import normalize_available, matches_available
@@ -15,6 +16,7 @@ from rag.store import (
 
 @lru_cache(maxsize=8)
 def _open_collection(path, name):
+    """Open a ChromaDB collection by path and name, raising RuntimeError if not found."""
     from chromadb.errors import NotFoundError
     client = client_for(path)
     try:
@@ -33,7 +35,7 @@ def get_collection(path=DEFAULT_DB_PATH, name=COLLECTION_NAME):
     return _open_collection(str(Path(path).expanduser().resolve()), name)
 
 
-# ---------- Ingredient cleaning ----------
+# Ingredient cleaning
 
 def normalize_ingredient(ing: str) -> str:
     """Lowercase, trim, and crudely singularize ('Tomatoes' -> 'tomato')."""
@@ -64,7 +66,7 @@ def parse_recipe_ingredients(raw) -> list:
     return normalize_ingredients(raw if raw else [])
 
 
-# ---------- Retrieval ----------
+# Retrieval
 
 def retrieve_candidate_recipes(
     user_query: str,
@@ -137,6 +139,7 @@ def search_recipes(query, top_k=5, *, max_time=None, collection=None, available_
 
 
 def rank_by_ingredient_overlap(retrieved_results, available_ingredients):
+    """Re-rank retrieved results by how many available ingredients each recipe uses."""
     user_ings = set(normalize_ingredients(available_ingredients))
 
     documents = retrieved_results["documents"][0]
@@ -179,6 +182,7 @@ def format_recipes_for_llm(scored_recipes, top_k=1):
 
 
 def main():
+    """CLI entry point to search the recipe index by query and optional ingredient filter."""
     import argparse
     import json
     parser = argparse.ArgumentParser(description="Search the team's recipe index by meaning.")

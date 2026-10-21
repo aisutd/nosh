@@ -1,3 +1,4 @@
+"""LLM generation, scope classification, and LLM-as-judge evaluation for NOSH."""
 import json
 import re
 import ollama
@@ -113,8 +114,10 @@ JUDGE_SCHEMA = {
 
 
 def _json_object(text):
+    """Parse a JSON object from text, returning None if invalid or contains duplicate keys."""
     # Reject duplicate keys as well as non-JSON prose; ambiguous decisions fail closed.
     def unique_pairs(pairs):
+        """Build a dict from key-value pairs, raising ValueError on duplicate keys."""
         result = {}
         for key, value in pairs:
             if key in result:
@@ -152,6 +155,7 @@ OUT_OF_SCOPE_PATTERN = re.compile(
 
 
 def classify_request(ingredients, user_query="", model=GEN_MODEL, *, conversation_context=None):
+    """Classify a user request as in-scope, out-of-scope, unsupported, or insufficient before searching."""
     text = user_query + " " + (ingredients if isinstance(ingredients, str) else ", ".join(ingredients))
     if OUT_OF_SCOPE_PATTERN.search(text):
         return {"status": "out_of_scope", "explanation": OUT_OF_SCOPE}
@@ -196,11 +200,12 @@ def classify_request(ingredients, user_query="", model=GEN_MODEL, *, conversatio
     return decision
 
 
-# ---------- 1. Generation ----------
+# 1. Generation
 
 def generate_recipe(available_ingredients: str, retrieved_context: str,
                     missing_ingredients=None, model: str = GEN_MODEL,
                     *, user_query="", max_time=None) -> str:
+    """Generate a recipe response from the LLM using the retrieved source context."""
     if not available_ingredients.strip() or not retrieved_context.strip():
         return INSUFFICIENT_CONTEXT
     payload = {"available_ingredients": available_ingredients + ", water, salt, pepper",
@@ -217,7 +222,7 @@ def generate_recipe(available_ingredients: str, retrieved_context: str,
     return (response.message.content or "").strip()
 
 
-# ---------- 2. Code-based check (deterministic, runs before the LLM judge) ----------
+# 2. Code-based check (deterministic, runs before the LLM judge)
 
 def _split_sections(output: str):
     """Return (changes_text, steps_text) from the model output."""
@@ -293,7 +298,7 @@ def check_output(output: str, available, original_ingredients) -> list:
     return problems
 
 
-# ---------- 3. LLM-as-a-judge ----------
+# 3. LLM-as-a-judge
 
 def output_format_problems(output):
     """Check the agreed three-section format before spending a judge call."""
@@ -333,6 +338,7 @@ def change_consistency_problems(output):
 
 def evaluate_generation(ingredients: str, retrieved_context: str, generated_output: str,
                         model: str = JUDGE_MODEL, *, user_query="", max_time=None) -> str:
+    """Run the LLM judge on the generated recipe and return a JSON verdict string."""
     problems = output_format_problems(generated_output)
     problems.extend(change_consistency_problems(generated_output))
     if not ingredients.strip() or not retrieved_context.strip():

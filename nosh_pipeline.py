@@ -80,6 +80,7 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
 
 
 def main():
+    """CLI entry point to run the full NOSH pipeline from the command line."""
     import argparse
     import json
     import sys

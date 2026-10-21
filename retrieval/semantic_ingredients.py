@@ -32,6 +32,7 @@ class SemanticIngredientMatcher:
     """Lazy-loaded cosine-similarity matcher for ingredient names."""
 
     def __init__(self, threshold: float = DEFAULT_THRESHOLD):
+        """Set the similarity threshold and initialise empty caches."""
         self.threshold = threshold
         self._canonical_names: list[str] | None = None
         self._canonical_embeddings: np.ndarray | None = None  # unit-norm rows

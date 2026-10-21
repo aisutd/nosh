@@ -71,6 +71,7 @@ _NON_FOOD = frozenset({
 
 
 def normalize_name(value):
+    """Strip units, quantities, and prep words from a raw ingredient string and return a clean name."""
     value = unicodedata.normalize('NFKC', value.lower()).replace('⁄', '/')
     value = re.sub(r'\([^()]*\)', '', value)
     value = re.sub(r'^[\s\d./–-]+', '', value)
@@ -162,5 +163,6 @@ def required_ingredients(raw):
 
 
 def matches_available(raw, available):
+    """Return True if every ingredient required by the raw string is in the available set."""
     required = required_ingredients(raw)
     return required is not None and required <= available

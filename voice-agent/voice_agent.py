@@ -1,3 +1,4 @@
+"""Voice agent that fetches a recipe from RAG based on spoken ingredients, then guides the user step by step."""
 import os
 import subprocess
 from pathlib import Path
@@ -10,18 +11,14 @@ from deepgram import DeepgramClient
 from rag_client import ask_rag
 
 
-# -----------------------------------
 # SETTINGS
-# -----------------------------------
 
 SAMPLE_RATE = 16000
 DURATION = 5
 AUDIO_FILE = "recording.wav"
 
 
-# -----------------------------------
 # LOAD ENVIRONMENT VARIABLES
-# -----------------------------------
 
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(env_path)
@@ -35,16 +32,12 @@ if not API_KEY:
     )
 
 
-# -----------------------------------
 # DEEPGRAM
-# -----------------------------------
 
 deepgram = DeepgramClient(api_key=API_KEY)
 
 
-# -----------------------------------
 # RECIPE STATE (populated at startup via RAG)
-# -----------------------------------
 
 recipe_name = ""
 recipe_steps = []
@@ -87,11 +80,10 @@ def fetch_recipe(ingredients):
     return name, steps, response
 
 
-# -----------------------------------
 # SPEECH TO TEXT
-# -----------------------------------
 
 def listen():
+    """Record 5 seconds of audio, send it to Deepgram, and return the transcribed text."""
     print("\nListening... Speak now!")
 
     audio = sd.rec(
@@ -130,11 +122,10 @@ def listen():
     return command
 
 
-# -----------------------------------
 # TEXT TO SPEECH
-# -----------------------------------
 
 def speak(text):
+    """Print and read the given text aloud using macOS text-to-speech."""
     print("NOSH:", text)
 
     subprocess.run(
@@ -142,9 +133,7 @@ def speak(text):
     )
 
 
-# -----------------------------------
 # CHECK CURRENT RECIPE CONTEXT
-# -----------------------------------
 
 def answer_from_recipe_context(question):
     """Answer simple questions from the current recipe context without calling RAG."""
@@ -168,11 +157,10 @@ def answer_from_recipe_context(question):
     return None
 
 
-# -----------------------------------
 # HANDLE USER QUESTION
-# -----------------------------------
 
 def handle_question(question):
+    """Try to answer from the current recipe context first; fall back to RAG if needed."""
     # First check cached recipe context
     context_answer = answer_from_recipe_context(question)
 
@@ -193,9 +181,7 @@ def handle_question(question):
     return rag_answer
 
 
-# -----------------------------------
 # START VOICE AGENT
-# -----------------------------------
 
 speak(
     "Welcome to Nosh. "

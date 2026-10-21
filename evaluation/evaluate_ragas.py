@@ -8,6 +8,7 @@ import sys as _sys
 from types import ModuleType as _ModuleType
 
 def _patch_vertexai_shim():
+    """Inject a stub module so ragas 0.4.x doesn't crash on missing langchain-community vertexai."""
     _mod = "langchain_community.chat_models.vertexai"
     if _mod not in _sys.modules:
         try:
@@ -106,6 +107,7 @@ def build_sample(ingredients: str, query: str, collection) -> dict | None:
 
 
 def main():
+    """Run retrieval + generation for each test case, evaluate with RAGAS, and save results."""
     print("Loading Chroma collection...")
     collection = get_collection()
     print(f"Index has {collection.count()} recipes.\n")
