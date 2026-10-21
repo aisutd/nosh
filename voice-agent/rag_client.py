@@ -3,8 +3,6 @@ import requests
 from pathlib import Path
 from dotenv import load_dotenv
 
-
-# Load .env from repository root
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(env_path)
 
@@ -14,43 +12,57 @@ BACKEND_URL = os.getenv(
 )
 
 
-def ask_rag(question, recipe_context=None):
-    """
-    Sends the user's question to the NOSH backend/RAG system.
-    """
-
+def generate_recipe(ingredients, user_query=""):
     payload = {
-        "question": question
+        "ingredients": ingredients,
+        "user_query": user_query
     }
-
-    # Include existing recipe context if we already have one
-    if recipe_context:
-        payload["context"] = recipe_context
 
     try:
         response = requests.post(
-            f"{BACKEND_URL}/query",
+            f"{BACKEND_URL}/recipes/generate",
             json=payload,
-            timeout=15
+            timeout=60
         )
 
         response.raise_for_status()
 
         data = response.json()
 
-        return data.get(
-            "response",
-            "I could not find an answer."
-        )
+        result = data.get("result", {})
+
+        if result.get("status") == "ok":
+            return {
+                "success": True,
+                "recipe": result.get("recipe"),
+                "source_recipe": result.get("source_recipe"),
+                "source_url": result.get("source_url")
+            }
+
+        return {
+            "success": False,
+            "message": result.get(
+                "message",
+                "No recipe could be generated."
+            )
+        }
 
     except requests.exceptions.ConnectionError:
-        return "The NOSH backend is currently unavailable."
+        return {
+            "success": False,
+            "message": "The NOSH backend is unavailable."
+        }
 
     except requests.exceptions.Timeout:
-        return "The NOSH backend took too long to respond."
+        return {
+            "success": False,
+            "message": "The recipe system took too long to respond."
+        }
 
     except Exception as error:
         print("Backend error:", error)
-        return "Something went wrong while contacting the recipe system."
-if __name__ == "__main__":
-    print(ask_rag("How do I cook pasta?"))
+
+        return {
+            "success": False,
+            "message": "Something went wrong while contacting NOSH."
+        }
