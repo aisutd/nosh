@@ -1,11 +1,11 @@
 {
-  "timestamp_utc": "2026-10-17T21:50:28.624764+00:00",
+  "timestamp_utc": "2026-10-22T01:24:16.887839+00:00",
   "grader_model": "gemma2",
   "embedding_model": "all-MiniLM-L6-v2",
   "samples_evaluated": 8,
   "samples_skipped": [],
   "scores": {
-    "faithfulness": 0.8565,
+    "faithfulness": 0.925,
     "llm_context_precision_without_reference": 0.8333
   },
   "per_sample": [
@@ -15,7 +15,7 @@
         "Recipe: Old-Fashioned Lemonade\nIngredients: 6  lemons, 1 cup white sugar, 6 cups water, or more as needed\nDirections: Juice lemons; you should have 1 cup juice.\nCombine juice, sugar, and water in a 1/2-gallon pitcher. Stir until sugar dissolves. Taste and add more water if desired.\nChill and serve over ice.\n\n\n\n\n\n\n\n\n\n\n\nDOTDASH MEREDITH FOOD STUDIOS"
       ],
       "response": "Recipe Name: Old-Fashioned Lemonade\nChanges:\n- none\nSteps:\n1. Juice 6 lemons.\n2. Combine 1 cup lemon juice, 1 cup white sugar, and 6 cups water in a 1/2-gallon pitcher. Stir until sugar dissolves.",
-      "faithfulness": 0.8,
+      "faithfulness": null,
       "llm_context_precision_without_reference": 0.9999999999
     },
     {
@@ -41,8 +41,8 @@
       "retrieved_contexts": [
         "Recipe: World's Best Guacamole\nIngredients: \u00bc cup minced onion, 2  limes, juiced, 2  serrano chile peppers, or to taste, 2  limes, juiced,   salt to taste, 4  ripe avocados, peeled and pitted, \u00bc cup chopped fresh cilantro, \u00bc cup pomegranate seeds, divided, 1 sprig cilantro for garnish\nDirections: Combine the onion with the juice of 2 limes in a small bowl; allow the onion to soak in the lime juice for 2 hours. Strain through a fine-mesh sieve and discard the lime juice. Set the onions aside.\nGrind the serrano chile peppers, the juice of 2 limes, and salt together in a food processor until smooth; add the avocado and continue processing until creamy and smooth. Transfer the mixture into a small serving bowl; fold the soaked onions, chopped cilantro, and about half the pomegranate seeds into the avocado mixture. Top with the remaining pomegranate seeds and garnish with the cilantro sprig to serve."
       ],
-      "response": "Recipe Name: World's Best Guacamole\n\nChanges:\n- none\nSteps:\n1. Combine the onion with the juice of 2 limes in a small bowl; allow the onion to soak in the lime juice for 2 hours. Strain through a fine-mesh sieve and discard the lime juice. Set the onions aside.\n2. Grind the serrano chile peppers, the juice of 2 limes, and salt together in a food processor until smooth; add the avocado and continue processing until creamy and smooth. Transfer the mixture into a small serving bowl;",
-      "faithfulness": null,
+      "response": "Recipe Name: World's Best Guacamole\n\nChanges:\n- none\nSteps:\n1. Combine the onion with the juice of 2 limes in a small bowl; allow the onion to soak in the lime juice for 2 hours. Strain through a fine-mesh sieve and discard the lime juice. Set the onions aside.\n2. Grind the serrano chile peppers, the juice of 2 limes, and salt together in a food processor until smooth; add the avocado and continue processing until creamy and smooth.",
+      "faithfulness": 1.0,
       "llm_context_precision_without_reference": 0.9999999999
     },
     {
@@ -52,8 +52,8 @@
         "Recipe: Southern-Style Baked Banana Pudding\nIngredients: 4 large eggs\nDirections: Separate eggs, placing the whites in the bowl of a stand mixer and the yolks into a saucepan.\nAdd sugar, salt, and 1/3 cup plus 1 tablespoon flour to the yolks. Splash in about 1/4 of the milk and start blending mixture with a whisk. Pour in remaining milk and whisk until smooth.\nCook and stir mixture over medium heat until hot to the touch, occasionally dipping your finger in to test. Whisk constantly until custard is thick enough to form ribbons.\nRemove custard from heat and add vanilla extract, banana liqueur, and cold butter. Whisk until butter dissolves. Set custard aside.\nPreheat the oven to 400 degrees F (200 degrees C).\nToss banana slices with lemon juice.\nSpread a quarter of the custard over the bottom of a baking dish. Add a single layer of vanilla wafers. Cover with 1/2 of the bananas and spread 1/2 of the remaining custard on top. Add another layer of vanilla wafers, using slightly fewer this time. Top with the remaining bananas and custard. Smooth the top and tap dish against the counter to settle the pudding.\nAdd cream of tartar to the egg whites. Beat using the whisk attachment until foamy. Gradually add sugar and beat until stiff, but not dry, peaks form. Spread meringue over the pudding using a soft spatula, creating ridges for contrast.\nBake in the preheated oven until meringue is nicely browned, 7 to 10 minutes. Serve warm or chilled.\n\n\n\n\n\n\n\n\n\n\n\nChef John",
         "Recipe: Fresh Fruit Tart with Mascarpone\nIngredients: 2 cups all-purpose flour, 1 cup butter, softened, \u00bd cup white sugar\nDirections: Preheat the oven to 350 degrees F (175 degrees C). Lightly grease 2 tart pans.\nBlend flour, butter, and sugar together in a bowl using an electric mixer until combined. Divide mixture evenly and press into the bottoms of the prepared tart pans.\nBake in the preheated oven until golden brown, 12 to 15 minutes. Let cool completely.\nWhile crusts are cooling, beat cream cheese, mascarpone cheese, sugar, vanilla extract, nutmeg, and cinnamon together in a bowl using an electric mixer until light and fluffy. Spread mixture over cooled crusts. Arrange strawberries, blackberries, and kiwis on tart in desired design.\nMix sugar and cornstarch together in a small saucepan. Pour in water and lemon juice. Cook over medium heat until clear and thick, about 2 minutes. Let glaze cool completely.\nGlaze the entire top of each tart gently using a pastry brush."
       ],
-      "response": "Recipe Name: Joy's Easy Banana Bread\n\nChanges:\n- none\nSteps:\n1. Combine 3 ripe bananas, mashed, 1 cup white sugar, 1 egg, and 1/2 cup melted butter together in a bowl.\n2. Mix 1 1/2 cups all-purpose flour and 1 teaspoon baking soda together in a separate bowl; stir into banana mixture until batter is just mixed.\n3. Stir in 1 teaspoon salt; pour batter into a prepared 9x5-inch loaf pan.\n4. Bake in a preheated oven at 325 degrees F (165 degrees C) until a toothpick inserted in the center of the bread comes out clean, about 1 hour.",
-      "faithfulness": 0.7777777778,
+      "response": "Recipe Name: Joy's Easy Banana Bread\n\nChanges:\n- none\nSteps:\n1. Combine 3 ripe bananas, mashed, 1 cup white sugar, 1 egg, and 1/2 cup melted butter together in a bowl.\n2. Mix 1 1/2 cups all-purpose flour and 1 teaspoon baking soda together in a separate bowl; stir into banana mixture until batter is just mixed.\n3. Stir in 1 teaspoon salt; pour batter into a greased 9x5-inch loaf pan.\n4. Bake in a preheated oven at 325 degrees F (165 degrees C) until a toothpick inserted in the center of the bread comes out clean, about 1 hour.",
+      "faithfulness": null,
       "llm_context_precision_without_reference": null
     },
     {
@@ -61,8 +61,8 @@
       "retrieved_contexts": [
         "Recipe: Fresh Mango Salsa\nIngredients: 2 cups diced Roma tomatoes , 1 \u00bd cups diced mango, \u00bd cup diced onion, 1 teaspoon white sugar, \u00bd cup chopped fresh cilantro, 2 tablespoons fresh lime juice, 1 tablespoon cider vinegar, \u00bd teaspoon salt, \u00bd teaspoon black pepper, 2 cloves garlic, minced\nDirections: Stir the tomatoes, mango, onion, sugar, cilantro, lime juice, cider vinegar, salt, pepper, and garlic together in a bowl; refrigerate 1 hour before serving."
       ],
-      "response": "Recipe Name: Fresh Mango Salsa\nChanges:\n- none\nSteps:\n1. Dice 2 cups Roma tomatoes, 1/2 cup mango, 1/2 cup onion.\n2. Stir the tomatoes, mango, onion, 1 teaspoon white sugar, 1/2 cup chopped fresh cilantro, 2 tablespoons fresh lime juice, 1 tablespoon cider vinegar, 1/2 teaspoon salt, 1/2 teaspoon black pepper, and 2 cloves garlic together in a bowl.\n3. Refrigerate 1 hour before serving.",
-      "faithfulness": 0.8571428571,
+      "response": "Recipe Name: Fresh Mango Salsa\nChanges:\n- none\nSteps:\n1. Stir the 2 cups diced Roma tomatoes, 1/2 cup diced mango, 1/4 cup diced onion, 1 teaspoon white sugar, 1/2 cup chopped fresh cilantro, 2 tablespoons fresh lime juice, 1 tablespoon cider vinegar, 1/2 teaspoon salt, 1/2 teaspoon black pepper, and 2 cloves garlic, minced together in a bowl.\n2. Refrigerate 1 hour before serving.",
+      "faithfulness": null,
       "llm_context_precision_without_reference": 0.9999999999
     },
     {
@@ -71,7 +71,7 @@
         "Recipe: Fresh Fruit Tart with Mascarpone\nIngredients: 2 cups all-purpose flour, 1 cup butter, softened, \u00bd cup white sugar\nDirections: Preheat the oven to 350 degrees F (175 degrees C). Lightly grease 2 tart pans.\nBlend flour, butter, and sugar together in a bowl using an electric mixer until combined. Divide mixture evenly and press into the bottoms of the prepared tart pans.\nBake in the preheated oven until golden brown, 12 to 15 minutes. Let cool completely.\nWhile crusts are cooling, beat cream cheese, mascarpone cheese, sugar, vanilla extract, nutmeg, and cinnamon together in a bowl using an electric mixer until light and fluffy. Spread mixture over cooled crusts. Arrange strawberries, blackberries, and kiwis on tart in desired design.\nMix sugar and cornstarch together in a small saucepan. Pour in water and lemon juice. Cook over medium heat until clear and thick, about 2 minutes. Let glaze cool completely.\nGlaze the entire top of each tart gently using a pastry brush."
       ],
       "response": "Recipe Name: Fresh Fruit Tart with Mascarpone\n\nChanges:\n- none\nSteps:\n1. Blend 2 cups flour, 1 cup butter, softened, and 1/2 cup white sugar together in a bowl using an electric mixer until combined.\n2. Divide mixture evenly and press into the bottoms of the prepared tart pans.\n3. Bake in the preheated oven until golden brown, 12 to 15 minutes.\n4. Let cool completely.\n5. Beat cream cheese, mascarpone cheese, 1/2 cup white sugar, vanilla extract, nutmeg, and cinnamon together in a bowl using an electric mixer until light and fluffy.\n6. Spread mixture over cooled crusts.\n7. Arrange strawberries, blackberries, and kiwis on tart in desired design.\n8. Mix 1/2 cup sugar and cornstarch together in a small saucepan.\n9. Pour in 1 cup water and cook over medium heat until clear and thick, about 2 minutes.\n10. Let glaze cool completely.\n11. Glaze the entire top of each tart gently using a pastry brush.",
-      "faithfulness": 0.9473684211,
+      "faithfulness": null,
       "llm_context_precision_without_reference": 0.0
     },
     {
@@ -80,8 +80,8 @@
         "Recipe: Southern-Style Baked Banana Pudding\nIngredients: 4 large eggs\nDirections: Separate eggs, placing the whites in the bowl of a stand mixer and the yolks into a saucepan.\nAdd sugar, salt, and 1/3 cup plus 1 tablespoon flour to the yolks. Splash in about 1/4 of the milk and start blending mixture with a whisk. Pour in remaining milk and whisk until smooth.\nCook and stir mixture over medium heat until hot to the touch, occasionally dipping your finger in to test. Whisk constantly until custard is thick enough to form ribbons.\nRemove custard from heat and add vanilla extract, banana liqueur, and cold butter. Whisk until butter dissolves. Set custard aside.\nPreheat the oven to 400 degrees F (200 degrees C).\nToss banana slices with lemon juice.\nSpread a quarter of the custard over the bottom of a baking dish. Add a single layer of vanilla wafers. Cover with 1/2 of the bananas and spread 1/2 of the remaining custard on top. Add another layer of vanilla wafers, using slightly fewer this time. Top with the remaining bananas and custard. Smooth the top and tap dish against the counter to settle the pudding.\nAdd cream of tartar to the egg whites. Beat using the whisk attachment until foamy. Gradually add sugar and beat until stiff, but not dry, peaks form. Spread meringue over the pudding using a soft spatula, creating ridges for contrast.\nBake in the preheated oven until meringue is nicely browned, 7 to 10 minutes. Serve warm or chilled.\n\n\n\n\n\n\n\n\n\n\n\nChef John",
         "Recipe: Fresh Fruit Tart with Mascarpone\nIngredients: 2 cups all-purpose flour, 1 cup butter, softened, \u00bd cup white sugar\nDirections: Preheat the oven to 350 degrees F (175 degrees C). Lightly grease 2 tart pans.\nBlend flour, butter, and sugar together in a bowl using an electric mixer until combined. Divide mixture evenly and press into the bottoms of the prepared tart pans.\nBake in the preheated oven until golden brown, 12 to 15 minutes. Let cool completely.\nWhile crusts are cooling, beat cream cheese, mascarpone cheese, sugar, vanilla extract, nutmeg, and cinnamon together in a bowl using an electric mixer until light and fluffy. Spread mixture over cooled crusts. Arrange strawberries, blackberries, and kiwis on tart in desired design.\nMix sugar and cornstarch together in a small saucepan. Pour in water and lemon juice. Cook over medium heat until clear and thick, about 2 minutes. Let glaze cool completely.\nGlaze the entire top of each tart gently using a pastry brush."
       ],
-      "response": "Recipe Name: Southern-Style Baked Banana Pudding\n\nChanges:\n- none\nSteps:\n1. Separate eggs, placing the whites in the bowl of a stand mixer and the yolks into a saucepan.\n2. Add sugar, salt, and 1/3 cup plus 1 tablespoon flour to the yolks. Splash in about 1/4 of the milk and start blending mixture with a whisk. Pour in remaining milk and whisk until smooth.",
-      "faithfulness": null,
+      "response": "Recipe Name: Southern-Style Baked Banana Pudding\n\nChanges:\n- none\nSteps:\n1. Separate eggs, placing the whites in the bowl of a stand mixer and the yolks into a saucepan.\n2. Add sugar, salt, and 1/3 cup plus 1 tablespoon flour to the yolks. Splash in about 1/4 of the milk and start blending mixture with a whisk.",
+      "faithfulness": 0.875,
       "llm_context_precision_without_reference": null
     }
   ],
