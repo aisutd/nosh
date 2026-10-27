@@ -49,6 +49,12 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
               {recipe.image && /^https?:\/\//i.test(recipe.image) && <img src={recipe.image} alt={recipe.title} className="swipe-card-image" />}
               <p>{recipe.total_time || "Time not listed"}</p>
               <p>{recipe.ingredients}</p>
+              {recipe.substitutions?.length > 0 && <div>
+                <strong>Pantry substitutions</strong>
+                <ul>{recipe.substitutions.map((swap) => <li key={swap.ingredient}>
+                  {swap.ingredient} → {swap.replacement_ingredients.join(" + ")}. {swap.instructions} {swap.limitations}
+                </li>)}</ul>
+              </div>}
               {/^https?:\/\//i.test(recipe.source_url || "") && <a href={recipe.source_url} target="_blank" rel="noreferrer">Source recipe</a>}
               <p className="swipe-card-position">Option {index + 1} of {deck.length}</p>
             </> : <p>{recipe.ingredients.length} ingredients</p>}

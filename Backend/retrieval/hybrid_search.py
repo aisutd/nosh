@@ -80,7 +80,7 @@ def _bm25_search(query: str, collection, top_n: int, available=None, max_time=No
             if doc_time is None or doc_time > max_time:
                 continue
         if available is not None:
-            if not matches_available(metadata.get("ingredients", ""), available):
+            if not matches_available(metadata.get("ingredients", ""), available, context=document or ""):
                 continue
         results.append({
             "id": rid,
@@ -160,7 +160,7 @@ def hybrid_search_recipes(
         collection = get_collection(db_path, collection_name)
 
     available = (
-        normalize_available(available_ingredients)
+        normalize_available(available_ingredients, semantic=False)
         if available_ingredients is not None
         else None
     )

@@ -1,0 +1,642 @@
+{
+  "version": 1,
+  "source_title": "Colorado State University Extension: Ingredient Substitutions",
+  "reviewed_on": "2026-10-26",
+  "entries": [
+    {
+      "id": "buttermilk-1",
+      "ingredient": "buttermilk",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "cup"
+      },
+      "components": [
+        {
+          "ingredient": "plain yogurt",
+          "quantity": "1",
+          "unit": "cup"
+        }
+      ],
+      "instructions": "Use 1 cup plain yogurt per cup of buttermilk.",
+      "limitations": "Baking texture and tang may change.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "buttermilk-2",
+      "ingredient": "buttermilk",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "cup"
+      },
+      "components": [
+        {
+          "ingredient": "milk",
+          "quantity": "15",
+          "unit": "tablespoon"
+        },
+        {
+          "ingredient": "lemon",
+          "quantity": "1",
+          "unit": "tablespoon juice"
+        }
+      ],
+      "instructions": "Combine 1 tablespoon lemon juice with milk to total 1 cup; rest 5 minutes.",
+      "limitations": "Use the soured mixture; not a cultured buttermilk equivalent.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "buttermilk-3",
+      "ingredient": "buttermilk",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "cup"
+      },
+      "components": [
+        {
+          "ingredient": "milk",
+          "quantity": "15",
+          "unit": "tablespoon"
+        },
+        {
+          "ingredient": "vinegar",
+          "quantity": "1",
+          "unit": "tablespoon"
+        }
+      ],
+      "instructions": "Combine 1 tablespoon vinegar with milk to total 1 cup; rest 5 minutes.",
+      "limitations": "Use plain food vinegar, not a sweetened or strongly flavored variety.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "baking-powder-1",
+      "ingredient": "baking powder",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "teaspoon"
+      },
+      "components": [
+        {
+          "ingredient": "baking soda",
+          "quantity": "1/4",
+          "unit": "teaspoon"
+        },
+        {
+          "ingredient": "cream of tartar",
+          "quantity": "1/2",
+          "unit": "teaspoon"
+        },
+        {
+          "ingredient": "cornstarch",
+          "quantity": "1/4",
+          "unit": "teaspoon"
+        }
+      ],
+      "instructions": "Mix 1/4 teaspoon baking soda, 1/2 teaspoon cream of tartar and 1/4 teaspoon cornstarch per teaspoon of baking powder.",
+      "limitations": "Prepare immediately before use.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "sour-cream-1",
+      "ingredient": "sour cream",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "cup"
+      },
+      "components": [
+        {
+          "ingredient": "plain yogurt",
+          "quantity": "1",
+          "unit": "cup"
+        }
+      ],
+      "instructions": "Use an equal volume of plain yogurt.",
+      "limitations": "Expect a different richness; avoid boiling yogurt sauces.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "cake-flour-1",
+      "ingredient": "cake flour",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "cup"
+      },
+      "components": [
+        {
+          "ingredient": "flour",
+          "quantity": "7/8",
+          "unit": "cup"
+        }
+      ],
+      "instructions": "Use 7/8 cup all-purpose flour per cup of cake flour.",
+      "limitations": "Texture may be less tender.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "pastry-flour-1",
+      "ingredient": "pastry flour",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "cup"
+      },
+      "components": [
+        {
+          "ingredient": "flour",
+          "quantity": "7/8",
+          "unit": "cup"
+        }
+      ],
+      "instructions": "Use 7/8 cup all-purpose flour per cup of pastry flour.",
+      "limitations": "Pastry texture may change.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "butter-1",
+      "ingredient": "butter",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "cup"
+      },
+      "components": [
+        {
+          "ingredient": "margarine",
+          "quantity": "1",
+          "unit": "cup"
+        }
+      ],
+      "instructions": "Use an equal volume of margarine.",
+      "limitations": "Use baking margarine, not a reduced-fat spread; flavor and texture differ.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "milk-1",
+      "ingredient": "milk",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "cup"
+      },
+      "components": [
+        {
+          "ingredient": "evaporated milk",
+          "quantity": "1/2",
+          "unit": "cup"
+        },
+        {
+          "ingredient": "water",
+          "quantity": "1/2",
+          "unit": "cup"
+        }
+      ],
+      "instructions": "Mix equal volumes of evaporated milk and water to replace the milk volume.",
+      "limitations": "Use unsweetened evaporated milk, not condensed milk.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "coconut-milk-1",
+      "ingredient": "coconut milk",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "cup"
+      },
+      "components": [
+        {
+          "ingredient": "milk",
+          "quantity": "1",
+          "unit": "cup"
+        }
+      ],
+      "instructions": "Use an equal volume of dairy milk.",
+      "limitations": "Loses coconut flavor and changes richness; unsuitable if coconut flavor is essential.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "half-and-half-1",
+      "ingredient": "half and half",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "cup"
+      },
+      "components": [
+        {
+          "ingredient": "evaporated milk",
+          "quantity": "1",
+          "unit": "cup"
+        }
+      ],
+      "instructions": "Use an equal volume of undiluted evaporated milk.",
+      "limitations": "Changes flavor and richness; not for whipping.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "heavy-cream-1",
+      "ingredient": "heavy cream",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "cup"
+      },
+      "components": [
+        {
+          "ingredient": "butter",
+          "quantity": "1/3",
+          "unit": "cup"
+        },
+        {
+          "ingredient": "milk",
+          "quantity": "3/4",
+          "unit": "cup"
+        }
+      ],
+      "instructions": "For each cup of heavy cream, combine 1/3 cup butter with 3/4 cup milk.",
+      "limitations": "Baking only. This mixture cannot be whipped.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "\\b(bake|baking|oven|muffins?|cakes?|biscuits?|pancakes?|waffles?|bread)\\b",
+      "excludes_context": "\\b(whip\\w*|stiff peaks|soft peaks|ice cream)\\b"
+    },
+    {
+      "id": "cornstarch-1",
+      "ingredient": "cornstarch",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "tablespoon"
+      },
+      "components": [
+        {
+          "ingredient": "flour",
+          "quantity": "2",
+          "unit": "tablespoon"
+        }
+      ],
+      "instructions": "Use twice the volume of all-purpose flour for thickening.",
+      "limitations": "For thickening only; may be less clear and needs cooking to remove raw flour flavor.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "\\b(thicken\\w*|gravy|sauce|soup|stew|pudding)\\b",
+      "excludes_context": ""
+    },
+    {
+      "id": "cornstarch-2",
+      "ingredient": "cornstarch",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "tablespoon"
+      },
+      "components": [
+        {
+          "ingredient": "arrowroot",
+          "quantity": "1",
+          "unit": "tablespoon"
+        }
+      ],
+      "instructions": "Use an equal volume of arrowroot as thickener.",
+      "limitations": "For thickening only; assess suitability for the cooking method.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "\\b(thicken\\w*|gravy|sauce|soup|stew|pudding)\\b",
+      "excludes_context": ""
+    },
+    {
+      "id": "arrowroot-1",
+      "ingredient": "arrowroot",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "tablespoon"
+      },
+      "components": [
+        {
+          "ingredient": "cornstarch",
+          "quantity": "1",
+          "unit": "tablespoon"
+        }
+      ],
+      "instructions": "Use an equal volume of cornstarch as thickener.",
+      "limitations": "For thickening only; appearance and texture can differ.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "\\b(thicken\\w*|gravy|sauce|soup|stew|pudding)\\b",
+      "excludes_context": ""
+    },
+    {
+      "id": "garlic-1",
+      "ingredient": "garlic",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "small clove"
+      },
+      "components": [
+        {
+          "ingredient": "garlic powder",
+          "quantity": "1/8",
+          "unit": "teaspoon"
+        }
+      ],
+      "instructions": "Use 1/8 teaspoon garlic powder per small garlic clove.",
+      "limitations": "For incorporated flavor only; cannot replace whole roasted garlic or garlic pieces.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "\\b(minced|chopped|sauce|soup|stew|marinade|season\\w*)\\b",
+      "excludes_context": "\\b(roast\\w* garlic|garlic confit)\\b"
+    },
+    {
+      "id": "honey-1",
+      "ingredient": "honey",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "cup"
+      },
+      "components": [
+        {
+          "ingredient": "sugar",
+          "quantity": "1 1/4",
+          "unit": "cup"
+        },
+        {
+          "ingredient": "water",
+          "quantity": "1/4",
+          "unit": "cup"
+        }
+      ],
+      "instructions": "For 1 cup honey, combine 1 1/4 cups granulated sugar with 1/4 cup water.",
+      "limitations": "Changes flavor; dissolve the sugar. Not suitable when honey flavor is essential.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "allspice-1",
+      "ingredient": "allspice",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "teaspoon"
+      },
+      "components": [
+        {
+          "ingredient": "cinnamon",
+          "quantity": "1/2",
+          "unit": "teaspoon"
+        },
+        {
+          "ingredient": "clove",
+          "quantity": "1/2",
+          "unit": "teaspoon"
+        }
+      ],
+      "instructions": "Combine equal volumes of ground cinnamon and ground cloves.",
+      "limitations": "Use ground spices; flavor differs from allspice.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "apple-pie-spice-1",
+      "ingredient": "apple pie spice",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "teaspoon"
+      },
+      "components": [
+        {
+          "ingredient": "cinnamon",
+          "quantity": "1/2",
+          "unit": "teaspoon"
+        },
+        {
+          "ingredient": "nutmeg",
+          "quantity": "1/4",
+          "unit": "teaspoon"
+        },
+        {
+          "ingredient": "cardamom",
+          "quantity": "1/8",
+          "unit": "teaspoon"
+        }
+      ],
+      "instructions": "For each teaspoon requested, combine 1/2 teaspoon cinnamon, 1/4 teaspoon nutmeg and 1/8 teaspoon cardamom.",
+      "limitations": "Use ground spices; the chart mixture is not a full teaspoon by volume.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "pumpkin-pie-spice-1",
+      "ingredient": "pumpkin pie spice",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "teaspoon"
+      },
+      "components": [
+        {
+          "ingredient": "cinnamon",
+          "quantity": "1/2",
+          "unit": "teaspoon"
+        },
+        {
+          "ingredient": "ginger",
+          "quantity": "1/4",
+          "unit": "teaspoon"
+        },
+        {
+          "ingredient": "allspice",
+          "quantity": "1/8",
+          "unit": "teaspoon"
+        },
+        {
+          "ingredient": "nutmeg",
+          "quantity": "1/8",
+          "unit": "teaspoon"
+        }
+      ],
+      "instructions": "Mix 1/2 teaspoon cinnamon, 1/4 teaspoon ginger, 1/8 teaspoon allspice and 1/8 teaspoon nutmeg.",
+      "limitations": "Ground spices only.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "cream-of-tartar-1",
+      "ingredient": "cream of tartar",
+      "source_amount": {
+        "quantity": "1/2",
+        "unit": "teaspoon"
+      },
+      "components": [
+        {
+          "ingredient": "lemon",
+          "quantity": "1 1/2",
+          "unit": "teaspoon juice"
+        }
+      ],
+      "instructions": "Use 1 1/2 teaspoons lemon juice for each 1/2 teaspoon cream of tartar.",
+      "limitations": "Adds liquid and flavor; judge suitability for the recipe.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "cream-of-tartar-2",
+      "ingredient": "cream of tartar",
+      "source_amount": {
+        "quantity": "1/2",
+        "unit": "teaspoon"
+      },
+      "components": [
+        {
+          "ingredient": "vinegar",
+          "quantity": "1 1/2",
+          "unit": "teaspoon"
+        }
+      ],
+      "instructions": "Use 1 1/2 teaspoons food vinegar for each 1/2 teaspoon cream of tartar.",
+      "limitations": "Adds liquid; avoid flavored or sweetened vinegar.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "chive-1",
+      "ingredient": "chive",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "tablespoon"
+      },
+      "components": [
+        {
+          "ingredient": "green onion",
+          "quantity": "1",
+          "unit": "tablespoon tops"
+        }
+      ],
+      "instructions": "Use the same volume of finely chopped green onion tops.",
+      "limitations": "Use the green tops; flavor may be stronger.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "white-pepper-1",
+      "ingredient": "white pepper",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "teaspoon"
+      },
+      "components": [
+        {
+          "ingredient": "black pepper",
+          "quantity": "1",
+          "unit": "teaspoon"
+        }
+      ],
+      "instructions": "Use the same amount of black pepper.",
+      "limitations": "Dark flecks will be visible; flavor differs.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "dry-mustard-1",
+      "ingredient": "dry mustard",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "teaspoon"
+      },
+      "components": [
+        {
+          "ingredient": "prepared mustard",
+          "quantity": "1",
+          "unit": "tablespoon"
+        }
+      ],
+      "instructions": "Use 1 tablespoon prepared mustard per teaspoon of dry mustard.",
+      "limitations": "Adds moisture, acidity and possibly salt; assess recipe compatibility.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "mayonnaise-1",
+      "ingredient": "mayonnaise",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "cup"
+      },
+      "components": [
+        {
+          "ingredient": "plain yogurt",
+          "quantity": "1",
+          "unit": "cup"
+        }
+      ],
+      "instructions": "Use an equal volume of plain yogurt.",
+      "limitations": "Salads and dressings only; not a universal baking or heated-sauce replacement.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "\\b(salad|dressing|coleslaw)\\b",
+      "excludes_context": "\\b(bake|baking|oven)\\b"
+    },
+    {
+      "id": "chicken-broth-1",
+      "ingredient": "chicken broth",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "cup"
+      },
+      "components": [
+        {
+          "ingredient": "chicken bouillon cube",
+          "quantity": "1",
+          "unit": "cube"
+        },
+        {
+          "ingredient": "water",
+          "quantity": "1",
+          "unit": "cup"
+        }
+      ],
+      "instructions": "Dissolve one chicken bouillon cube in one cup water per cup broth.",
+      "limitations": "Check the cube label for dilution and salt; use label instructions if different.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    },
+    {
+      "id": "beef-broth-1",
+      "ingredient": "beef broth",
+      "source_amount": {
+        "quantity": "1",
+        "unit": "cup"
+      },
+      "components": [
+        {
+          "ingredient": "beef bouillon cube",
+          "quantity": "1",
+          "unit": "cube"
+        },
+        {
+          "ingredient": "water",
+          "quantity": "1",
+          "unit": "cup"
+        }
+      ],
+      "instructions": "Dissolve one beef bouillon cube in one cup water per cup broth.",
+      "limitations": "Check the cube label for dilution and salt; use label instructions if different.",
+      "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
+      "requires_context": "",
+      "excludes_context": ""
+    }
+  ]
+}

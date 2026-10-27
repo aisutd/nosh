@@ -24,7 +24,7 @@ function Cook() {
 
   if (!recipe) return <main className="page"><p>Loading...</p></main>;
 
-  if (recipe.kind === "rag") return <RagCook savedId={id} title={recipe.title} />;
+  if (recipe.kind === "rag") return <RagCook savedId={id} title={recipe.title} sourceRecipe={recipe} />;
 
   return (
     <main className="page cook">

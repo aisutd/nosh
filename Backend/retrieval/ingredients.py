@@ -5,15 +5,21 @@ import unicodedata
 PANTRY = {"water", "salt", "black pepper", "pepper", "ice"}
 
 ALIASES = {
+    "boiling water": "water",
+    "half-and-half": "half and half", "half-and-half cream": "half and half",
+    "mustard powder": "dry mustard", "ground mustard": "dry mustard",
     # Temperature does not change the pantry requirement for water.
     "cold water": "water", "warm water": "water", "hot water": "water",
     # Plurals
     "tomatoes": "tomato", "potatoes": "potato", "leaves": "leaf",
     # Sugar variations
     "white sugar": "sugar", "granulated sugar": "sugar",
-    "brown sugar": "sugar", "powdered sugar": "sugar",
-    "confectioners sugar": "sugar", "caster sugar": "sugar",
-    "icing sugar": "sugar",
+    # Different sugar types are not interchangeable inventory items.
+    "light brown sugar": "brown sugar", "dark brown sugar": "brown sugar",
+    "confectioners sugar": "powdered sugar", "confectioners' sugar": "powdered sugar",
+    "confectioner's sugar": "powdered sugar", "confectioners’ sugar": "powdered sugar",
+    "confectioner’s sugar": "powdered sugar", "icing sugar": "powdered sugar",
+    "caster sugar": "sugar",
     # Salt and pepper
     "ground black pepper": "black pepper", "ground pepper": "pepper",
     "sea salt": "salt", "table salt": "salt", "kosher salt": "salt",
@@ -170,6 +176,6 @@ def required_ingredients(raw):
     return names or None
 
 
-def matches_available(raw, available):
-    required = required_ingredients(raw)
-    return required is not None and required <= available
+def matches_available(raw, available, *, context=""):
+    from retrieval.substitutions import plan_substitutions
+    return plan_substitutions(raw, available, context=context) is not None

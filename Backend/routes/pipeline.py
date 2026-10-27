@@ -114,6 +114,7 @@ async def recipe_options(request: GenerateRecipeRequest):
     cards = [{
         "id": "rag:" + recipe["id"], "title": recipe["title"],
         "ingredients": recipe.get("ingredients", ""), "source_url": recipe["url"],
+        "substitutions": recipe.get("substitutions", []),
         "image": recipe.get("metadata", {}).get("img_src"),
         "total_time": recipe.get("metadata", {}).get("total_time"),
     } for recipe in result["recipes"]]
