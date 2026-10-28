@@ -1,0 +1,254 @@
+{
+  "lemon": {
+    "quantity": 15,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 5,
+    "untracked_detections": 55
+  },
+  "eggs": {
+    "quantity": 2,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 0,
+    "untracked_detections": 19
+  },
+  "milk": {
+    "quantity": 6,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 2,
+    "untracked_detections": 62
+  },
+  "tomato": {
+    "quantity": 8,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 4,
+    "untracked_detections": 24
+  },
+  "apple": {
+    "quantity": 22,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 5,
+    "untracked_detections": 13
+  },
+  "carrot": {
+    "quantity": 7,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 3,
+    "untracked_detections": 44
+  },
+  "broccoli": {
+    "quantity": 7,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 2,
+    "untracked_detections": 31
+  },
+  "mushroom": {
+    "quantity": 0,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 0,
+    "untracked_detections": 8
+  },
+  "peppers": {
+    "quantity": 0,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 0,
+    "untracked_detections": 4
+  },
+  "banana": {
+    "quantity": 1,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 1,
+    "untracked_detections": 24
+  },
+  "potato": {
+    "quantity": 0,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 0,
+    "untracked_detections": 5
+  },
+  "bread": {
+    "quantity": 0,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 0,
+    "untracked_detections": 10
+  },
+  "meat": {
+    "quantity": 0,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 0,
+    "untracked_detections": 3
+  },
+  "red_bell_pepper": {
+    "quantity": 5,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 1,
+    "untracked_detections": 15
+  },
+  "lettuce": {
+    "quantity": 2,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 1,
+    "untracked_detections": 11
+  },
+  "cheese": {
+    "quantity": 0,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 1,
+    "untracked_detections": 6
+  },
+  "cauliflower": {
+    "quantity": 1,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 2,
+    "untracked_detections": 0
+  },
+  "tomato_paste": {
+    "quantity": 1,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 1,
+    "untracked_detections": 5
+  },
+  "peas": {
+    "quantity": 0,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 0,
+    "untracked_detections": 0
+  },
+  "yellow_bell_pepper": {
+    "quantity": 0,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 0,
+    "untracked_detections": 0
+  },
+  "yoghurt": {
+    "quantity": 1,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 0,
+    "untracked_detections": 4
+  },
+  "blueberries": {
+    "quantity": 0,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 0,
+    "untracked_detections": 6
+  },
+  "cream_cheese": {
+    "quantity": 0,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 0,
+    "untracked_detections": 11
+  },
+  "sauce": {
+    "quantity": 1,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 1,
+    "untracked_detections": 1
+  },
+  "butter": {
+    "quantity": 0,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 0,
+    "untracked_detections": 7
+  },
+  "strawberry": {
+    "quantity": 0,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 0,
+    "untracked_detections": 2
+  },
+  "sugar": {
+    "quantity": 0,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 0,
+    "untracked_detections": 1
+  },
+  "cream": {
+    "quantity": 0,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "min_confidence": 0.35,
+    "min_track_frames": 2,
+    "rejected_tracks": 0,
+    "untracked_detections": 2
+  }
+}
