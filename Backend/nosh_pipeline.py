@@ -91,8 +91,11 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
 
     # Adapt one source recipe so the response has a clear, traceable source.
     context = format_recipes_for_llm(recipes, top_k=1)
-    answer = generate_recipe(available_ingredients=available, retrieved_context=context,
-                             user_query=user_query, max_time=max_time, substitutions=substitutions)
+    from llm.source_adaptation import build_source_adaptation
+    answer = build_source_adaptation(recipes[0], substitutions)
+    if answer is None:
+        answer = generate_recipe(available_ingredients=available, retrieved_context=context,
+                                 user_query=user_query, max_time=max_time, substitutions=substitutions)
     if answer in (INSUFFICIENT_CONTEXT, OUT_OF_SCOPE):
         return {"status": "insufficient_context" if answer == INSUFFICIENT_CONTEXT else "out_of_scope",
                 "message": answer, "recipe": None, "recipes": recipes}
