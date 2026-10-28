@@ -8,8 +8,3 @@ langchain-ollama
 langchain
 langchain-community
 langchain-google-vertexai
-rank-bm25
-deepgram-sdk
-python-dotenv
-sounddevice
-scipy
