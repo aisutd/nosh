@@ -1,0 +1,8 @@
+.cooking-memory { text-align: left; margin: 1.5rem 0; padding: 1.2rem; border: 1px solid #aac7b0; border-radius: 1rem; background: #f6faf6; color: #183a27; overflow-wrap: anywhere; }
+.memory-form { display: grid; gap: 1rem; }
+.memory-form label { display: grid; gap: .4rem; font-weight: 600; }
+.memory-form input, .memory-form select, .memory-form textarea { width: 100%; box-sizing: border-box; padding: .7rem; border: 1px solid #658771; border-radius: .5rem; background: white; color: #183a27; font: inherit; }
+.memory-form textarea { min-height: 5rem; resize: vertical; }
+.memory-form small { font-weight: normal; }
+.memory-history { padding-left: 1.2rem; }
+.memory-history li { margin-bottom: 1rem; }

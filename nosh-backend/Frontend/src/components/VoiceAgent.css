@@ -1,0 +1,10 @@
+.voice-agent { margin: 1.5rem 0; padding: 1.25rem; border: 1px solid #aac7b0; border-radius: 1rem; background: #f6faf6; color: #183a27; text-align: left; }
+.voice-agent h2 { margin-top: 0; }
+.voice-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin: .8rem 0; }
+.voice-agent button { background: #245c3a; color: white; border: 0; padding: .7rem 1rem; border-radius: .6rem; cursor: pointer; }
+.voice-agent button:disabled { opacity: .5; cursor: default; }
+.voice-agent button[aria-pressed="true"] { background: #94372d; }
+.voice-agent input:not([type="checkbox"]) { flex: 1; min-width: 140px; padding: .7rem; border: 1px solid #658771; border-radius: .5rem; background: white; color: #183a27; }
+.voice-agent :focus-visible { outline: 3px solid #ca7516; outline-offset: 3px; }
+.voice-messages { max-height: 24rem; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.voice-messages p { padding: .75rem; border-radius: .5rem; background: white; }

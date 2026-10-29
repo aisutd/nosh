@@ -1,0 +1,544 @@
+/* =====================================================================
+   App.css, styles for the whole app
+   Colors come from CSS variables defined in index.css:
+   --bg (background)  --surface (cards/inputs)  --text  --muted (grey text)
+   --border  --accent / --accent-dark (orange)  --blob (mascot color)
+   ===================================================================== */
+
+/* ===== Base: rules that apply everywhere ===== */
+
+.page {                        /* wrapper used by most pages */
+  gap: 16px;                   /* space between things inside */
+  padding: 24px 24px 100px;    /* top / sides / bottom. 100px bottom = room for the nav bar */
+  width: 100%;
+  text-align: center;
+}
+
+h1 {                           /* affects EVERY h1, so other rules sometimes override it */
+  display: flex;               /* icon and text side by side */
+  align-items: center;         /* vertical centering */
+  justify-content: center;     /* horizontal centering */
+  gap: 10px;                   /* space between icon and text */
+  margin: 8px 0 0;
+  font-size: 42px;
+}
+
+p {
+  margin: 0;                   /* removes the browser's default gap */
+  color: var(--muted);         /* grey text */
+}
+
+.login-link {                  /* little orange text links */
+  color: var(--accent);
+  text-decoration: none;       /* no underline */
+  font-weight: 500;
+}
+
+/* ----- inputs (every text box in the app) ----- */
+input {
+  height: 48px;
+  padding: 0 18px;             /* space between the border and your typing */
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;        /* huge radius = pill shape */
+}
+
+input::placeholder {           /* the grey hint text before you type */
+  color: var(--muted);
+}
+
+input:focus {                  /* when you click into the box */
+  outline: none;               /* remove the browser's default blue outline */
+  border-color: var(--accent); /* orange border instead */
+}
+
+/* ----- buttons (every button in the app) ----- */
+button {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 16px;
+  cursor: pointer;             /* hand cursor on hover */
+  transition: border-color 0.2s ease, background 0.2s ease;   /* smooth color change */
+}
+
+button:hover {                 /* mouse is over the button */
+  border-color: var(--accent);
+}
+
+.btn-primary {                 /* the main orange button (add class on top of a button) */
+  display: inline-flex;        /* lets us center the icon + text inside */
+  align-items: center;
+  justify-content: center;
+  gap: 6px;                    /* icon-to-text space */
+  height: 48px;
+  padding: 0 22px;
+  background: var(--accent);
+  color: #1a1210;              /* dark text so it's readable on orange */
+  border: none;
+  font-weight: 700;
+}
+
+.btn-primary:hover {
+  background: var(--accent-dark);   /* slightly darker orange on hover */
+}
+
+
+/* ===== Login / sign-up page (Auth.jsx) ===== */
+
+.auth {
+  max-width: 400px;            /* don't get wider than this on desktop */
+  margin: 0 auto;              /* auto left/right = centered on the screen */
+  padding: 24px;
+  display: flex;
+  flex-direction: column;      /* stack everything top to bottom */
+  align-items: center;
+  gap: 20px;
+}
+
+.auth h1 {                     /* only the h1 inside .auth */
+  margin: 0;
+  font-size: 34px;             /* smaller than the global 42px */
+}
+
+.auth-back {
+  align-self: flex-start;      /* this one item sticks to the left instead of centering */
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.auth-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;                   /* space between the input boxes */
+}
+
+.auth-form input {
+  background: transparent;     /* only change the background, the rest comes from the global input rule */
+}
+
+.auth-error {                  /* red message like "Wrong password" */
+  margin: 0;
+  color: #ff8a7a;
+  font-size: 14px;
+  text-align: center;
+}
+
+
+/* ===== Pantry page (the ingredients screen in App.jsx) ===== */
+
+.scan-box {                    /* the dashed "scan your fridge" box */
+  width: 450px;
+  max-width: 100%;             /* on a narrow phone it shrinks instead of overflowing */
+  height: 160px;
+  margin: 0 auto;              /* centered */
+  display: flex;
+  flex-direction: column;      /* icon above the text */
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px dashed var(--accent);   /* dashed orange outline */
+  border-radius: 24px;
+}
+
+.add-row {                     /* the text box and the Add button on one line */
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+.add-row input {
+  flex: 1;                     /* input takes all leftover space, button stays small */
+  min-width: 0;                /* lets a flex item shrink below its content size (prevents overflow on phones) */
+}
+
+.chips {                       /* <ul> holding the ingredient chips */
+  list-style: none;            /* no bullet points */
+  padding: 0;                  /* removes the default list indent */
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;             /* chips drop to the next line when out of room */
+  justify-content: center;
+  gap: 8px;
+}
+
+.chip {                        /* one ingredient pill, like "milk  x" */
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 6px 6px 16px;   /* top / right / bottom / left: less padding on the right, where the X is */
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.chip button {                 /* the small X that removes the ingredient */
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;          /* 50% on a square = circle */
+}
+
+
+/* ===== Blob mascot (Home and Cook pages) ===== */
+
+.blob {
+  margin: 24px auto;           /* auto left/right centers the blob */
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;          /* circle */
+  background: var(--blob);
+  box-shadow: 0 0 40px color-mix(in srgb, var(--blob) 45%, transparent);   /* soft glow in the blob's own color */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;                   /* space between the two eyes */
+  animation: float 3s ease-in-out infinite;   /* bobs up and down forever, 3s per loop */
+}
+
+.blob.talking {                /* blob that ALSO has the "talking" class (Cook page) */
+  animation-duration: 1s;      /* bobs faster while listening */
+}
+
+.eye {
+  width: 10px;
+  height: 14px;
+  border-radius: 50%;
+  background: #1a1210;
+}
+
+@keyframes float {             /* the animation used above */
+  0%, 100% { transform: translateY(0); }      /* start and end at normal position */
+  50% { transform: translateY(-8px); }        /* halfway: 8px up */
+}
+
+
+/* ===== Bottom nav bar (NavBar.jsx) ===== */
+
+.navbar {
+  position: fixed;             /* stuck to the screen, doesn't scroll away */
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%); /* left: 50% puts the left edge at the middle, this shifts it back by half its width = centered */
+  width: 100%;
+  max-width: 640px;            /* on desktop it doesn't stretch the whole screen */
+  display: flex;
+  justify-content: space-around;   /* tabs spread out evenly */
+  padding: 10px 0 14px;
+  background: var(--bg);       /* solid, so page content doesn't show through */
+  border-top: 1px solid var(--border);
+}
+
+.nav-item {                    /* one tab (icon above label) */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 16px;
+  background: none;            /* these 3 lines undo the global button style, */
+  border: none;                /* because some tabs are <button>s and some are links */
+  border-radius: 0;
+  color: var(--muted);         /* grey when not selected */
+  font-size: 12px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.nav-item.active {             /* React Router's NavLink adds "active" to the tab for the current page */
+  color: var(--accent);
+}
+
+
+/* ===== Landing page (Home.jsx) ===== */
+
+.home {
+  padding: 16px;
+  max-width: 480px;            /* phone-width column, even on desktop */
+  margin: 0 auto;
+}
+
+.home-top {                    /* top bar: logo left, Sign in right */
+  display: flex;
+  justify-content: space-between;   /* pushes the two items to opposite ends */
+  align-items: center;
+}
+
+.logo span {                   /* the dot in "nosh." */
+  color: #ff7a1a;
+}
+
+.signin-link {
+  color: #ff7a1a;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.hero {                        /* the big headline (it's an h1) */
+  display: block;              /* cancels the global h1 flex, otherwise the words become side-by-side columns */
+  text-align: center;
+  font-size: 2.2rem;           /* rem = relative to the base font size */
+  line-height: 1.1;            /* tight spacing between lines */
+  margin: 32px 0 8px;
+}
+
+.hero-sub {                    /* grey line under the headline */
+  text-align: center;
+  color: #999;
+}
+
+.row-title {                   /* heading above the scrolling recipes */
+  margin: 28px 0 12px;
+}
+
+.row {                         /* the sideways-scrolling strip of recipe cards */
+  display: flex;               /* puts cards next to each other */
+  gap: 12px;
+  overflow-x: auto;            /* scroll sideways when cards don't fit (Home.jsx also moves it automatically) */
+  padding-bottom: 8px;
+  scrollbar-width: none;       /* hide the scrollbar in Firefox */
+}
+
+.row::-webkit-scrollbar {      /* hide the scrollbar in Chrome / Safari / Edge */
+  display: none;
+}
+
+.card {
+  flex: 0 0 160px;             /* don't grow, don't shrink, stay 160px wide */
+}
+
+.card-img {
+  height: 180px;
+  border-radius: 16px;
+  background-size: cover;      /* fill the square without stretching */
+  background-position: center;
+}
+
+.card-title {
+  margin: 8px 0 0;
+  font-weight: 600;
+}
+
+.cta {                         /* the big outlined "Get started" link at the bottom */
+  display: block;
+  text-align: center;
+  margin: 28px 0;
+  padding: 14px;
+  border: 2px solid #ff7a1a;
+  border-radius: 999px;
+  color: #ff7a1a;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+
+/* ===== Cook page (Cook.jsx) ===== */
+
+.cook-title {
+  font-size: 28px;             /* smaller than the global h1 so long recipe names fit */
+}
+
+.cook-list {                   /* ingredients / directions list */
+  text-align: left;            /* lists read better left-aligned than centered */
+  color: var(--muted);
+  max-width: 480px;
+  margin: 0 auto;
+  line-height: 1.6;            /* more space between lines */
+}
+
+.talk-btn {                    /* the "talk to the assistant" button */
+  background: none;
+  margin: 16px auto;
+  max-width: 400px;
+}
+
+
+/* ===== Saved ("Liked") and Swipe pages share one layout ===== */
+
+.liked,
+.swipe {                       /* comma = same rules for both */
+  padding: 24px 16px 100px;    /* 100px bottom so the nav bar doesn't cover content */
+  margin: 0 auto;
+}
+
+.liked {
+  max-width: 640px;            /* wider, holds the 2-column grid */
+}
+
+.swipe {
+  max-width: 480px;            /* narrower, one card at a time */
+  text-align: center;
+}
+
+.liked-title,
+.swipe-title {
+  justify-content: flex-start; /* overrides the global h1 centering, so the title is on the left */
+  margin: 0 0 16px;
+}
+
+
+/* ----- Saved page ----- */
+
+.liked-sub {                   /* "3 recipes saved" line */
+  margin: -12px 0 16px;        /* negative top margin pulls it up under the title */
+}
+
+.liked-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;   /* 2 equal columns */
+  gap: 12px;
+}
+
+.liked-card {
+  background: var(--surface);
+  border-radius: 20px;
+  overflow: hidden;            /* clips the image corners to match the rounded card */
+  cursor: pointer;             /* clicking opens the Cook page */
+}
+
+.liked-img {
+  position: relative;          /* makes this the anchor for the absolutely-positioned trash button */
+  height: 200px;
+  background: linear-gradient(135deg, #ff7a1a, #7a2e00) center / cover;   /* gradient until recipes have images */
+}
+
+.liked-trash {                 /* delete button in the image's top-right corner */
+  position: absolute;          /* placed relative to .liked-img */
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);   /* semi-transparent black so the icon shows on any image */
+  border: none;
+}
+
+.liked-name {                  /* recipe name under the image */
+  margin: 0;
+  padding: 12px;
+  color: var(--text);          /* p is grey by default, so make it white here */
+  font-weight: 600;
+  font-size: 14px;
+  text-align: left;
+}
+
+
+/* ----- Swipe page (Swipe.jsx) ----- */
+
+.swipe-card {
+  height: auto;
+  min-width: 0;
+  box-sizing: border-box;
+  border-radius: 28px;
+  padding: clamp(16px, 4vw, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  justify-content: flex-start;   /* keep all content inside the growing card */
+  text-align: left;
+  background: linear-gradient(160deg, #ff7a1a, #3a1500);   /* the recipe photo goes here later */
+  cursor: grab;
+  user-select: none;           /* don't highlight text while dragging */
+}
+
+.swipe-card h2 {
+  margin: 0;
+  font-size: clamp(22px, 5vw, 30px);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.swipe-card-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+
+.swipe-card a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+
+.swipe-card .swipe-card-position {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.swipe-card p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  color: #eee;                 /* lighter than the default grey so it reads on the gradient */
+}
+
+.swipe-actions {               /* row holding the X and heart buttons */
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.swipe-btn {                   /* round X / heart buttons */
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.swipe-like {                  /* used together with .swipe-btn on the heart */
+  background: var(--accent);   /* orange heart button */
+  color: #1a1210;
+  border: none;
+}
+
+.swipe-card img {
+  pointer-events: none;        /* the image ignores the mouse, so the card gets the drag */
+  user-select: none;
+  -webkit-user-drag: none;     /* stops the browser's ghost-image drag in Chrome/Safari */
+}
+
+.stamp {
+  position: absolute;
+  top: 45%;                    /* middle of the card, over the photo */
+  padding: 4px 14px;
+  border: 4px solid;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 28px;
+  letter-spacing: 2px;
+  background: rgba(0, 0, 0, 0.35);   /* dark backing so it reads on bright photos */
+  pointer-events: none;
+}
+
+.stamp-yes {
+  left: -84px;
+  color: #3ddc84;
+  border-color: #3ddc84;
+  transform: translateY(-50%) rotate(-12deg);
+}
+
+.stamp-no {
+  right: -84px;
+  color: #ff5c5c;
+  border-color: #ff5c5c;
+  transform: translateY(-50%) rotate(12deg);
+}
