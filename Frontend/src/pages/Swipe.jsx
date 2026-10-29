@@ -1,15 +1,32 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { LuX, LuHeart } from "react-icons/lu";
+import { LuX, LuHeart, LuChevronUp, LuChevronDown, LuClock } from "react-icons/lu";
 
 const API = `http://${window.location.hostname}:8000`;
 
-function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
+const STAPLES = ["water", "salt", "pepper", "ice", "sugar", "oil"];   // always counted as "have it", same as the RAG side
+
+// split "3 lemons, 8 cups cold water, or as needed" into chips,
+// keeping fragments like "or as needed" attached to the item before them
+function splitIngredients(value) {
+  const parts = Array.isArray(value) ? value : String(value || "").split(",");
+  const out = [];
+  for (const p of parts.map((s) => s.trim()).filter(Boolean)) {
+  if (out.length && /^(or |plus |to taste|as needed|divided|for |optional|hulled|chopped|diced|sliced|minced|peeled|melted|softened|crushed|mashed|grated|cubed|halved|quartered|drained|rinsed|cut |finely |thinly |roughly |cooked|beaten|packed|sifted|trimmed|seeded|cored)/i.test(p)) {      out[out.length - 1] += ", " + p;
+    } else {
+      out.push(p);
+    }
+  }
+  return out;
+}
+
+function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [browse, setBrowse] = useState([]);
   const [index, setIndex] = useState(0);
-  const [dragX, setDragX] = useState(0);           // how far the card is dragged
+  const [open, setOpen] = useState(false);          // is the details sheet open?
+  const [dragX, setDragX] = useState(0);            // how far the card is dragged
   const [dragging, setDragging] = useState(false);
   const startX = useRef(0);                         // where the drag started
 
@@ -24,7 +41,27 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
   const deck = ragSearch || recipes.length > 0 ? recipes : browse;
 
   const recipe = deck[index];
-  const next = () => setIndex((i) => i + 1);
+  const next = () => { setIndex((i) => i + 1); setOpen(false); };
+
+  const items = splitIngredients(recipe?.ingredients);
+  // "strawberries" -> "strawberry", "eggs" -> "egg", "tomatoes" -> "tomato"
+  const stem = (w) => w.replace(/ies$/, "y").replace(/(es|s)$/, "");
+  const norm = (s) => s.toLowerCase().split(/[^a-z]+/).filter(Boolean).map(stem).join(" ");
+
+  const haveIt = (line) =>
+    STAPLES.some((s) => line.toLowerCase().includes(s)) ||
+    pantry.some((p) => norm(line).includes(norm(p)));
+  const rawSteps = Array.isArray(recipe?.directions)
+    ? recipe.directions
+    : String(recipe?.directions || "").split(/\n|(?<=\.)\s+(?=[A-Z])/);
+
+  const cleaned = rawSteps
+    .map((s) => String(s).trim().replace(/^\d+[.)]\s*/, ""))   // drop numbers already in the text
+    .filter(Boolean);
+
+  // the last item is often a byline ("Chef John"): real steps end with . ! ? or )
+  const last = cleaned[cleaned.length - 1];
+  const steps = last && !/[.!?)]["']?$/.test(last) ? cleaned.slice(0, -1) : cleaned;
 
   async function like() {
     if (saving) return;
@@ -39,8 +76,10 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
     finally { setSaving(false); }
   }
 
+  // ----- dragging the card -----
   function onPointerDown(e) {
-    e.currentTarget.setPointerCapture(e.pointerId); // keep tracking even if the pointer leaves the card
+    if (open) return;                               // sheet is open: no swiping
+    e.currentTarget.setPointerCapture(e.pointerId);
     startX.current = e.clientX;
     setDragging(true);
   }
@@ -61,6 +100,7 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
   return (
     <main className="swipe">
       <h1 className="swipe-title">Swipe</h1>
+      {ragSearch && recipe && <p className="swipe-position">Option {index + 1} of {deck.length}</p>}
       {error && <p role="alert">{error}</p>}
 
       {recipe ? (
@@ -72,26 +112,70 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
             style={{
-              transform: `translateX(${dragX}px) rotate(${dragX / 20}deg)`,   // slides and tilts
-              transition: dragging ? "none" : "transform 0.2s",               // smooth snap-back
-              touchAction: "pan-y",                                           // allow scrolling up/down, but not sideways
+              transform: `translateX(${dragX}px) rotate(${dragX / 20}deg)`,
+              transition: dragging ? "none" : "transform 0.2s",
+              touchAction: "pan-y",
+              cursor: open ? "default" : "grab",      
+              // the photo fills the whole card, with a dark fade at the bottom so the title is readable
+              backgroundImage: recipe.image && /^https?:\/\//i.test(recipe.image)
+                ? `linear-gradient(to top, rgba(0,0,0,0.85) 8%, transparent 55%), url("${recipe.image}")`
+                : undefined,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
             }}
-          > 
+          >
             {dragX > 40 && (
               <span className="stamp stamp-yes" style={{ opacity: Math.min(dragX / 100, 1) }}>YESSIR</span>
             )}
             {dragX < -40 && (
               <span className="stamp stamp-no" style={{ opacity: Math.min(-dragX / 100, 1) }}>HECKS NAH</span>
             )}
-          <h2>{recipe.title}</h2>
+
             {ragSearch ? <>
-              {recipe.image && /^https?:\/\//i.test(recipe.image) && <img src={recipe.image} alt={recipe.title} className="swipe-card-image" />}
-              <p>{recipe.total_time || "Time not listed"}</p>
-              <p>{recipe.ingredients}</p>
-              {/^https?:\/\//i.test(recipe.source_url || "") && <a href={recipe.source_url} target="_blank" rel="noreferrer">Source recipe</a>}
-              <p className="swipe-card-position">Option {index + 1} of {deck.length}</p>
-            </> : <p>{recipe.ingredients.length} ingredients</p>}
+              <h2>{recipe.title}</h2>
+              <p className="swipe-meta"><LuClock /> {recipe.total_time || "Time not listed"}</p>
+            </> : <>
+              <h2>{recipe.title}</h2>
+              <p>{recipe.ingredients.length} ingredients</p>
+            </>}
+
+            <button
+              className="sheet-toggle"
+              onPointerDown={(e) => e.stopPropagation()}     // so tapping it doesn't start a drag
+              onClick={() => setOpen((o) => !o)}
+              aria-label="Details"
+            >
+              {open ? <LuChevronDown size={22} /> : <LuChevronUp size={22} />}
+            </button>
+
+            {open && (
+              <div className="sheet" onPointerDown={(e) => e.stopPropagation()}>
+                <h2>{recipe.title}</h2>
+                  <p className="sheet-meta">
+                    <LuClock /> {recipe.total_time || "Time not listed"}
+                    {recipe.servings && <> · {recipe.servings} servings</>}
+                  </p>                
+                <h3>Ingredients</h3>
+                <div className="sheet-chips">
+                  {items.map((line, i) => (
+                    <span key={i} className={`sheet-chip ${haveIt(line) ? "" : "missing"}`}>{line}</span>
+                  ))}
+                </div>
+                  {steps.length > 0 && (
+                    <>
+                      <h3>Directions</h3>
+                      <ol className="sheet-steps">
+                        {steps.map((s, i) => <li key={i}>{s}</li>)}
+                      </ol>
+                    </>
+                  )}
+                {/^https?:\/\//i.test(recipe.source_url || "") && (
+                  <a className="sheet-source" href={recipe.source_url} target="_blank" rel="noreferrer">Source recipe</a>
+                )}
+              </div>
+            )}
           </div>
+
           <div className="swipe-actions">
             <button className="swipe-btn" onClick={next} disabled={saving} aria-label="Skip"><LuX size={28} /></button>
             <button className="swipe-btn swipe-like" onClick={like} disabled={saving} aria-label="Save"><LuHeart size={28} /></button>

@@ -340,12 +340,37 @@ button:hover {                 /* mouse is over the button */
 }
 
 
-/* ===== Cook page (Cook.jsx) ===== */
+/* ===== Cook page (RagCook.jsx; Cook.jsx just passes data to it) ===== */
 
-.cook-title {
-  font-size: 28px;             /* smaller than the global h1 so long recipe names fit */
+/* Photo at the top with the recipe title on it */
+.cook-hero {
+  position: relative;
+  height: 200px;
+  border-radius: 24px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;       /* title sits at the bottom of the photo */
+  background: linear-gradient(135deg, #ff7a1a, #7a2e00) center / cover;   /* shown when there's no photo */
+  background-size: cover;
+  background-position: center;
 }
 
+.cook-hero::before {           /* dark fade at the bottom so the title is readable */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, #0b0b0b 5%, transparent 70%);
+}
+
+.cook-hero-title {
+  position: relative;          /* sits above the fade */
+  margin: 0;
+  padding: 16px;
+  justify-content: flex-start; /* overrides the global h1 centering */
+  font-size: 30px;
+}
+
+/* Numbered steps list */
 .cook-list {                   /* ingredients / directions list */
   text-align: left;            /* lists read better left-aligned than centered */
   color: var(--muted);
@@ -354,12 +379,58 @@ button:hover {                 /* mouse is over the button */
   line-height: 1.6;            /* more space between lines */
 }
 
-.talk-btn {                    /* the "talk to the assistant" button */
+.cook-steps {
+  list-style-position: inside;   /* numbers sit with the text */
+  text-align: center;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 0;
+}
+/* "Talk to Nosh" button */
+.talk-btn {
   background: none;
   margin: 16px auto;
   max-width: 400px;
+  display: flex;               /* icon and text on one line */
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
+.back-link {
+  align-self: flex-start;      /* stays on the left, not centered */
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;        /* pill shape, same as your buttons */
+  color: var(--text);
+  text-decoration: none;       /* no underline */
+  font-size: 14px;
+}
+
+.back-link:hover {
+  border-color: var(--accent); /* orange outline on hover */
+}
+
+.cook-done {
+  margin: 16px auto;
+  max-width: 480px;
+}
+
+.cook-warning {
+  color: #ffb36b;              /* orange-ish, so warnings stand out */
+}
+
+.cook-actions {
+  display: flex;
+  flex-direction: column;      /* stack them vertically */
+  align-items: center;         /* centered */
+  gap: 12px;                   /* space between the button and the link */
+  margin: 20px 0;
+}
 
 /* ===== Saved ("Liked") and Swipe pages share one layout ===== */
 
@@ -437,85 +508,41 @@ button:hover {                 /* mouse is over the button */
 
 /* ----- Swipe page (Swipe.jsx) ----- */
 
+.swipe-position {
+  margin: -8px 0 12px;         /* pulls it up under the title */
+  font-size: 14px;
+}
+
 .swipe-card {
-  height: auto;
-  min-width: 0;
-  box-sizing: border-box;
+  position: relative;          /* the stamps, chevron and sheet are placed inside it */
+  height: 480px;
   border-radius: 28px;
-  padding: clamp(16px, 4vw, 24px);
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  justify-content: flex-start;   /* keep all content inside the growing card */
+  justify-content: flex-end;   /* text sits at the bottom of the card */
   text-align: left;
-  background: linear-gradient(160deg, #ff7a1a, #3a1500);   /* the recipe photo goes here later */
+  background: linear-gradient(160deg, #ff7a1a, #3a1500);   /* shown when there's no photo */
   cursor: grab;
   user-select: none;           /* don't highlight text while dragging */
 }
 
 .swipe-card h2 {
-  margin: 0;
-  font-size: clamp(22px, 5vw, 30px);
-  line-height: 1.2;
-  overflow-wrap: anywhere;
-}
-
-.swipe-card-image {
-  display: block;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  border-radius: 14px;
-  flex-shrink: 0;
-}
-
-.swipe-card a {
-  color: inherit;
-  text-underline-offset: 3px;
-}
-
-.swipe-card .swipe-card-position {
-  font-size: 13px;
-  opacity: 0.8;
+  margin: 0 0 4px;
 }
 
 .swipe-card p {
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-  color: #eee;                 /* lighter than the default grey so it reads on the gradient */
+  color: #eee;
 }
 
-.swipe-actions {               /* row holding the X and heart buttons */
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-  margin-top: 20px;
-}
-
-.swipe-btn {                   /* round X / heart buttons */
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
+.swipe-meta {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0;
+  gap: 6px;
+  margin: 0;
 }
 
-.swipe-like {                  /* used together with .swipe-btn on the heart */
-  background: var(--accent);   /* orange heart button */
-  color: #1a1210;
-  border: none;
-}
-
-.swipe-card img {
-  pointer-events: none;        /* the image ignores the mouse, so the card gets the drag */
-  user-select: none;
-  -webkit-user-drag: none;     /* stops the browser's ghost-image drag in Chrome/Safari */
-}
-
+/* YESSIR / HECKS NAH stamps that appear while dragging */
 .stamp {
   position: absolute;
   top: 45%;                    /* middle of the card, over the photo */
@@ -525,8 +552,8 @@ button:hover {                 /* mouse is over the button */
   font-weight: 800;
   font-size: 28px;
   letter-spacing: 2px;
-  background: rgba(0, 0, 0, 0.35);   /* dark backing so it reads on bright photos */
-  pointer-events: none;
+  background: rgba(0, 0, 0, 0.35);
+  pointer-events: none;        /* never blocks the drag */
 }
 
 .stamp-yes {
@@ -541,4 +568,274 @@ button:hover {                 /* mouse is over the button */
   color: #ff5c5c;
   border-color: #ff5c5c;
   transform: translateY(-50%) rotate(12deg);
+}
+
+/* details sheet that slides up inside the card */
+.sheet-toggle {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  z-index: 3;                  /* above the sheet */
+}
+
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 75%;
+  overflow-y: auto;            /* scrolls if the content is long */
+  padding: 20px 20px 60px;     /* extra bottom space so the chevron doesn't cover text */
+  background: var(--surface);
+  border-radius: 24px 24px 28px 28px;   /* top corners, then bottom corners (same as the card's 28px) */  z-index: 2;
+  text-align: left;
+  max-height: 70%;
+  overflow-y: auto;
+}
+
+.sheet h2 {
+  margin: 0 0 8px;
+}
+
+.sheet-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sheet-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sheet-chip {
+  padding: 6px 12px;
+  background: var(--bg);
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+.sheet-chip.missing {          /* ingredient you don't have */
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.sheet-source {
+  display: block;
+  margin-top: 16px;            /* space between the chips and the link */
+}
+
+.sheet-steps {
+  margin: 8px 0 0;
+  padding-left: 22px;
+  color: var(--muted, #b8aea5);
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.sheet-steps li {
+  margin-bottom: 8px;
+}
+
+/* X and heart buttons under the card */
+.swipe-actions {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.swipe-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.swipe-like {
+  background: var(--accent);
+  color: #1a1210;
+  border: none;
+}
+/* ===== Inventory page ===== */
+
+.inv-add {
+  display: flex;
+  gap: 8px;
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+.inv-add input:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.inv-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inv-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 8px 16px;
+  background: var(--surface);
+  border: 3px solid transparent;
+  border-radius: 999px;
+}
+
+.inv-item.low {                /* 1 or fewer left */
+  border-color: #e5484d;
+}
+
+.inv-name {
+  flex: 1;                     /* pushes the buttons to the right */
+  text-align: left;
+}
+
+.inv-count {
+  min-width: 28px;
+  text-align: center;
+}
+
+.inv-item button {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.inv-qty {
+  width: 72px;
+  padding: 0 8px;
+  text-align: center;
+  appearance: textfield;       /* removes the up/down arrows in Firefox */
+}
+
+.inv-qty::-webkit-outer-spin-button,
+.inv-qty::-webkit-inner-spin-button {   /* removes the arrows in Chrome / Edge / Safari */
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.inv-unit {
+  appearance: none;            /* hides the browser's arrow, which sits at the far right */
+  width: auto;                 /* only as wide as the text needs */
+  height: 48px;
+  padding: 0 32px 0 16px;      /* top/bottom, right (room for the arrow), left */
+  background-color: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  flex: 0 0 auto;              /* never shrink */
+  min-width: 96px;             /* always enough room for "count" plus the arrow */
+  /* our own small arrow, placed 12px from the right edge */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a39d96' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+}
+.inv-unit:focus {
+  outline: none;
+  border-color: var(--accent); /* orange outline like the text inputs */
+}
+
+.inv-unit option {             /* the open dropdown list */
+  background: var(--surface);
+  color: var(--text);
+}
+
+.inv-count {                   /* update your existing rule: remove min-width, add this */
+  min-width: 56px;             /* room for "500 g" */
+  text-align: center;
+  white-space: nowrap;
+}
+
+.inv-add {
+  margin: 0 auto 16px;         /* adds space below the form */
+}
+
+.inv-edit {
+  width: 90px;                     
+  min-height: 40px;
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: inherit;
+  background: #2a2522;               /* a little lighter than the row so the box shows */
+  border: 1px solid #3a332e;
+  border-radius: 999px;
+  outline: none;
+  flex: 0 0 auto;                    /* don't let flex squeeze it */
+}
+
+
+.inv-unit-edit {
+  appearance: none;                  /* drop the white browser box */
+  -webkit-appearance: none;
+  background-color: #1c1816;         /* dark, like the other pills */
+  color: inherit;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 8px 28px 8px 12px;
+  font-size: 16px;
+  /* small custom arrow */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23f4efe9' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+
+}.inv-unit-edit {
+  appearance: none;                  /* drop the white browser box */
+  -webkit-appearance: none;
+  background-color: #1c1816;         /* dark, like the other pills */
+  color: inherit;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 8px 28px 8px 12px;
+  font-size: 16px;
+  /* small custom arrow */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23f4efe9' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.inv-edit:focus {
+  border-color: var(--accent);          /* orange outline when typing */
+}
+
+/* Chrome / Edge / Safari: hide the up/down arrows */
+.inv-edit::-webkit-outer-spin-button,
+.inv-edit::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.inv-unit-edit option,
+.inv-unit option {
+  background: #1c1816;   /* dark, same as your row color */
+  color: #f4efe9;
 }

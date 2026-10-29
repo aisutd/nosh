@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from database.configurations import user
 from security import get_current_user
+from database.configurations import inventory
+from retrieval.ingredients import normalize_name
 
 router = APIRouter()
 
@@ -25,7 +27,13 @@ async def add_ingredients(ingredient: str, current_user: dict = Depends(get_curr
         raise HTTPException(status_code=400, detail="Ingredient cannot be empty")
     # $addToSet adds the item to this user's array only if it isn't already there
     await user.update_one({"_id": current_user["_id"]}, {"$addToSet": {"ingredients": item}})
+    await inventory.update_one(
+        {"user_id": current_user["_id"], "name": normalize_name(ingredient)},
+        {"$setOnInsert": {"quantity": 1, "unit": "count"}},   # only if it's new
+        upsert=True,
+    )
     return {"ingredients": await get_user_ingredients(current_user["_id"])}
+
 
 # Remove an ingredient
 @router.post("/ingredients/remove")

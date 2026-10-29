@@ -28,4 +28,13 @@ class Token(BaseModel):
 # Request recipes
 class FindRequest(BaseModel):
     ingredients: list[str]
-    
+
+# One inventory item as sent to / from the API
+class InventoryItem(BaseModel):
+    name: str = Field(min_length=1, max_length=100)   
+    quantity: float = Field(ge=0)                 
+    unit: str = "count"  
+
+# What the frontend sends when a recipe is marked as cooked
+class ConsumeRequest(BaseModel):
+    ingredients: list[str]       # the recipe's ingredient lines, e.g. ["4 large eggs", "1 cup flour"]                            

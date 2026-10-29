@@ -14,3 +14,4 @@ client = AsyncMongoClient(
 db = client.recipecluster
 collection = db.recipes
 user = db.user
+inventory = db.inventory

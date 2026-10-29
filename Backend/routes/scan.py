@@ -4,6 +4,8 @@ from fastapi.concurrency import run_in_threadpool
 from security import get_current_user
 from vision.detector import detect_ingredients
 from vision.ocr import detect_text_ingredients
+from database.configurations import inventory
+from retrieval.ingredients import normalize_name
 
 router = APIRouter()
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
@@ -42,4 +44,10 @@ async def scan(image: UploadFile = File(...), current_user: dict = Depends(get_c
         for item in detections["ingredients"]
         if item["name"].replace("_", " ").strip()
     })
+    for name in ingredients:                      # list of names YOLO found
+        await inventory.update_one(
+            {"user_id": current_user["_id"], "name": normalize_name(name)},
+            {"$setOnInsert": {"quantity": 1, "unit": "count"}},   # only set if it's new
+            upsert=True,
+        )
     return {"ingredients": ingredients, "detections": detections}

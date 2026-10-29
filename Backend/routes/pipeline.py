@@ -102,6 +102,15 @@ async def generate_recipe_from_pantry(request: GenerateRecipeRequest):
         ) from exc
     return {"ingredients": ingredients, "result": result}
 
+# minutes -> "1 hr 30 min"
+def pretty_minutes(m):
+    if not m:
+        return None
+    h, mins = divmod(int(m), 60)
+    if h and mins:
+        return f"{h} hr {mins} min"
+    return f"{h} hr" if h else f"{mins} min"
+
 
 @router.post("/recipes/options")
 async def recipe_options(request: GenerateRecipeRequest):
@@ -111,14 +120,21 @@ async def recipe_options(request: GenerateRecipeRequest):
         )
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Recipe search is unavailable. Check Ollama and the recipe index.") from exc
-    cards = [{
-        "id": "rag:" + recipe["id"], "title": recipe["title"],
-        "ingredients": recipe.get("ingredients", ""), "source_url": recipe["url"],
-        "image": recipe.get("metadata", {}).get("img_src"),
-        "total_time": recipe.get("metadata", {}).get("total_time"),
-    } for recipe in result["recipes"]]
-    return {"status": result["status"], "message": result["message"], "recipes": cards}
 
+    cards = []
+    for recipe in result["recipes"]:
+        meta = recipe.get("metadata", {})
+        cards.append({
+            "id": "rag:" + recipe["id"],
+            "title": recipe["title"],
+            "ingredients": recipe.get("ingredients", ""),
+            "directions": recipe.get("directions", ""),           
+            "source_url": recipe["url"],
+            "image": meta.get("img_src"),
+            "total_time": meta.get("total_time") or pretty_minutes(meta.get("total_time_minutes")),
+            "servings": meta.get("servings"),
+        })
+    return {"status": result["status"], "message": result["message"], "recipes": cards}
 
 class SelectedRecipeRequest(GenerateRecipeRequest):
     recipe_id: str = Field(min_length=1)

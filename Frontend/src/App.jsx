@@ -11,6 +11,7 @@ import Swipe from "./pages/Swipe.jsx";
 import { BiFoodMenu, BiX, BiPlus } from "react-icons/bi";
 import { LuCamera } from "react-icons/lu";
 import RagCook from "./pages/RagCook.jsx";
+import Inventory from "./pages/Inventory.jsx";
 import GenerateRecipe from "./components/GenerateRecipe.jsx";
 
 // Backend address. Uses whatever host the page was opened from, so it works on localhost and on the LAN IP
@@ -167,8 +168,14 @@ async function handleRemoving(ingredient) {
       { method: "POST", headers: authHeaders() }
     );
     if (response.ok) setIngredients((await response.json()).ingredients);
+
+    // also remove it from inventory (a 404 just means it wasn't there)
+    fetch(`${API}/inventory/${encodeURIComponent(ingredient)}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
   } else {
-    setIngredients((prev) => prev.filter((i) => i !== ingredient));   // keep everything except this one
+    setIngredients((prev) => prev.filter((i) => i !== ingredient));
   }
 }
 
@@ -296,8 +303,10 @@ async function handleScan(e) {
         />
         <Route path="/profile" element={<Profile user={user} onLogout={handleLogout} />} />
         <Route path="/cook/rag/:id" element={<RagCook />} />
-        <Route path="/cook/:id" element={<Cook />} />          {/* :id = the recipe id from the URL */}
-        <Route path="/swipe" element={<Swipe key={JSON.stringify([recipes, ragSearch])} ragSearch={ragSearch} recipes={recipes} onToggleSave={handleToggleSave} savedIds={savedIds} />} />
+        <Route path="/cook/:id" element={<Cook />} />
+        <Route path="/swipe" element={<Swipe key={JSON.stringify([recipes, ragSearch])} ragSearch={ragSearch} 
+        recipes={recipes} onToggleSave={handleToggleSave} savedIds={savedIds} pantry={ingredients}/>} />
+        <Route path="/inventory" element={<Inventory user={user} />} />
       </Routes>
       {!hideNav && <NavBar user={user} />}                     {/* bottom nav bar, hidden on login/landing */}
     </>
