@@ -46,20 +46,19 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
         return {"status": "no_ingredients", "recipe": None, "recipes": [],
                 "message": "Please provide your available ingredients."}
 
+    from retrieval.availability import assess_availability, availability_rank, recommendation_threshold
+    from retrieval.ingredients import normalize_available
+    min_coverage = recommendation_threshold() if retrieve_only else 1.0
     available = ", ".join(ingredients)
     search_query = f"{user_query.strip()} Ingredients: {available}" if user_query.strip() else available
     if selected_recipe_id is not None:
         from retrieval.nosh_retrieval import get_collection
-        from retrieval.ingredients import normalize_available, matches_available
         collection = collection if collection is not None else get_collection()
         source = collection.get(ids=[selected_recipe_id], include=["documents", "metadatas"])
         if not source["ids"]:
             return {"status": "recipe_not_found", "recipe": None, "recipes": [],
                     "message": "This recipe is no longer available. Search again."}
         metadata = source["metadatas"][0] or {}
-        if not matches_available(metadata.get("ingredients", ""), normalize_available(detected_ings)):
-            return {"status": "ingredients_changed", "recipe": None, "recipes": [],
-                    "message": "Your pantry no longer covers this recipe. Search again."}
         recipes = [{"id": source["ids"][0], "title": metadata.get("recipe_name", "Untitled"),
                     "url": metadata.get("url", ""), "document": source["documents"][0],
                     "metadata": metadata, "ingredients": metadata.get("ingredients", ""),
@@ -67,34 +66,72 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
     else:
         recipes = search_recipes(
             search_query, top_k=top_k, max_time=max_time, collection=collection,
-            available_ingredients=detected_ings,
+            available_ingredients=detected_ings, min_coverage=min_coverage,
         )
     if not recipes:
         return {"status": "no_recipes_found", "recipe": None, "recipes": [],
                 "message": "No matching recipes were found for those constraints."}
+
+    inventory = normalize_available(detected_ings, semantic=False)
+    for recipe in recipes:
+        profile = assess_availability(recipe["metadata"].get("ingredients", ""), inventory,
+                                      context=recipe["document"] or "")
+        recipe["availability"] = profile
+        recipe["substitutions"] = profile["substitutions"] if profile else []
+    if selected_recipe_id is not None and (
+        not recipes[0]["availability"] or not recipes[0]["availability"]["ready_to_cook"]
+    ):
+        return {"status": "ingredients_changed", "recipe": None, "recipes": recipes,
+                "message": "Ingredients are still missing or could not be checked. Update your pantry and search again before cooking."}
+    recipes = [recipe for recipe in recipes if recipe["availability"] is not None
+               and recipe["availability"]["coverage"] >= min_coverage]
+    if not recipes:
+        return {"status": "no_recipes_found", "recipe": None, "recipes": [],
+                "message": "No recipes can be made with your available ingredients and supported substitutions."}
+    recipes.sort(key=lambda recipe: availability_rank(recipe["availability"]))
+    substitutions = recipes[0]["substitutions"]
 
     if retrieve_only:
         return {"status": "ok", "message": "Choose a recipe to cook.", "recipe": None, "recipes": recipes}
 
     # Adapt one source recipe so the response has a clear, traceable source.
     context = format_recipes_for_llm(recipes, top_k=1)
-    answer = generate_recipe(available_ingredients=available, retrieved_context=context,
-                             user_query=user_query, max_time=max_time)
+    from llm.source_adaptation import build_source_adaptation, build_inventory_ingredients
+    answer = build_source_adaptation(recipes[0], substitutions)
+    if answer is None:
+        answer = generate_recipe(available_ingredients=available, retrieved_context=context,
+                                 user_query=user_query, max_time=max_time, substitutions=substitutions)
     if answer in (INSUFFICIENT_CONTEXT, OUT_OF_SCOPE):
         return {"status": "insufficient_context" if answer == INSUFFICIENT_CONTEXT else "out_of_scope",
                 "message": answer, "recipe": None, "recipes": recipes}
     verdict = evaluate_generation(available, context, answer,
-                                  user_query=user_query, max_time=max_time)
+                                  user_query=user_query, max_time=max_time, substitutions=substitutions)
     passed = judge_passed(verdict)
+    if not passed:
+        # One bounded correction attempt; failed drafts are never cooking instructions.
+        corrected = generate_recipe(
+            available_ingredients=available, retrieved_context=context,
+            user_query=user_query, max_time=max_time, substitutions=substitutions,
+            repair_feedback={"previous_output": answer, "validation": verdict},
+        )
+        if corrected not in (INSUFFICIENT_CONTEXT, OUT_OF_SCOPE):
+            verdict = evaluate_generation(available, context, corrected,
+                                          user_query=user_query, max_time=max_time,
+                                          substitutions=substitutions)
+            passed = judge_passed(verdict)
+            if passed:
+                answer = corrected
 
     return {
         "status": "ok" if passed else "failed_validation",
-        "message": "Recipe validated." if passed else "I could not validate a recipe for this request. Try different ingredients or a simpler request.",
+        "message": "Recipe validated." if passed else "The adapted instructions could not be verified. You can review the source ingredients and suggested substitutions below, or try generating again.",
         "recipe": answer if passed else None,
         "source_recipe": recipes[0]["title"],
         "source_url": recipes[0]["url"],
         "similarity": recipes[0]["similarity"],
+        "inventory_ingredients": build_inventory_ingredients(recipes[0], substitutions) if passed else None,
         "judge_verdict": verdict,
+        "substitutions": substitutions if passed else [],
         "recipes": recipes,
     }
 

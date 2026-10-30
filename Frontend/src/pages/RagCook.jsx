@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { LuMic, LuArrowLeft } from "react-icons/lu";
+import RecipeIngredients from "../components/RecipeIngredients";
 const API = `http://${window.location.hostname}:8000`;
 
-export default function RagCook({ savedId = null, title = null, image = null, ingredients = []}) {
+export default function RagCook({ savedId = null, title = null, image = null, ingredients = [], sourceRecipe = null}) {
   const { id } = useParams();
   const { state: context } = useLocation();
   const [result, setResult] = useState(null);
@@ -13,20 +14,20 @@ export default function RagCook({ savedId = null, title = null, image = null, in
   const [talking, setTalking] = useState(false);
   const [cooked, setCooked] = useState(null);       // the consume result, once marked as cooked
   const [cooking, setCooking] = useState(false);
-  const steps = (result?.recipe || "")
-    .split("\n")
-    .map((s) => s.trim())
-    .filter(Boolean)
-    // drop the header lines and the "- none" under Changes
-    .filter((s) => !/^(recipe name|changes|steps)\s*:/i.test(s) && !/^-\s*none/i.test(s))
-    // remove numbers the model added itself ("1. ", "2) ")
+  const steps = (result?.recipe?.split(/^Steps:\s*$/m)[1] || "")
+    .split("\n").map((s) => s.trim()).filter(Boolean)
     .map((s) => s.replace(/^\d+[.)]\s*/, ""));
+  const availability = result?.recipes?.[0]?.availability;
+  const substitutions = result?.recipes?.[0]?.substitutions || result?.substitutions || [];
+  const rawIngredients = sourceRecipe?.ingredients || result?.recipes?.[0]?.ingredients || ingredients;
+  const sourceIngredients = Array.isArray(rawIngredients) ? rawIngredients.join(", ") : rawIngredients;
+  const consumptionIngredients = result?.inventory_ingredients ?? (substitutions.length ? null : ingredients);
 
   useEffect(() => {
     if (!savedId && !context?.ingredients) return;
     const controller = new AbortController();
-    setLoading(true); setResult(null); setError("");
     async function generate() {
+      setLoading(true); setResult(null); setError(""); setCooked(null);
       try {
         const response = await fetch(savedId ? `${API}/recipes/saved-generate/${encodeURIComponent(savedId)}` : `${API}/recipes/generate-selected`, {
           method: "POST", headers: { "Content-Type": "application/json", ...(savedId ? { Authorization: `Bearer ${localStorage.getItem("access_token") || ""}` } : {}) },
@@ -52,6 +53,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
 
   // tell the backend this recipe is done, so it subtracts the ingredients from the inventory
   async function handleCooked() {
+    if (cooking || cooked || !consumptionIngredients?.length) return;
     setCooking(true);
     try {
       const res = await fetch(`${API}/inventory/consume`, {
@@ -60,10 +62,12 @@ export default function RagCook({ savedId = null, title = null, image = null, in
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("access_token") || ""}`,
         },
-        body: JSON.stringify({ ingredients }),
+        body: JSON.stringify({ ingredients: consumptionIngredients }),
       });
       if (res.ok) setCooked(await res.json());
       else setError("Could not update your inventory. Are you logged in?");
+    } catch {
+      setError("Could not update your inventory. Please try again.");
     } finally {
       setCooking(false);
     }
@@ -86,6 +90,18 @@ export default function RagCook({ savedId = null, title = null, image = null, in
       <LuMic /> {talking ? "Stop" : "Talk to Nosh"}
     </button>
 
+    {sourceIngredients && <section aria-label="Source ingredients">
+      <h3>Source ingredients</h3>
+      <p>{sourceIngredients}</p>
+    </section>}
+    {availability && <RecipeIngredients availability={availability} />}
+    {!availability && substitutions.length > 0 && <section aria-label="Pantry substitutions">
+      <h3>Pantry substitutions</h3>
+      <ul className="cook-list">{substitutions.map((swap) => <li key={swap.ingredient}>
+        <strong>{swap.ingredient} → {swap.replacement_ingredients.join(" + ")}</strong>
+        {" "}{swap.instructions} {swap.limitations}
+      </li>)}</ul>
+    </section>}
     {!savedId && !context?.ingredients && <p>Please <Link to="/pantry">search from your pantry</Link> to choose a recipe.</p>}
     {loading && <p role="status">Preparing and validating instructions for your selected recipe…</p>}
     {error && <div role="alert"><p>{error}</p><button onClick={() => setAttempt(attempt + 1)}>Try again</button></div>}
@@ -95,7 +111,11 @@ export default function RagCook({ savedId = null, title = null, image = null, in
       </ol>
 
       <div className="cook-actions">
-        {ingredients.length > 0 && (
+        {substitutions.length > 0 && !consumptionIngredients && <p className="cook-warning">
+          Please update inventory manually for this substitution; its quantities could not be converted reliably.
+          {" "}<Link to="/inventory">View inventory</Link>
+        </p>}
+        {consumptionIngredients?.length > 0 && (
           cooked ? (
             <div className="cook-done">
               <p>Inventory updated.</p>
@@ -113,6 +133,8 @@ export default function RagCook({ savedId = null, title = null, image = null, in
           <a href={result.source_url} target="_blank" rel="noreferrer">Source recipe</a>
         )}
       </div>
-    </> : <p>{result.message}</p>)}
+    </> : <div role="status"><p>{result.message}</p>
+      {result.status === "failed_validation" && <button className="btn-primary" onClick={() => setAttempt(attempt + 1)}>Try instructions again</button>}
+    </div>)}
   </main>;
 }

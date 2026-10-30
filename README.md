@@ -98,5 +98,3 @@ with `llama3.2` and `gemma2` available for generation.
 - Both return `detections`, normalized `ingredients`, and the pipeline `result`.
   `no_recipes_found` is a valid result when no source satisfies ingredient constraints.
 
-The current frontend still calls OCR `/scan` and MongoDB `/recipes/find`.
-These are preserved; frontend integration with the YOLO/RAG routes is pending.

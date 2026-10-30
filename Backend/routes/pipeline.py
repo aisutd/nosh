@@ -128,6 +128,8 @@ async def recipe_options(request: GenerateRecipeRequest):
             "id": "rag:" + recipe["id"],
             "title": recipe["title"],
             "ingredients": recipe.get("ingredients", ""),
+            "substitutions": recipe.get("substitutions", []),
+            "availability": recipe.get("availability"),
             "directions": recipe.get("directions", ""),           
             "source_url": recipe["url"],
             "image": meta.get("img_src"),

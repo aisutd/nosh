@@ -1,0 +1,9 @@
+.recipe-availability { margin-block: 1rem; }
+.recipe-availability-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.recipe-availability-grid > section { min-width: 0; overflow-wrap: anywhere; }
+.recipe-availability-grid ul { padding-left: 1.1rem; }
+.recipe-availability-grid li { margin-block: .5rem; }
+.recipe-availability-grid li p { margin-block: .35rem; }
+@media (max-width: 600px) {
+  .recipe-availability-grid { grid-template-columns: 1fr; gap: .25rem; }
+}
