@@ -4,7 +4,7 @@ import { LuX, LuHeart, LuChevronUp, LuChevronDown, LuClock } from "react-icons/l
 
 const API = `http://${window.location.hostname}:8000`;
 
-const STAPLES = ["water", "salt", "pepper", "ice", "sugar", "oil"];   // always counted as "have it", same as the RAG side
+const STAPLES = ["water", "salt", "pepper", "ice"];   // always counted as "have it", same as the RAG side
 
 // split "3 lemons, 8 cups cold water, or as needed" into chips,
 // keeping fragments like "or as needed" attached to the item before them
@@ -48,9 +48,11 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
   const stem = (w) => w.replace(/ies$/, "y").replace(/(es|s)$/, "");
   const norm = (s) => s.toLowerCase().split(/[^a-z]+/).filter(Boolean).map(stem).join(" ");
 
-  const haveIt = (line) =>
+  const substituted = (line) => recipe?.substitutions?.some((swap) =>
+    (` ${norm(line)} `).includes(` ${norm(swap.ingredient)} `));
+  const haveIt = (line) => !substituted(line) && (
     STAPLES.some((s) => line.toLowerCase().includes(s)) ||
-    pantry.some((p) => norm(line).includes(norm(p)));
+    pantry.some((p) => norm(line).includes(norm(p))));
   const rawSteps = Array.isArray(recipe?.directions)
     ? recipe.directions
     : String(recipe?.directions || "").split(/\n|(?<=\.)\s+(?=[A-Z])/);
@@ -161,6 +163,16 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
                     <span key={i} className={`sheet-chip ${haveIt(line) ? "" : "missing"}`}>{line}</span>
                   ))}
                 </div>
+                {recipe.substitutions?.length > 0 && <>
+                  <h3>Pantry substitutions</h3>
+                  <ul className="sheet-steps">
+                    {recipe.substitutions.map((swap) => <li key={swap.ingredient}>
+                      <strong>{swap.ingredient} → {swap.replacement_ingredients.join(" + ")}</strong>
+                      {" "}{swap.instructions} {swap.limitations}
+                    </li>)}
+                  </ul>
+                  <p>Directions below are from the original recipe. Adapted instructions are prepared when you cook.</p>
+                </>}
                   {steps.length > 0 && (
                     <>
                       <h3>Directions</h3>

@@ -86,7 +86,7 @@ def retrieve_candidate_recipes(
         if (isinstance(max_time, bool) or not isinstance(max_time, (int, float))
                 or not math.isfinite(max_time) or max_time < 0):
             raise ValueError("max_time must be a finite nonnegative number of minutes")
-    available = (normalize_available(available_ingredients)
+    available = (normalize_available(available_ingredients, semantic=False)
                  if available_ingredients is not None else None)
     if collection is None:
         collection = get_collection()
@@ -102,7 +102,7 @@ def retrieve_candidate_recipes(
     )
     if available is not None:
         keep = [i for i, meta in enumerate(results["metadatas"][0])
-                if matches_available((meta or {}).get("ingredients"), available)][:top_n]
+                if matches_available((meta or {}).get("ingredients"), available, context=results["documents"][0][i] or "")][:top_n]
         for key in ("ids", "documents", "metadatas", "distances"):
             results[key] = [[results[key][0][i] for i in keep]]
     return results

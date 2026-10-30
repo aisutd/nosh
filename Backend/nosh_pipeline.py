@@ -57,7 +57,7 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
             return {"status": "recipe_not_found", "recipe": None, "recipes": [],
                     "message": "This recipe is no longer available. Search again."}
         metadata = source["metadatas"][0] or {}
-        if not matches_available(metadata.get("ingredients", ""), normalize_available(detected_ings)):
+        if not matches_available(metadata.get("ingredients", ""), normalize_available(detected_ings, semantic=False), context=source["documents"][0] or ""):
             return {"status": "ingredients_changed", "recipe": None, "recipes": [],
                     "message": "Your pantry no longer covers this recipe. Search again."}
         recipes = [{"id": source["ids"][0], "title": metadata.get("recipe_name", "Untitled"),
@@ -73,28 +73,60 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
         return {"status": "no_recipes_found", "recipe": None, "recipes": [],
                 "message": "No matching recipes were found for those constraints."}
 
+    from retrieval.ingredients import normalize_available
+    from retrieval.substitutions import plan_substitutions
+    inventory = normalize_available(detected_ings, semantic=False)
+    for recipe in recipes:
+        recipe["substitutions"] = plan_substitutions(recipe["metadata"].get("ingredients", ""), inventory, context=recipe["document"] or "")
+    recipes = [recipe for recipe in recipes if recipe["substitutions"] is not None]
+    if not recipes:
+        return {"status": "no_recipes_found", "recipe": None, "recipes": [],
+                "message": "No recipes can be made with your available ingredients and supported substitutions."}
+    # Keep relevance ordering within each group; favor fewer adaptations.
+    recipes.sort(key=lambda recipe: len(recipe["substitutions"]))
+    substitutions = recipes[0]["substitutions"]
+
     if retrieve_only:
         return {"status": "ok", "message": "Choose a recipe to cook.", "recipe": None, "recipes": recipes}
 
     # Adapt one source recipe so the response has a clear, traceable source.
     context = format_recipes_for_llm(recipes, top_k=1)
-    answer = generate_recipe(available_ingredients=available, retrieved_context=context,
-                             user_query=user_query, max_time=max_time)
+    from llm.source_adaptation import build_source_adaptation, build_inventory_ingredients
+    answer = build_source_adaptation(recipes[0], substitutions)
+    if answer is None:
+        answer = generate_recipe(available_ingredients=available, retrieved_context=context,
+                                 user_query=user_query, max_time=max_time, substitutions=substitutions)
     if answer in (INSUFFICIENT_CONTEXT, OUT_OF_SCOPE):
         return {"status": "insufficient_context" if answer == INSUFFICIENT_CONTEXT else "out_of_scope",
                 "message": answer, "recipe": None, "recipes": recipes}
     verdict = evaluate_generation(available, context, answer,
-                                  user_query=user_query, max_time=max_time)
+                                  user_query=user_query, max_time=max_time, substitutions=substitutions)
     passed = judge_passed(verdict)
+    if not passed:
+        # One bounded correction attempt; failed drafts are never cooking instructions.
+        corrected = generate_recipe(
+            available_ingredients=available, retrieved_context=context,
+            user_query=user_query, max_time=max_time, substitutions=substitutions,
+            repair_feedback={"previous_output": answer, "validation": verdict},
+        )
+        if corrected not in (INSUFFICIENT_CONTEXT, OUT_OF_SCOPE):
+            verdict = evaluate_generation(available, context, corrected,
+                                          user_query=user_query, max_time=max_time,
+                                          substitutions=substitutions)
+            passed = judge_passed(verdict)
+            if passed:
+                answer = corrected
 
     return {
         "status": "ok" if passed else "failed_validation",
-        "message": "Recipe validated." if passed else "I could not validate a recipe for this request. Try different ingredients or a simpler request.",
+        "message": "Recipe validated." if passed else "The adapted instructions could not be verified. You can review the source ingredients and suggested substitutions below, or try generating again.",
         "recipe": answer if passed else None,
         "source_recipe": recipes[0]["title"],
         "source_url": recipes[0]["url"],
         "similarity": recipes[0]["similarity"],
+        "inventory_ingredients": build_inventory_ingredients(recipes[0], substitutions) if passed else None,
         "judge_verdict": verdict,
+        "substitutions": substitutions if passed else [],
         "recipes": recipes,
     }
 
