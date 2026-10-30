@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { LuMic, LuArrowLeft } from "react-icons/lu";
+import RecipeIngredients from "../components/RecipeIngredients";
 const API = `http://${window.location.hostname}:8000`;
 
 export default function RagCook({ savedId = null, title = null, image = null, ingredients = [], sourceRecipe = null}) {
@@ -16,6 +17,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
   const steps = (result?.recipe?.split(/^Steps:\s*$/m)[1] || "")
     .split("\n").map((s) => s.trim()).filter(Boolean)
     .map((s) => s.replace(/^\d+[.)]\s*/, ""));
+  const availability = result?.recipes?.[0]?.availability;
   const substitutions = result?.recipes?.[0]?.substitutions || result?.substitutions || [];
   const rawIngredients = sourceRecipe?.ingredients || result?.recipes?.[0]?.ingredients || ingredients;
   const sourceIngredients = Array.isArray(rawIngredients) ? rawIngredients.join(", ") : rawIngredients;
@@ -92,7 +94,8 @@ export default function RagCook({ savedId = null, title = null, image = null, in
       <h3>Source ingredients</h3>
       <p>{sourceIngredients}</p>
     </section>}
-    {substitutions.length > 0 && <section aria-label="Pantry substitutions">
+    {availability && <RecipeIngredients availability={availability} />}
+    {!availability && substitutions.length > 0 && <section aria-label="Pantry substitutions">
       <h3>Pantry substitutions</h3>
       <ul className="cook-list">{substitutions.map((swap) => <li key={swap.ingredient}>
         <strong>{swap.ingredient} → {swap.replacement_ingredients.join(" + ")}</strong>

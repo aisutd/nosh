@@ -176,6 +176,11 @@ def required_ingredients(raw):
     return names or None
 
 
-def matches_available(raw, available, *, context=""):
-    from retrieval.substitutions import plan_substitutions
-    return plan_substitutions(raw, available, context=context) is not None
+def matches_available(raw, available, *, context="", min_coverage=1.0):
+    from retrieval.availability import assess_availability, validate_threshold
+    validate_threshold(min_coverage)
+    if min_coverage == 1.0:
+        from retrieval.substitutions import plan_substitutions
+        return plan_substitutions(raw, available, context=context) is not None
+    profile = assess_availability(raw, available, context=context)
+    return profile is not None and profile["coverage"] >= min_coverage

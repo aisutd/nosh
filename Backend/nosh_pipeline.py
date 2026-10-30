@@ -46,20 +46,19 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
         return {"status": "no_ingredients", "recipe": None, "recipes": [],
                 "message": "Please provide your available ingredients."}
 
+    from retrieval.availability import assess_availability, availability_rank, recommendation_threshold
+    from retrieval.ingredients import normalize_available
+    min_coverage = recommendation_threshold() if retrieve_only else 1.0
     available = ", ".join(ingredients)
     search_query = f"{user_query.strip()} Ingredients: {available}" if user_query.strip() else available
     if selected_recipe_id is not None:
         from retrieval.nosh_retrieval import get_collection
-        from retrieval.ingredients import normalize_available, matches_available
         collection = collection if collection is not None else get_collection()
         source = collection.get(ids=[selected_recipe_id], include=["documents", "metadatas"])
         if not source["ids"]:
             return {"status": "recipe_not_found", "recipe": None, "recipes": [],
                     "message": "This recipe is no longer available. Search again."}
         metadata = source["metadatas"][0] or {}
-        if not matches_available(metadata.get("ingredients", ""), normalize_available(detected_ings, semantic=False), context=source["documents"][0] or ""):
-            return {"status": "ingredients_changed", "recipe": None, "recipes": [],
-                    "message": "Your pantry no longer covers this recipe. Search again."}
         recipes = [{"id": source["ids"][0], "title": metadata.get("recipe_name", "Untitled"),
                     "url": metadata.get("url", ""), "document": source["documents"][0],
                     "metadata": metadata, "ingredients": metadata.get("ingredients", ""),
@@ -67,23 +66,29 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
     else:
         recipes = search_recipes(
             search_query, top_k=top_k, max_time=max_time, collection=collection,
-            available_ingredients=detected_ings,
+            available_ingredients=detected_ings, min_coverage=min_coverage,
         )
     if not recipes:
         return {"status": "no_recipes_found", "recipe": None, "recipes": [],
                 "message": "No matching recipes were found for those constraints."}
 
-    from retrieval.ingredients import normalize_available
-    from retrieval.substitutions import plan_substitutions
     inventory = normalize_available(detected_ings, semantic=False)
     for recipe in recipes:
-        recipe["substitutions"] = plan_substitutions(recipe["metadata"].get("ingredients", ""), inventory, context=recipe["document"] or "")
-    recipes = [recipe for recipe in recipes if recipe["substitutions"] is not None]
+        profile = assess_availability(recipe["metadata"].get("ingredients", ""), inventory,
+                                      context=recipe["document"] or "")
+        recipe["availability"] = profile
+        recipe["substitutions"] = profile["substitutions"] if profile else []
+    if selected_recipe_id is not None and (
+        not recipes[0]["availability"] or not recipes[0]["availability"]["ready_to_cook"]
+    ):
+        return {"status": "ingredients_changed", "recipe": None, "recipes": recipes,
+                "message": "Ingredients are still missing or could not be checked. Update your pantry and search again before cooking."}
+    recipes = [recipe for recipe in recipes if recipe["availability"] is not None
+               and recipe["availability"]["coverage"] >= min_coverage]
     if not recipes:
         return {"status": "no_recipes_found", "recipe": None, "recipes": [],
                 "message": "No recipes can be made with your available ingredients and supported substitutions."}
-    # Keep relevance ordering within each group; favor fewer adaptations.
-    recipes.sort(key=lambda recipe: len(recipe["substitutions"]))
+    recipes.sort(key=lambda recipe: availability_rank(recipe["availability"]))
     substitutions = recipes[0]["substitutions"]
 
     if retrieve_only:

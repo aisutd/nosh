@@ -20,6 +20,7 @@ from retrieval.nosh_retrieval import (
     normalize_ingredients,
 )
 from retrieval.ingredients import normalize_available, matches_available
+from retrieval.availability import recipe_availability_rank
 
 # Reciprocal Rank Fusion constant — higher k reduces the impact of top ranks.
 _RRF_K = 60
@@ -54,7 +55,7 @@ def _build_bm25(cache_key: str, collection):
     return _bm25_cache[cache_key]
 
 
-def _bm25_search(query: str, collection, top_n: int, available=None, max_time=None):
+def _bm25_search(query: str, collection, top_n: int, available=None, max_time=None, min_coverage=1.0):
     """Run BM25 keyword search and return ranked results filtered to constraints."""
     # Use the collection count as a stable cache key proxy
     cache_key = f"{collection.name}:{collection.count()}"
@@ -80,7 +81,7 @@ def _bm25_search(query: str, collection, top_n: int, available=None, max_time=No
             if doc_time is None or doc_time > max_time:
                 continue
         if available is not None:
-            if not matches_available(metadata.get("ingredients", ""), available, context=document or ""):
+            if not matches_available(metadata.get("ingredients", ""), available, context=document or "", min_coverage=min_coverage):
                 continue
         results.append({
             "id": rid,
@@ -88,10 +89,12 @@ def _bm25_search(query: str, collection, top_n: int, available=None, max_time=No
             "metadata": metadata,
             "bm25_score": float(score),
         })
-        if len(results) >= top_n:
+        if available is None and len(results) >= top_n:
             break
 
-    return results
+    if available is not None:
+        results.sort(key=lambda recipe: recipe_availability_rank(recipe, available))
+    return results[:top_n]
 
 
 def _reciprocal_rank_fusion(
@@ -132,6 +135,7 @@ def hybrid_search_recipes(
     max_time=None,
     collection=None,
     available_ingredients=None,
+    min_coverage=1.0,
     db_path=DEFAULT_DB_PATH,
     collection_name: str = COLLECTION_NAME,
     bm25_candidates: int = 50,
@@ -172,7 +176,7 @@ def hybrid_search_recipes(
         top_k=max(top_k * 4, bm25_candidates),
         max_time=max_time,
         collection=collection,
-        available_ingredients=available_ingredients,
+        available_ingredients=available_ingredients, min_coverage=min_coverage,
     )
     vector_results = [
         {"id": r["id"], "document": r["document"], "metadata": r["metadata"],
@@ -183,11 +187,13 @@ def hybrid_search_recipes(
     # --- BM25 search (keyword) ---
     bm25_results = _bm25_search(
         query, collection, top_n=bm25_candidates,
-        available=available, max_time=max_time,
+        available=available, max_time=max_time, min_coverage=min_coverage,
     )
 
     # --- Reciprocal Rank Fusion ---
     merged = _reciprocal_rank_fusion(vector_results, bm25_results)
+    if available is not None:
+        merged.sort(key=lambda recipe: recipe_availability_rank(recipe, available))
 
     # --- Format output to match search_recipes() structure ---
     output = []

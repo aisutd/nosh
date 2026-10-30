@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import RecipeIngredients from "../components/RecipeIngredients";
 import { LuX, LuHeart, LuChevronUp, LuChevronDown, LuClock } from "react-icons/lu";
 
 const API = `http://${window.location.hostname}:8000`;
@@ -157,6 +158,12 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
                     <LuClock /> {recipe.total_time || "Time not listed"}
                     {recipe.servings && <> · {recipe.servings} servings</>}
                   </p>                
+                {recipe.availability ? <>
+                  <RecipeIngredients availability={recipe.availability} />
+                  <h3>Source ingredients</h3>
+                  <p>{items.join(", ")}</p>
+                  <p>Directions below are from the original recipe. Adapted instructions are validated when you cook.</p>
+                </> : <>
                 <h3>Ingredients</h3>
                 <div className="sheet-chips">
                   {items.map((line, i) => (
@@ -172,6 +179,7 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
                     </li>)}
                   </ul>
                   <p>Directions below are from the original recipe. Adapted instructions are prepared when you cook.</p>
+                </>}
                 </>}
                   {steps.length > 0 && (
                     <>
