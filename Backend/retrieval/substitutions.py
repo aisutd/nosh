@@ -58,5 +58,6 @@ def plan_substitutions(raw, available, *, context=""):
                      "replacement_ingredients": [c["ingredient"] for c in option["components"]],
                      "instructions": option["instructions"], "limitations": option["limitations"],
                      "source_url": option["source_url"], "catalog_id": option["id"],
-                     "source_amount": option["source_amount"], "components": option["components"]})
+                     "source_amount": option["source_amount"], "components": option["components"],
+                     "preparation_template": option.get("preparation_template")})
     return plan

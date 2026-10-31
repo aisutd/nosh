@@ -4,7 +4,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import patch, MagicMock
 
-from retrieval.ingredients import normalize_available, matches_available
+from retrieval.ingredients import normalize_available, matches_available, normalize_name
 from retrieval.substitutions import plan_substitutions
 from llm import nosh_generation as llm
 import nosh_pipeline as pipeline
@@ -86,7 +86,7 @@ class SubstitutionTests(unittest.TestCase):
     def test_honey_substitute_requires_granulated_sugar(self):
         for sugar in ("powdered sugar", "icing sugar", "confectioners' sugar", "confectioners’ sugar", "brown sugar", "light brown sugar", "dark brown sugar"):
             with self.subTest(sugar=sugar):
-                self.assertIsNone(plan_substitutions("honey", inventory(sugar)))
+                self.assertIsNone(plan_substitutions("honey", inventory(sugar) - {"sugar"}))
         for sugar in ("sugar", "white sugar", "granulated sugar"):
             with self.subTest(sugar=sugar):
                 self.assertIsNotNone(plan_substitutions("honey", inventory(sugar)))
@@ -94,7 +94,7 @@ class SubstitutionTests(unittest.TestCase):
     def test_sugar_varieties_remain_distinct_for_direct_matching(self):
         for requested, pantry in (("powdered sugar", "sugar"), ("sugar", "powdered sugar"), ("brown sugar", "sugar"), ("sugar", "brown sugar")):
             with self.subTest(requested=requested, pantry=pantry):
-                self.assertFalse(matches_available(requested, inventory(pantry)))
+                self.assertFalse(matches_available(requested, {normalize_name(pantry)}))
         self.assertTrue(matches_available("1 cup confectioners' sugar", inventory("icing sugar")))
         self.assertTrue(matches_available("1 cup packed light brown sugar", inventory("brown sugar")))
 

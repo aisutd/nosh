@@ -21,7 +21,8 @@
       "limitations": "Baking texture and tang may change.",
       "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
       "requires_context": "",
-      "excludes_context": ""
+      "excludes_context": "",
+      "preparation_template": "Measure {component_0} for the replacement."
     },
     {
       "id": "buttermilk-2",
@@ -46,7 +47,8 @@
       "limitations": "Use the soured mixture; not a cultured buttermilk equivalent.",
       "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
       "requires_context": "",
-      "excludes_context": ""
+      "excludes_context": "",
+      "preparation_template": "Combine {component_0} with {component_1}; rest 5 minutes. Use the entire prepared mixture for the replacement."
     },
     {
       "id": "buttermilk-3",
@@ -71,7 +73,8 @@
       "limitations": "Use plain food vinegar, not a sweetened or strongly flavored variety.",
       "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
       "requires_context": "",
-      "excludes_context": ""
+      "excludes_context": "",
+      "preparation_template": "Combine {component_0} with {component_1}; rest 5 minutes. Use the entire prepared mixture for the replacement."
     },
     {
       "id": "baking-powder-1",
@@ -376,7 +379,8 @@
       "limitations": "Changes flavor; dissolve the sugar. Not suitable when honey flavor is essential.",
       "source_url": "https://extension.colostate.edu/resource/ingredient-substitutions/",
       "requires_context": "",
-      "excludes_context": ""
+      "excludes_context": "",
+      "preparation_template": "Mix {component_0} with {component_1} to prepare the replacement. Stir until the sugar dissolves when incorporating this mixture into the recipe."
     },
     {
       "id": "allspice-1",

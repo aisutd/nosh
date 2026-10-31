@@ -100,6 +100,7 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
     context = format_recipes_for_llm(recipes, top_k=1)
     from llm.source_adaptation import build_source_adaptation, build_inventory_ingredients
     answer = build_source_adaptation(recipes[0], substitutions)
+    source_preserving = answer is not None
     if answer is None:
         answer = generate_recipe(available_ingredients=available, retrieved_context=context,
                                  user_query=user_query, max_time=max_time, substitutions=substitutions)
@@ -107,7 +108,8 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
         return {"status": "insufficient_context" if answer == INSUFFICIENT_CONTEXT else "out_of_scope",
                 "message": answer, "recipe": None, "recipes": recipes}
     verdict = evaluate_generation(available, context, answer,
-                                  user_query=user_query, max_time=max_time, substitutions=substitutions)
+                                  user_query=user_query, max_time=max_time, substitutions=substitutions,
+                                  source_preserving=source_preserving)
     passed = judge_passed(verdict)
     if not passed:
         # One bounded correction attempt; failed drafts are never cooking instructions.

@@ -15,7 +15,7 @@ def inventory(raw):
 
 
 # Ten distinct requirements; these fixtures never enter application data.
-INGREDIENTS = "flour, sugar, egg, butter, milk, apple, cinnamon, vanilla, oat, walnut"
+INGREDIENTS = "flour, lentil, egg, chickpea, milk, apple, cinnamon, vanilla, oat, walnut"
 PANTRY = INGREDIENTS.rsplit(",", 1)[0]
 
 
