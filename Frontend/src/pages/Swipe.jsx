@@ -54,9 +54,13 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
   const stem = (w) => w.replace(/ies$/, "y").replace(/(es|s)$/, "");
   const norm = (s) => s.toLowerCase().split(/[^a-z]+/).filter(Boolean).map(stem).join(" ");
 
-  const haveIt = (line) =>
+  // true if the recipe swaps this ingredient for something else
+  const substituted = (line) => recipe?.substitutions?.some((swap) =>
+    (` ${norm(line)} `).includes(` ${norm(swap.ingredient)} `));
+
+  const haveIt = (line) => !substituted(line) && (
     staples.some((s) => line.toLowerCase().includes(s)) ||
-    pantry.some((p) => line.toLowerCase().includes(p.toLowerCase()));
+    pantry.some((p) => norm(line).includes(norm(p))));
   const rawSteps = Array.isArray(recipe?.directions)
     ? recipe.directions
     : String(recipe?.directions || "").split(/\n|(?<=\.)\s+(?=[A-Z])/);
