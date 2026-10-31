@@ -28,12 +28,14 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
     ):
         raise ValueError("detected_ings must be ingredient strings")
     ingredients = normalize_ingredients(detected_ings)
-    if not ingredients and not user_query.strip():
+    if not ingredients and not user_query.strip() and selected_recipe_id is None:
         return {"status": "no_ingredients", "recipe": None, "recipes": [],
                 "message": "Please provide your available ingredients."}
 
     # Classify before Chroma: an unrelated question must not retrieve random recipes.
-    scope = classify_request(ingredients, user_query)
+    # An empty pantry can still be compared with an explicitly selected source.
+    scope = ({"status": "in_scope"} if selected_recipe_id is not None and not ingredients and not user_query.strip()
+             else classify_request(ingredients, user_query))
     if scope["status"] != "in_scope":
         message = {
             "out_of_scope": OUT_OF_SCOPE,
@@ -42,7 +44,7 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
             "guardrail_error": "Could not validate request scope. Please try again.",
         }[scope["status"]]
         return {"status": scope["status"], "message": message, "recipe": None, "recipes": []}
-    if not ingredients:
+    if not ingredients and selected_recipe_id is None:
         return {"status": "no_ingredients", "recipe": None, "recipes": [],
                 "message": "Please provide your available ingredients."}
 
