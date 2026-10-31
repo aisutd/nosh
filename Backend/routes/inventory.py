@@ -4,6 +4,7 @@ from security import get_current_user
 from pymongo import ReturnDocument
 from database.schemas import InventoryItem, ConsumeRequest
 from retrieval.ingredients import normalize_name, required_ingredients, PANTRY
+from staples import STAPLES, is_staple
 import re
 import unicodedata
 
@@ -42,6 +43,11 @@ async def delete_item(name: str, current_user: dict = Depends(get_current_user))
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Item not found")
     return {"deleted": name}
+
+# GET /staples: the shared staples list
+@router.get("/staples")
+async def get_staples():
+    return {"staples": STAPLES}
 
 LOW_STOCK = 1                    # warn when this much or less is left
 
@@ -99,7 +105,8 @@ async def consume(req: ConsumeRequest, current_user: dict = Depends(get_current_
 
     for line in req.ingredients:
         amount, unit = parse_amount(line)
-        for name in sorted((required_ingredients(line) or set()) - PANTRY):
+        names = [n for n in sorted(required_ingredients(line) or set()) if n not in PANTRY and not is_staple(n)]
+        for name in names:
             doc = await inventory.find_one({"user_id": current_user["_id"], "name": name})
             if doc is None:
                 warnings.append(f"{name} isn't in your inventory")
@@ -127,12 +134,15 @@ async def consume(req: ConsumeRequest, current_user: dict = Depends(get_current_
                 {"$inc": {"quantity": -deduct}},
                 return_document=ReturnDocument.AFTER,
             )
-            if doc["quantity"] <= 0:
+            qty = round(doc["quantity"], 2)                        # no 1.3400000001
+            if qty <= 0:
                 await inventory.update_one({"_id": doc["_id"]}, {"$set": {"quantity": 0}})   # never go negative
                 doc["quantity"] = 0
                 warnings.append(f"You've run out of {name}")
-            elif doc["quantity"] <= LOW_STOCK:
-                warnings.append(f"Only {doc['quantity']:g} {name} left")
+            elif doc["unit"] == "count":
+                warnings.append(f"You have {qty:g} {name} left")                       # "You have 2 lemon left"
+            else:
+                warnings.append(f"You have {qty:g} {doc['unit']} of {name} left")      # "You have 1.5 cup of milk left"
             updated.append(item_out(doc))
 
     return {"updated": updated, "warnings": warnings}
