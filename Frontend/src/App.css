@@ -686,6 +686,7 @@ button:hover {                 /* mouse is over the button */
 
 .inv-list {
   list-style: none;
+  width: 100%;
   padding: 0;
   margin: 0 auto;
   max-width: 460px;
@@ -704,8 +705,14 @@ button:hover {                 /* mouse is over the button */
   border-radius: 999px;
 }
 
-.inv-item.low {                /* 1 or fewer left */
-  border-color: #e5484d;
+/* low = normal dark background, thin orange border */
+.inv-item.low {
+  border: 1px solid rgba(255, 122, 26, 0.55);
+}
+
+/* out = normal dark background, thin red border */
+.inv-item.out {
+  border: 1px solid rgba(229, 72, 77, 0.6);
 }
 
 .inv-name {
@@ -838,4 +845,121 @@ button:hover {                 /* mouse is over the button */
 .inv-unit option {
   background: #1c1816;   /* dark, same as your row color */
   color: #f4efe9;
+}
+
+/* three summary cards across the top */
+.inv-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 12px 0 18px;
+}
+
+.inv-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 8px;
+  border-radius: 18px;
+  background: #1c1816;
+  border: 2px solid transparent;
+}
+
+.inv-stat strong {
+  font-size: 26px;
+}
+
+.inv-stat span {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+/* Low = light orange fill, no border */
+.inv-stat.low {
+  background: rgba(255, 122, 26, 0.18);
+  border-color: transparent;
+}
+
+/* Out = light red fill */
+.inv-stat.out {
+  background: rgba(229, 72, 77, 0.22);
+  border-color: transparent;
+}
+
+/* All / Low / Out tabs */
+.inv-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+/* red warning box at the top */
+.inv-alert {
+  margin: 12px 0;
+  padding: 12px 16px;
+  border: 2px solid #e5484d;
+  border-radius: 18px;
+  background: #2a1214;
+  font-size: 15px;
+}
+
+.inv-alert p {
+  margin: 4px 0;
+}
+
+.inv-alert strong {
+  color: #ff8a8f;
+}
+
+/* search box and sort dropdown */
+.inv-tools {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.inv-search {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 999px;
+  background: #1c1816;
+  color: inherit;
+  font-size: 16px;                 /* 16px stops iPhones zooming in */
+}
+
+.inv-sort {
+  padding: 10px 12px;
+  border: none;
+  border-radius: 999px;
+  background: #1c1816;
+  color: inherit;
+  font-size: 16px;
+}
+
+/* back arrow, top left */
+.inv-back {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #1c1816;
+  color: inherit;
+}
+
+.inv-stat {
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* the card that's currently filtering the list */
+.inv-stat.active {
+  box-shadow: 0 0 0 2px var(--accent);       /* orange ring */
 }

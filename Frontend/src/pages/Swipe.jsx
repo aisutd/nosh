@@ -4,8 +4,6 @@ import { LuX, LuHeart, LuChevronUp, LuChevronDown, LuClock } from "react-icons/l
 
 const API = `http://${window.location.hostname}:8000`;
 
-const STAPLES = ["water", "salt", "pepper", "ice", "sugar", "oil"];   // always counted as "have it", same as the RAG side
-
 // split "3 lemons, 8 cups cold water, or as needed" into chips,
 // keeping fragments like "or as needed" attached to the item before them
 function splitIngredients(value) {
@@ -29,6 +27,7 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
   const [dragX, setDragX] = useState(0);            // how far the card is dragged
   const [dragging, setDragging] = useState(false);
   const startX = useRef(0);                         // where the drag started
+  const [staples, setStaples] = useState([]);        
 
   useEffect(() => {
     if (ragSearch || recipes.length > 0) return;
@@ -37,6 +36,13 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
       .then(setBrowse)
       .catch(() => setBrowse([]));
   }, [recipes, ragSearch]);
+
+  useEffect(() => {
+    fetch(`${API}/staples`)
+      .then((res) => res.json())
+      .then((data) => setStaples(data.staples))
+      .catch(() => setStaples([]));
+  }, []);
 
   const deck = ragSearch || recipes.length > 0 ? recipes : browse;
 
@@ -49,8 +55,8 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
   const norm = (s) => s.toLowerCase().split(/[^a-z]+/).filter(Boolean).map(stem).join(" ");
 
   const haveIt = (line) =>
-    STAPLES.some((s) => line.toLowerCase().includes(s)) ||
-    pantry.some((p) => norm(line).includes(norm(p)));
+    staples.some((s) => line.toLowerCase().includes(s)) ||
+    pantry.some((p) => line.toLowerCase().includes(p.toLowerCase()));
   const rawSteps = Array.isArray(recipe?.directions)
     ? recipe.directions
     : String(recipe?.directions || "").split(/\n|(?<=\.)\s+(?=[A-Z])/);

@@ -1,8 +1,10 @@
 """Conservative ingredient-presence matching; not quantities or dietary safety."""
 import re
 import unicodedata
+from staples import STAPLES
 
-PANTRY = {"water", "salt", "black pepper", "pepper", "ice"}
+
+PANTRY = set(STAPLES)
 
 ALIASES = {
     # Temperature does not change the pantry requirement for water.
