@@ -1,75 +1,102 @@
 # NOSH
+## Description
+NOSH is an AI-powered student cooking assistant that turns ingredients from a refrigerator photo into practical, budget-friendly meals. It combines ingredient detection, recipe retrieval, and a hands-free voice interface for substitutions, timers, and step-by-step cooking guidance.
+Planned Technologies
 
-NOSH finds recipes from your available ingredients using ChromaDB, generates a
-recipe with local Ollama models, and lets you ask follow-up cooking questions.
-The current pipeline accepts typed ingredients. Voice is a separate prototype.
+* Python and JavaScript/TypeScript
+* React and Tailwind CSS
+* FastAPI or Flask with MongoDB and Redis
+* YOLOv8, OpenCV, LangChain, RAG, vector search, speech-to-text, and text-to-speech
 
-## Setup
+Docker Setup
+Make sure Docker Desktop is installed and running.
 
-Tested with Python 3.13. Run these commands from the project folder:
+```
+docker compose up -d
+docker compose down
+docker compose ps
+```
+
+This is a generic starter configuration. The team can add project-specific dependencies and startup commands later.
+
+---
+
+## Project folders
+- `Backend/`  FastAPI + MongoDB API
+- `Frontend/` React web app (Vite)
+- `Mobile/`   Expo app (shows the web app + native camera)
+- `Docker Folder/` Docker files (not yet updated for this layout; run `docker compose` from inside this folder)
+
+## Run the backend
+```
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r Backend\requirements.txt
+cd Backend
+copy .env.example .env     # then fill in your values
+uvicorn main:app --reload --host 0.0.0.0
+python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000 # for mobile
+```
+API docs: http://localhost:8000/docs
+
+### Secret key
+`SECRET_KEY` signs the login tokens. Generate your own with:
+```
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+Copy the output into `Backend/.env` as `SECRET_KEY=...`.
+`MONGO_URI` must come from the team (ask privately, it contains the database password).
+
+## Run the web app
+```
+cd Frontend
+npm install
+npm run dev -- --host
+```
+Open http://localhost:5173
+
+## Run the phone app
+```
+cd Mobile
+npm install
+npx expo start
+```
+Scan the QR code with Expo Go (SDK 57). Phone and laptop must be on the same Wi-Fi.
+Edit the IP address in `Mobile/App.js` and the CORS list in `Backend/main.py` to match your laptop (`ipconfig`).
+
+## Adding an endpoint
+1. Make a file in `Backend/routes/` with `router = APIRouter()` and a function like `@router.post("/name")`.
+2. Register it in `Backend/main.py`: `app.include_router(yourfile.router)`.
+3. Test it at http://localhost:8000/docs
+
+`/scan` takes an image (field name `image`) and returns `{"ingredients": [...]}`. It needs a login token.
+
+## Rules
+- Never commit `.env`.
+
+## YOLO and hybrid RAG integration (macOS/Linux)
+
+The image and JSON recipe endpoints live in `Backend/routes/pipeline.py`.
+From the repository root, use the existing virtual environment:
 
 ```bash
-python3.13 -m venv .venv
 source .venv/bin/activate
-python -m pip install -r requirements.txt
-python -m rag.build_embeddings
+python -m pip install -r Backend/requirements.txt
+cd Backend
+python -m rag.build_embeddings  # first setup only
+python -m uvicorn main:app --reload --port 8000
 ```
 
-The recipe CSV is included. Build the local index once; rebuild it when the data
-changes. The first build downloads the embedding model.
+Put your private configuration in `Backend/.env` (see `.env.example`), including
+`MONGO_URI` and a private `SECRET_KEY` for authentication. Put the trained weights
+in `Backend/models/best.pt`. Neither file belongs in Git. Ollama must be running
+with `llama3.2` and `gemma2` available for generation.
 
-For recipe generation and chat, install and start Ollama, then download the models:
+- `POST /recipes/from-image`: multipart `image` and optional `user_query`.
+- `POST /recipes/from-detections`: JSON `detections.ingredients` entries with
+  `name` and `confidence`, plus optional `user_query`.
+- Both return `detections`, normalized `ingredients`, and the pipeline `result`.
+  `no_recipes_found` is a valid result when no source satisfies ingredient constraints.
 
-```bash
-ollama pull llama3.2
-ollama pull gemma2
-```
-
-## Run
-
-Generate a recipe and ask follow-up questions (`quit` to exit):
-
-```bash
-python nosh_pipeline.py "lemon, sugar" --query "Make lemonade" --chat
-```
-
-Leave out `--chat` for a single recipe. Add `--debug` to see retrieved titles and
-the judge's decision. Use `--chat --show-drafts` to inspect chat drafts and judgments.
-
-Search recipes without Ollama:
-
-```bash
-python -m retrieval.nosh_retrieval "coconut rice" --ingredients "basmati rice, coconut milk"
-```
-
-The main pipeline always filters by available ingredients. Direct search only
-applies ingredient filtering when `--ingredients` is supplied.
-
-## Test
-
-```bash
-python -m unittest discover -s tests -v
-python -m evaluation.evaluate_retrieval
-```
-
-Tests use real Chroma retrieval with mocked model responses. To evaluate the live
-Ollama models:
-
-```bash
-python -m evaluation.evaluate_guardrails
-python -m evaluation.evaluate_chat
-```
-
-Evaluation reports are saved in `evaluation/results/`. They are small development
-benchmarks, not guarantees of accuracy; older reports may reflect earlier code.
-
-## Current limits
-
-- Ingredient filtering checks presence, not quantities. Water, salt, and pepper
-  are assumed available. Some ingredient descriptions may exclude valid matches.
-- `--max-time` filters total preparation and cooking time.
-- Dietary and budget filtering are not implemented.
-- Chat explains techniques and offers optional substitution ideas; the saved recipe stays unchanged.
-
-See the [retrieval and chat guide](docs/retrieval.md) or the
-[voice prototype guide](docs/voice-agent.md) for more detail.
+The current frontend still calls OCR `/scan` and MongoDB `/recipes/find`.
+These are preserved; frontend integration with the YOLO/RAG routes is pending.
