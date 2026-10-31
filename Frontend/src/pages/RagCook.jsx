@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { LuMic, LuArrowLeft } from "react-icons/lu";
 import RecipeIngredients from "../components/RecipeIngredients";
+import "./RagCook.css";
 const API = `http://${window.location.hostname}:8000`;
 
 export default function RagCook({ savedId = null, title = null, image = null, ingredients = [], sourceRecipe = null}) {
@@ -19,7 +20,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
     .map((s) => s.replace(/^\d+[.)]\s*/, ""));
   const availability = result?.recipes?.[0]?.availability;
   const substitutions = result?.recipes?.[0]?.substitutions || result?.substitutions || [];
-  const rawIngredients = sourceRecipe?.ingredients || result?.recipes?.[0]?.ingredients || ingredients;
+  const rawIngredients = result?.recipes?.[0]?.ingredients || sourceRecipe?.ingredients || ingredients;
   const sourceIngredients = Array.isArray(rawIngredients) ? rawIngredients.join(", ") : rawIngredients;
   const consumptionIngredients = result?.inventory_ingredients ?? (substitutions.length ? null : ingredients);
 
@@ -103,7 +104,10 @@ export default function RagCook({ savedId = null, title = null, image = null, in
       </li>)}</ul>
     </section>}
     {!savedId && !context?.ingredients && <p>Please <Link to="/pantry">search from your pantry</Link> to choose a recipe.</p>}
-    {loading && <p role="status">Preparing and validating instructions for your selected recipe…</p>}
+    {loading && <p role="status" className="rag-cook-loading">
+      <span className="rag-cook-spinner" aria-hidden="true" />
+      Preparing and validating instructions for your selected recipe…
+    </p>}
     {error && <div role="alert"><p>{error}</p><button onClick={() => setAttempt(attempt + 1)}>Try again</button></div>}
     {result && (result.status === "ok" && result.recipe ? <>
       <ol className="cook-list">

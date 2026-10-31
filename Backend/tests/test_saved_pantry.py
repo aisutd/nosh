@@ -70,3 +70,46 @@ class SavedPantryTests(unittest.IsolatedAsyncioTestCase):
             await routes.generate_saved_recipe("rag:test", user)
             self.assertEqual(runner.call_args.args[1], ["flour", "egg"])
             self.assertEqual(runner.call_args.kwargs["user_query"], "Make pancakes")
+
+
+class SavedSourceTests(unittest.IsolatedAsyncioTestCase):
+    async def test_details_use_repaired_index_before_generation(self):
+        from unittest.mock import AsyncMock
+        routes = load_routes()
+        rid = 'rag:' + 'b' * 64
+        routes.collection.find_one = AsyncMock(return_value={'_id': rid, 'ingredients': ['4 eggs']})
+        index = MagicMock()
+        index.get.return_value = {'ids': ['b' * 64], 'documents': ['source'], 'metadatas': [{
+            'recipe_name': 'Pudding', 'ingredients': '4 eggs, 2 cups milk, 3 bananas',
+            'directions': 'Make the custard.\nAssemble pudding.'}]}
+        with patch.object(routes, 'get_collection', return_value=index), patch.object(routes, 'run_nosh') as generate:
+            result = await routes.get_recipe(rid)
+        self.assertEqual(result['ingredients'], ['4 eggs', '2 cups milk', '3 bananas'])
+        self.assertEqual(result['id'], rid)
+        self.assertEqual(result['kind'], 'rag')
+        generate.assert_not_called()
+
+    async def test_missing_index_source_does_not_serve_stale_snapshot(self):
+        from fastapi import HTTPException
+        from unittest.mock import AsyncMock
+        routes = load_routes()
+        rid = 'rag:' + 'b' * 64
+        routes.collection.find_one = AsyncMock(return_value={'_id': rid, 'ingredients': ['4 eggs']})
+        index = MagicMock()
+        index.get.return_value = {'ids': []}
+        with patch.object(routes, 'get_collection', return_value=index):
+            with self.assertRaises(HTTPException) as caught:
+                await routes.get_recipe(rid)
+        self.assertEqual(caught.exception.status_code, 404)
+
+    async def test_non_rag_details_still_use_mongo(self):
+        from unittest.mock import AsyncMock
+        routes = load_routes()
+        rid = 'a' * 24
+        routes.collection.find_one = AsyncMock(return_value={
+            '_id': rid, 'title': 'Soup', 'ingredients': ['carrot'],
+            'directions': ['Cook.'], 'link': '', 'ner': ['carrot']})
+        with patch.object(routes, 'load_rag_source') as load:
+            result = await routes.get_recipe(rid)
+        self.assertEqual(result['ingredients'], ['carrot'])
+        load.assert_not_called()
