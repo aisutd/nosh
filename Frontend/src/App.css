@@ -11,6 +11,8 @@
   gap: 16px;                   /* space between things inside */
   padding: 24px 24px 100px;    /* top / sides / bottom. 100px bottom = room for the nav bar */
   width: 100%;
+  max-width: 640px;            /* same as the nav bar */
+  margin: 0 auto;              /* centered */
   text-align: center;
 }
 
@@ -689,7 +691,6 @@ button:hover {                 /* mouse is over the button */
   width: 100%;
   padding: 0;
   margin: 0 auto;
-  max-width: 460px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -699,6 +700,7 @@ button:hover {                 /* mouse is over the button */
   display: flex;
   align-items: center;
   gap: 8px;
+  border: 1px solid transparent;     /* was 3px */
   padding: 8px 8px 8px 16px;
   background: var(--surface);
   border: 3px solid transparent;
@@ -801,22 +803,7 @@ button:hover {                 /* mouse is over the button */
   flex: 0 0 auto;                    /* don't let flex squeeze it */
 }
 
-
 .inv-unit-edit {
-  appearance: none;                  /* drop the white browser box */
-  -webkit-appearance: none;
-  background-color: #1c1816;         /* dark, like the other pills */
-  color: inherit;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  padding: 8px 28px 8px 12px;
-  font-size: 16px;
-  /* small custom arrow */
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23f4efe9' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-
-}.inv-unit-edit {
   appearance: none;                  /* drop the white browser box */
   -webkit-appearance: none;
   background-color: #1c1816;         /* dark, like the other pills */
@@ -957,9 +944,30 @@ button:hover {                 /* mouse is over the button */
   color: inherit;
   font: inherit;
   cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
 }
 
-/* the card that's currently filtering the list */
-.inv-stat.active {
-  box-shadow: 0 0 0 2px var(--accent);       /* orange ring */
+.inv-stat:hover,
+.inv-stat:active {
+  transform: translateY(-2px);
+  background: #26201d;                          /* Items card */
+}
+
+.inv-stat.low:hover,
+.inv-stat.low:active {
+  background: rgba(255, 122, 26, 0.32);         /* brighter orange */
+}
+
+.inv-stat.out:hover,
+.inv-stat.out:active {
+  background: rgba(229, 72, 77, 0.36);          /* brighter red */
+}
+
+/* no orange ring on the cards, on hover, press or focus */
+.inv-stat:hover,
+.inv-stat:active,
+.inv-stat:focus,
+.inv-stat:focus-visible {
+  border-color: transparent;
+  outline: none;
 }

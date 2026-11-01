@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import RecipeIngredients from "../components/RecipeIngredients";
 import { LuX, LuHeart, LuChevronUp, LuChevronDown, LuClock } from "react-icons/lu";
 
 const API = `http://${window.location.hostname}:8000`;
@@ -166,29 +165,14 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
                     <LuClock /> {recipe.total_time || "Time not listed"}
                     {recipe.servings && <> · {recipe.servings} servings</>}
                   </p>                
-                {recipe.availability ? <>
-                  <RecipeIngredients availability={recipe.availability} />
-                  <h3>Source ingredients</h3>
-                  <p>{items.join(", ")}</p>
-                  <p>Directions below are from the original recipe. Adapted instructions are validated when you cook.</p>
-                </> : <>
-                <h3>Ingredients</h3>
-                <div className="sheet-chips">
-                  {items.map((line, i) => (
-                    <span key={i} className={`sheet-chip ${haveIt(line) ? "" : "missing"}`}>{line}</span>
-                  ))}
-                </div>
-                {recipe.substitutions?.length > 0 && <>
-                  <h3>Pantry substitutions</h3>
-                  <ul className="sheet-steps">
-                    {recipe.substitutions.map((swap) => <li key={swap.ingredient}>
-                      <strong>{swap.ingredient} → {swap.replacement_ingredients.join(" + ")}</strong>
-                      {" "}{swap.instructions} {swap.limitations}
-                    </li>)}
-                  </ul>
-                  <p>Directions below are from the original recipe. Adapted instructions are prepared when you cook.</p>
-                </>}
-                </>}
+                  <h3>Ingredients</h3>
+                  <div className="sheet-chips">
+                    {items.map((line, i) => (
+                      <span key={i} className="sheet-chip">
+                        {line}
+                      </span>
+                    ))}
+                  </div>
                   {steps.length > 0 && (
                     <>
                       <h3>Directions</h3>
