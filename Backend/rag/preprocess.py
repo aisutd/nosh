@@ -4,6 +4,8 @@ from pathlib import Path
 import kagglehub
 import pandas as pd
 
+from rag.source_import import load_repairs, apply_repair
+
 
 # Download the latest version of the Kaggle recipe dataset
 path = kagglehub.dataset_download(
@@ -65,17 +67,10 @@ df["ingredients"] = df["ingredients"].astype(str).str.strip()
 df["directions"] = df["directions"].astype(str).str.strip()
 
 
-# Create one chunk per recipe
-# This text will later be converted into an embedding
-def create_chunk(row):
-    return (
-        f"Recipe: {row['recipe_name']}\n"
-        f"Ingredients: {row['ingredients']}\n"
-        f"Directions: {row['directions']}"
-    )
-
-
-df["chunk"] = df.apply(create_chunk, axis=1)
+# Reapply verified source imports before building chunks; dataset refreshes
+# must not restore truncated ingredient lists.
+repairs = load_repairs()
+df = pd.DataFrame([apply_repair(row, repairs) for row in df.to_dict("records")])
 
 
 # Print results

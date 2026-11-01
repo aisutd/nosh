@@ -24,7 +24,9 @@ def parse_minutes(value):
                for m in matches)
 
 
-def load_records(csv_path):
+def load_records(csv_path, repairs_path=None):
+    from rag.source_import import load_repairs, apply_repair, DEFAULT_REPAIRS_PATH
+    repairs = load_repairs(repairs_path if repairs_path is not None else DEFAULT_REPAIRS_PATH)
     records = {}
     row_count = 0
     with Path(csv_path).open(encoding="utf-8", newline="") as source:
@@ -39,10 +41,8 @@ def load_records(csv_path):
             rid = hashlib.sha256(url.encode()).hexdigest()
             if rid in records:
                 continue
-            document = row.get("chunk") or (
-                f"Recipe: {row['recipe_name']}\nIngredients: {row['ingredients']}\n"
-                f"Directions: {row['directions']}"
-            )
+            row = apply_repair(row, repairs)
+            document = row["chunk"]
             metadata = {key: value.strip() for key, value in row.items()
                         if key != "chunk" and value and value.strip()}
             metadata["title"] = row["recipe_name"].strip()
@@ -56,10 +56,10 @@ def load_records(csv_path):
 
 
 def build_index(csv_path=DEFAULT_CSV_PATH, db_path=DEFAULT_DB_PATH,
-                name=COLLECTION_NAME, batch_size=64):
+                name=COLLECTION_NAME, batch_size=64, repairs_path=None):
     if batch_size < 1:
         raise ValueError("batch_size must be positive")
-    records, row_count = load_records(csv_path)
+    records, row_count = load_records(csv_path, repairs_path=repairs_path)
     client = client_for(db_path)
     from chromadb.errors import NotFoundError
     try:
@@ -94,8 +94,9 @@ def main():
     parser.add_argument("--csv", type=Path, default=DEFAULT_CSV_PATH)
     parser.add_argument("--db-path", type=Path, default=DEFAULT_DB_PATH)
     parser.add_argument("--collection", default=COLLECTION_NAME)
+    parser.add_argument("--repairs", type=Path, help="Optional source repair file")
     args = parser.parse_args()
-    print(json.dumps(build_index(args.csv, args.db_path, args.collection), indent=2))
+    print(json.dumps(build_index(args.csv, args.db_path, args.collection, repairs_path=args.repairs), indent=2))
 
 
 if __name__ == "__main__":

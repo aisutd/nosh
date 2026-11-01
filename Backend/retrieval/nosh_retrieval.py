@@ -73,6 +73,7 @@ def retrieve_candidate_recipes(
     top_n: int = 20,
     collection=None,
     available_ingredients=None,
+    min_coverage=1.0,
 ):
     """Return Chroma results in semantic order. max_time means TOTAL minutes."""
     if not isinstance(user_query, str) or not user_query.strip():
@@ -86,7 +87,7 @@ def retrieve_candidate_recipes(
         if (isinstance(max_time, bool) or not isinstance(max_time, (int, float))
                 or not math.isfinite(max_time) or max_time < 0):
             raise ValueError("max_time must be a finite nonnegative number of minutes")
-    available = (normalize_available(available_ingredients)
+    available = (normalize_available(available_ingredients, semantic=False)
                  if available_ingredients is not None else None)
     if collection is None:
         collection = get_collection()
@@ -101,14 +102,19 @@ def retrieve_candidate_recipes(
         include=["documents", "metadatas", "distances"], **kwargs,
     )
     if available is not None:
+        from retrieval.availability import recipe_availability_rank
         keep = [i for i, meta in enumerate(results["metadatas"][0])
-                if matches_available((meta or {}).get("ingredients"), available)][:top_n]
+                if matches_available((meta or {}).get("ingredients"), available,
+                                     context=results["documents"][0][i] or "", min_coverage=min_coverage)]
+        keep.sort(key=lambda i: recipe_availability_rank(
+            {"metadata": results["metadatas"][0][i] or {}, "document": results["documents"][0][i]}, available))
+        keep = keep[:top_n]
         for key in ("ids", "documents", "metadatas", "distances"):
             results[key] = [[results[key][0][i] for i in keep]]
     return results
 
 
-def search_recipes(query, top_k=5, *, max_time=None, collection=None, available_ingredients=None):
+def search_recipes(query, top_k=5, *, max_time=None, collection=None, available_ingredients=None, min_coverage=1.0):
     """Top-k nearest recipes. Lower cosine distance means a closer match.
 
     Returns full source text and metadata for generation, without an LLM call.
@@ -116,7 +122,7 @@ def search_recipes(query, top_k=5, *, max_time=None, collection=None, available_
     """
     results = retrieve_candidate_recipes(
         query, max_time=max_time, top_n=top_k, collection=collection,
-        available_ingredients=available_ingredients
+        available_ingredients=available_ingredients, min_coverage=min_coverage
     )
     recipes = []
     for rank, (rid, document, metadata, distance) in enumerate(zip(

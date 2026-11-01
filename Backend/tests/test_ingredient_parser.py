@@ -38,7 +38,8 @@ class IngredientParserTests(unittest.TestCase):
         self.assertEqual(required_ingredients("macaroni and cheese"), {"macaroni and cheese"})
         self.assertEqual(required_ingredients("1 cup cold milk"), {"cold milk"})
         self.assertEqual(required_ingredients("1 cup all-purpose flour"), {"flour"})
-        self.assertFalse(matches_available("strawberries, honey", self.available))
+        self.assertTrue(matches_available("strawberries, honey", self.available))  # sugar + water substitute
+        self.assertFalse(matches_available("strawberries, maple syrup", self.available))
 
 
 if __name__ == "__main__":

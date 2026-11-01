@@ -16,7 +16,7 @@ function Cook() {
   }, [id]);
 
   if (!recipe) return <main className="page"><p>Loading...</p></main>;
-return <RagCook savedId={id} title={recipe.title} image={recipe.image} ingredients={recipe.ingredients} />;
+return <RagCook savedId={id} title={recipe.title} image={recipe.image} ingredients={recipe.ingredients} sourceRecipe={recipe} />;
 }
 
 export default Cook;
