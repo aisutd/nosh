@@ -89,7 +89,7 @@ async def save_recipe(recipe_id: str, context: SaveContext | None = None,
 
 
 @router.post("/recipes/saved-generate/{recipe_id}")
-async def generate_saved_recipe(recipe_id: str, servings: int = None, current_user: dict = Depends(get_current_user)):
+async def generate_saved_recipe(recipe_id: str, servings: int | None = None, current_user: dict = Depends(get_current_user)):
     if recipe_id not in current_user.get("saved_recipes", []) or not recipe_id.startswith("rag:"):
         raise HTTPException(status_code=404, detail="Saved recipe not found")
     source_id = recipe_id.removeprefix("rag:")

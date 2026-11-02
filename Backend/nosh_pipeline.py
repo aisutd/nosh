@@ -1,4 +1,5 @@
 """Check request scope, retrieve a recipe, generate once, and judge the answer."""
+import re
 from retrieval.nosh_retrieval import (
     normalize_ingredients,
     format_recipes_for_llm,
@@ -18,7 +19,7 @@ from llm.nosh_generation import (
 
 def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection=None,
              retrieve_only=False, selected_recipe_id=None,
-             servings: int = None, original_servings: int = None):
+             servings=None, original_servings=None):
     """Return only judge-approved generation; refusals use message, not recipe.
 
     Ingredient labels or comma-separated ingredients are accepted. Free-form
@@ -111,8 +112,7 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
         src_servings = original_servings
         if src_servings is None:
             raw = recipes[0]["metadata"].get("servings", "")
-            import re as _re
-            m = _re.search(r"\d+", str(raw))
+            m = re.search(r"\d+", str(raw))
             src_servings = int(m.group()) if m else 4
         context = scale_recipe_context(original_context,
                                        original_servings=src_servings,
@@ -120,7 +120,7 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
     else:
         context = original_context
 
-    from llm.source_adaptation import build_source_adaptation
+    from llm.source_adaptation import build_source_adaptation, build_inventory_ingredients
     answer = build_source_adaptation(recipes[0], substitutions)
     source_preserving = answer is not None
     if answer is None:

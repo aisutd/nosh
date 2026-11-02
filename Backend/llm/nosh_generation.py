@@ -316,7 +316,7 @@ def normalize_recipe_format(output):
 
 def generate_recipe(available_ingredients: str, retrieved_context: str,
                     missing_ingredients=None, model: str = GEN_MODEL,
-                    *, user_query="", max_time=None, servings: int = None,
+                    *, user_query="", max_time=None, servings=None,
                     substitutions=None, repair_feedback=None) -> str:
     if not available_ingredients.strip() or not retrieved_context.strip():
         return INSUFFICIENT_CONTEXT

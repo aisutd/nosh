@@ -79,7 +79,7 @@ async def recipes_from_image(
 class GenerateRecipeRequest(BaseModel):
     ingredients: list[str] = Field(min_length=1)
     user_query: str = ""
-    servings: int = None
+    servings: int | None = None
 
 
 @router.post("/recipes/generate")
