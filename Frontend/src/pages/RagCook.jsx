@@ -13,6 +13,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
   const [talking, setTalking] = useState(false);
   const [cooked, setCooked] = useState(null);       // the consume result, once marked as cooked
   const [cooking, setCooking] = useState(false);
+  const [servings, setServings] = useState(null);   // null = original serving size
   const steps = (result?.recipe || "")
     .split("\n")
     .map((s) => s.trim())
@@ -28,9 +29,10 @@ export default function RagCook({ savedId = null, title = null, image = null, in
     setLoading(true); setResult(null); setError("");
     async function generate() {
       try {
-        const response = await fetch(savedId ? `${API}/recipes/saved-generate/${encodeURIComponent(savedId)}` : `${API}/recipes/generate-selected`, {
+        const savedUrl = `${API}/recipes/saved-generate/${encodeURIComponent(savedId)}${servings ? `?servings=${servings}` : ""}`;
+        const response = await fetch(savedId ? savedUrl : `${API}/recipes/generate-selected`, {
           method: "POST", headers: { "Content-Type": "application/json", ...(savedId ? { Authorization: `Bearer ${localStorage.getItem("access_token") || ""}` } : {}) },
-          body: savedId ? undefined : JSON.stringify({ recipe_id: id, ingredients: context.ingredients, user_query: context.user_query }),
+          body: savedId ? undefined : JSON.stringify({ recipe_id: id, ingredients: context.ingredients, user_query: context.user_query, ...(servings ? { servings } : {}) }),
           signal: controller.signal,
         });
         const data = await response.json().catch(() => null);
@@ -46,7 +48,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
     // Defer to avoid duplicate generation during React StrictMode's effect check.
     const timer = setTimeout(generate, 0);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [id, context, attempt, savedId]);
+  }, [id, context, attempt, savedId, servings]);
 
   const photo = image || context?.image;
 
@@ -87,7 +89,22 @@ export default function RagCook({ savedId = null, title = null, image = null, in
     </button>
 
     {!savedId && !context?.ingredients && <p>Please <Link to="/pantry">search from your pantry</Link> to choose a recipe.</p>}
-    {loading && <p role="status">Preparing and validating instructions for your selected recipe…</p>}
+
+    <div className="servings-selector">
+      <label htmlFor="servings-select">Servings</label>
+      <select
+        id="servings-select"
+        value={servings ?? ""}
+        onChange={(e) => { setServings(e.target.value ? Number(e.target.value) : null); setResult(null); }}
+      >
+        <option value="">Original ({context?.servings ?? "?"})</option>
+        {[1, 2, 4, 6, 8, 10, 12].map((n) => (
+          <option key={n} value={n}>{n}</option>
+        ))}
+      </select>
+    </div>
+
+    {loading && <p role="status">{servings ? `Scaling recipe to ${servings} serving(s)…` : "Preparing and validating instructions for your selected recipe…"}</p>}
     {error && <div role="alert"><p>{error}</p><button onClick={() => setAttempt(attempt + 1)}>Try again</button></div>}
     {result && (result.status === "ok" && result.recipe ? <>
       <ol className="cook-list">

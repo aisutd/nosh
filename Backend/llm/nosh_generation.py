@@ -200,12 +200,20 @@ def classify_request(ingredients, user_query="", model=GEN_MODEL, *, conversatio
 
 def generate_recipe(available_ingredients: str, retrieved_context: str,
                     missing_ingredients=None, model: str = GEN_MODEL,
-                    *, user_query="", max_time=None) -> str:
+                    *, user_query="", max_time=None, servings: int = None) -> str:
     if not available_ingredients.strip() or not retrieved_context.strip():
         return INSUFFICIENT_CONTEXT
     payload = {"available_ingredients": available_ingredients + ", water, salt, pepper",
                "source_context": retrieved_context, "request": user_query,
                "max_total_minutes": max_time}
+    if servings is not None:
+        payload["servings"] = servings
+        payload["scaling_note"] = (
+            f"Ingredient quantities in source_context have already been pre-scaled "
+            f"for {servings} serving(s). Use exactly those scaled amounts in your steps. "
+            f"Do NOT rescale them. Keep oven temperatures and cooking times exactly as "
+            f"the source states — do not scale those."
+        )
     if missing_ingredients is not None:
         payload["missing_ingredients"] = missing_ingredients
     response = ollama.chat(

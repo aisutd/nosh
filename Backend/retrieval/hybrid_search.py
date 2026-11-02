@@ -213,6 +213,7 @@ def hybrid_search_recipes(
 
 
 def main():
+    """CLI entry point to run hybrid search from the command line."""
     import argparse
     import json
     from pathlib import Path

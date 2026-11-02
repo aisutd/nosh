@@ -121,10 +121,12 @@ def _scale_line(line: str, ratio: float) -> str:
     line = _normalize_unicode(line)
 
     # Match patterns like: "2 1/2 cups", "1/4 cup", "3", "½ tablespoon"
+    # Word boundary \b after the unit prevents short abbreviations like "l" matching
+    # the start of ingredient names like "lemons".
     pattern = re.compile(
         r"(\d+\s+\d+/\d+|\d+/\d+|\d+(?:\.\d+)?)"   # quantity
         r"(\s+)"                                        # space
-        r"(" + "|".join(re.escape(u) for u in sorted(_UNIT_MAP, key=len, reverse=True)) + r")?"  # optional unit
+        r"(?:(" + "|".join(re.escape(u) for u in sorted(_UNIT_MAP, key=len, reverse=True)) + r")\b)?"  # optional unit
         , re.IGNORECASE
     )
 
