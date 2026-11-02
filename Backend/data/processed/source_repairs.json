@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "recipes": {
+    "https://www.allrecipes.com/recipe/273048/fresh-fruit-tart-with-mascarpone/": {
+      "ingredient_lines": [
+        "2 cups all-purpose flour",
+        "1 cup butter, softened",
+        "0.5 cup white sugar",
+        "1 (8 ounce) package cream cheese, softened",
+        "1 (8 ounce) container mascarpone cheese",
+        "1 cup white sugar",
+        "2 teaspoons vanilla extract",
+        "0.5 teaspoon ground nutmeg",
+        "0.5 teaspoon ground cinnamon",
+        "2 cups sliced fresh strawberries, or as needed",
+        "2 cups fresh blackberries, or as needed",
+        "3 kiwis, peeled and sliced, or as needed",
+        "0.5 cup white sugar",
+        "1 tablespoon cornstarch",
+        "0.25 cup water",
+        "0.5 tablespoon lemon juice"
+      ],
+      "instruction_steps": [
+        "Preheat the oven to 350 degrees F (175 degrees C). Lightly grease 2 tart pans.",
+        "Make crust: Blend together flour, butter, and sugar in a large bowl using an electric mixer until combined. Divide mixture evenly and press into the bottoms of the prepared tart pans.",
+        "Bake in the preheated oven until golden brown, 12 to 15 minutes. Let cool completely.",
+        "While crusts are cooling, make filling: Beat together cream cheese, mascarpone cheese, sugar, vanilla, nutmeg, and cinnamon in a medium bowl using an electric mixer until light and fluffy. Spread mixture over cooled crusts.",
+        "Add topping: Arrange strawberries, blackberries, and kiwis over filling in desired design.",
+        "Make glaze: Mix together sugar and cornstarch in a small saucepan. Pour in water and lemon juice. Cook over medium heat until clear and thick, about 2 minutes. Let glaze cool completely.",
+        "Glaze the entire top of each tart gently using a pastry brush."
+      ],
+      "recipe_name": "Fresh Fruit Tart with Mascarpone",
+      "source_url": "https://www.allrecipes.com/recipe/273048/fresh-fruit-tart-with-mascarpone/",
+      "imported_at": "2026-10-31T22:52:45.822550+00:00"
+    },
+    "https://www.allrecipes.com/recipe/273495/southern-style-baked-banana-pudding/": {
+      "ingredient_lines": [
+        "4 large eggs",
+        "0.5 cup white sugar",
+        "0.25 teaspoon salt",
+        "0.33333334326744 cup all-purpose flour",
+        "1 tablespoon all-purpose flour",
+        "2 cups milk",
+        "1 tablespoon banana liqueur",
+        "0.5 teaspoon vanilla extract",
+        "1 tablespoon cold butter",
+        "3 very ripe bananas, or more to taste, sliced",
+        "1.5 teaspoons freshly squeezed lemon juice",
+        "1 (12 ounce) package miniature vanilla wafers",
+        "0.125 teaspoon cream of tartar",
+        "2 tablespoons white sugar"
+      ],
+      "instruction_steps": [
+        "Separate eggs, placing the whites in the bowl of a stand mixer and the yolks into a saucepan.",
+        "Prepare the custard: Add sugar, salt, and 1/3 cup plus 1 tablespoon flour to the yolks. Splash in about 1/4 of the milk and start blending mixture with a whisk. Pour in remaining milk and whisk until smooth.",
+        "Cook and stir mixture over medium heat until hot to the touch, occasionally dipping your finger in to test. Whisk constantly until custard is thick enough to form ribbons.",
+        "Remove custard from heat and add banana liqueur, vanilla, then cold butter. Whisk until butter dissolves. Set custard aside.",
+        "Preheat the oven to 400 degrees F (200 degrees C).",
+        "Begin to assemble the pudding: Toss banana slices with lemon juice.",
+        "Spread 1/4 of the custard over the bottom of a baking dish. Add a single layer of vanilla wafers. Cover with 1/2 of the bananas and spread 1/2 of the remaining custard on top. Add another layer of vanilla wafers, using slightly fewer this time. Top with remaining bananas and custard. Smooth the top and tap dish against the counter to settle the pudding.",
+        "Make the meringue topping: Add cream of tartar to the egg whites. Beat using the whisk attachment until foamy. Gradually add sugar and beat until stiff, but not dry, peaks form. Spread meringue over the pudding using a soft spatula, creating ridges for contrast.",
+        "Bake in the preheated oven until meringue is nicely browned, 7 to 10 minutes. Serve warm or chilled."
+      ],
+      "recipe_name": "Southern-Style Baked Banana Pudding",
+      "source_url": "https://www.allrecipes.com/recipe/273495/southern-style-baked-banana-pudding/",
+      "imported_at": "2026-10-31T22:59:22.184568+00:00"
+    }
+  }
+}

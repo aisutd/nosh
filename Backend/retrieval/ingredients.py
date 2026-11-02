@@ -1,19 +1,27 @@
 """Conservative ingredient-presence matching; not quantities or dietary safety."""
 import re
 import unicodedata
+from staples import STAPLES
 
-PANTRY = {"water", "salt", "black pepper", "pepper", "ice"}
+
+PANTRY = set(STAPLES)
 
 ALIASES = {
+    "boiling water": "water",
+    "half-and-half": "half and half", "half-and-half cream": "half and half",
+    "mustard powder": "dry mustard", "ground mustard": "dry mustard",
     # Plurals
     "tomatoes": "tomato", "potatoes": "potato", "leaves": "leaf",
     # Water temperature variants
     "cold water": "water", "warm water": "water", "hot water": "water",
     # Sugar variations
     "white sugar": "sugar", "granulated sugar": "sugar",
-    "brown sugar": "sugar", "powdered sugar": "sugar",
-    "confectioners sugar": "sugar", "caster sugar": "sugar",
-    "icing sugar": "sugar",
+    # Different sugar types are not interchangeable inventory items.
+    "light brown sugar": "brown sugar", "dark brown sugar": "brown sugar",
+    "confectioners sugar": "powdered sugar", "confectioners' sugar": "powdered sugar",
+    "confectioner's sugar": "powdered sugar", "confectioners’ sugar": "powdered sugar",
+    "confectioner’s sugar": "powdered sugar", "icing sugar": "powdered sugar",
+    "caster sugar": "sugar",
     # Salt and pepper
     "ground black pepper": "black pepper", "ground pepper": "pepper",
     "sea salt": "salt", "table salt": "salt", "kosher salt": "salt",
@@ -170,7 +178,11 @@ def required_ingredients(raw):
     return names or None
 
 
-def matches_available(raw, available):
-    """Return True if every ingredient required by the raw string is in the available set."""
-    required = required_ingredients(raw)
-    return required is not None and required <= available
+def matches_available(raw, available, *, context="", min_coverage=1.0):
+    from retrieval.availability import assess_availability, validate_threshold
+    validate_threshold(min_coverage)
+    if min_coverage == 1.0:
+        from retrieval.substitutions import plan_substitutions
+        return plan_substitutions(raw, available, context=context) is not None
+    profile = assess_availability(raw, available, context=context)
+    return profile is not None and profile["coverage"] >= min_coverage

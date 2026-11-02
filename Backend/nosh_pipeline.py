@@ -35,12 +35,14 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
     ):
         raise ValueError("detected_ings must be ingredient strings")
     ingredients = normalize_ingredients(detected_ings)
-    if not ingredients and not user_query.strip():
+    if not ingredients and not user_query.strip() and selected_recipe_id is None:
         return {"status": "no_ingredients", "recipe": None, "recipes": [],
                 "message": "Please provide your available ingredients."}
 
     # Classify before Chroma: an unrelated question must not retrieve random recipes.
-    scope = classify_request(ingredients, user_query)
+    # An empty pantry can still be compared with an explicitly selected source.
+    scope = ({"status": "in_scope"} if selected_recipe_id is not None and not ingredients and not user_query.strip()
+             else classify_request(ingredients, user_query))
     if scope["status"] != "in_scope":
         message = {
             "out_of_scope": OUT_OF_SCOPE,
@@ -49,24 +51,23 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
             "guardrail_error": "Could not validate request scope. Please try again.",
         }[scope["status"]]
         return {"status": scope["status"], "message": message, "recipe": None, "recipes": []}
-    if not ingredients:
+    if not ingredients and selected_recipe_id is None:
         return {"status": "no_ingredients", "recipe": None, "recipes": [],
                 "message": "Please provide your available ingredients."}
 
+    from retrieval.availability import assess_availability, availability_rank, recommendation_threshold
+    from retrieval.ingredients import normalize_available
+    min_coverage = recommendation_threshold() if retrieve_only else 1.0
     available = ", ".join(ingredients)
     search_query = f"{user_query.strip()} Ingredients: {available}" if user_query.strip() else available
     if selected_recipe_id is not None:
         from retrieval.nosh_retrieval import get_collection
-        from retrieval.ingredients import normalize_available, matches_available
         collection = collection if collection is not None else get_collection()
         source = collection.get(ids=[selected_recipe_id], include=["documents", "metadatas"])
         if not source["ids"]:
             return {"status": "recipe_not_found", "recipe": None, "recipes": [],
                     "message": "This recipe is no longer available. Search again."}
         metadata = source["metadatas"][0] or {}
-        if not matches_available(metadata.get("ingredients", ""), normalize_available(detected_ings)):
-            return {"status": "ingredients_changed", "recipe": None, "recipes": [],
-                    "message": "Your pantry no longer covers this recipe. Search again."}
         recipes = [{"id": source["ids"][0], "title": metadata.get("recipe_name", "Untitled"),
                     "url": metadata.get("url", ""), "document": source["documents"][0],
                     "metadata": metadata, "ingredients": metadata.get("ingredients", ""),
@@ -74,11 +75,30 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
     else:
         recipes = search_recipes(
             search_query, top_k=top_k, max_time=max_time, collection=collection,
-            available_ingredients=detected_ings,
+            available_ingredients=detected_ings, min_coverage=min_coverage,
         )
     if not recipes:
         return {"status": "no_recipes_found", "recipe": None, "recipes": [],
                 "message": "No matching recipes were found for those constraints."}
+
+    inventory = normalize_available(detected_ings, semantic=False)
+    for recipe in recipes:
+        profile = assess_availability(recipe["metadata"].get("ingredients", ""), inventory,
+                                      context=recipe["document"] or "")
+        recipe["availability"] = profile
+        recipe["substitutions"] = profile["substitutions"] if profile else []
+    if selected_recipe_id is not None and (
+        not recipes[0]["availability"] or not recipes[0]["availability"]["ready_to_cook"]
+    ):
+        return {"status": "ingredients_changed", "recipe": None, "recipes": recipes,
+                "message": "Ingredients are still missing or could not be checked. Update your pantry and search again before cooking."}
+    recipes = [recipe for recipe in recipes if recipe["availability"] is not None
+               and recipe["availability"]["coverage"] >= min_coverage]
+    if not recipes:
+        return {"status": "no_recipes_found", "recipe": None, "recipes": [],
+                "message": "No recipes can be made with your available ingredients and supported substitutions."}
+    recipes.sort(key=lambda recipe: availability_rank(recipe["availability"]))
+    substitutions = recipes[0]["substitutions"]
 
     if retrieve_only:
         return {"status": "ok", "message": "Choose a recipe to cook.", "recipe": None, "recipes": recipes}
@@ -87,8 +107,6 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
     original_context = format_recipes_for_llm(recipes, top_k=1)
 
     # Scale ingredient quantities if a serving size was requested.
-    # The LLM receives the scaled context so its output has correct amounts.
-    # The judge receives the original context so it grades against the real recipe.
     if servings is not None:
         src_servings = original_servings
         if src_servings is None:
@@ -96,20 +114,24 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
             import re as _re
             m = _re.search(r"\d+", str(raw))
             src_servings = int(m.group()) if m else 4
-        generation_context = scale_recipe_context(original_context,
-                                                  original_servings=src_servings,
-                                                  requested_servings=servings)
+        context = scale_recipe_context(original_context,
+                                       original_servings=src_servings,
+                                       requested_servings=servings)
     else:
-        generation_context = original_context
+        context = original_context
 
-    answer = generate_recipe(available_ingredients=available, retrieved_context=generation_context,
-                             user_query=user_query, max_time=max_time, servings=servings)
+    from llm.source_adaptation import build_source_adaptation
+    answer = build_source_adaptation(recipes[0], substitutions)
+    source_preserving = answer is not None
+    if answer is None:
+        answer = generate_recipe(available_ingredients=available, retrieved_context=context,
+                                 user_query=user_query, max_time=max_time,
+                                 servings=servings, substitutions=substitutions)
     if answer in (INSUFFICIENT_CONTEXT, OUT_OF_SCOPE):
         return {"status": "insufficient_context" if answer == INSUFFICIENT_CONTEXT else "out_of_scope",
                 "message": answer, "recipe": None, "recipes": recipes}
 
-    # When servings are scaled, skip the judge — quantities will differ from the
-    # source by design, so source-matching validation would always fail.
+    # When servings are scaled, skip the judge — scaled quantities won't match source.
     if servings is not None:
         return {
             "status": "ok",
@@ -123,17 +145,34 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
         }
 
     verdict = evaluate_generation(available, original_context, answer,
-                                  user_query=user_query, max_time=max_time)
+                                  user_query=user_query, max_time=max_time,
+                                  substitutions=substitutions, source_preserving=source_preserving)
     passed = judge_passed(verdict)
+    if not passed:
+        # One bounded correction attempt; failed drafts are never cooking instructions.
+        corrected = generate_recipe(
+            available_ingredients=available, retrieved_context=context,
+            user_query=user_query, max_time=max_time, substitutions=substitutions,
+            repair_feedback={"previous_output": answer, "validation": verdict},
+        )
+        if corrected not in (INSUFFICIENT_CONTEXT, OUT_OF_SCOPE):
+            verdict = evaluate_generation(available, context, corrected,
+                                          user_query=user_query, max_time=max_time,
+                                          substitutions=substitutions)
+            passed = judge_passed(verdict)
+            if passed:
+                answer = corrected
 
     return {
         "status": "ok" if passed else "failed_validation",
-        "message": "Recipe validated." if passed else "I could not validate a recipe for this request. Try different ingredients or a simpler request.",
+        "message": "Recipe validated." if passed else "The adapted instructions could not be verified. You can review the source ingredients and suggested substitutions below, or try generating again.",
         "recipe": answer if passed else None,
         "source_recipe": recipes[0]["title"],
         "source_url": recipes[0]["url"],
         "similarity": recipes[0]["similarity"],
+        "inventory_ingredients": build_inventory_ingredients(recipes[0], substitutions) if passed else None,
         "judge_verdict": verdict,
+        "substitutions": substitutions if passed else [],
         "recipes": recipes,
     }
 

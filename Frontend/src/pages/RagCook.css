@@ -1,0 +1,21 @@
+.rag-cook-loading .rag-cook-spinner {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 1em;
+  height: 1em;
+  margin-inline-end: 0.5em;
+  vertical-align: -0.125em;
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: 50%;
+  color: var(--accent, currentColor);
+  animation: rag-cook-spin 0.8s linear infinite;
+}
+
+@keyframes rag-cook-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rag-cook-loading .rag-cook-spinner { animation: none; }
+}

@@ -97,7 +97,9 @@ async def generate_saved_recipe(recipe_id: str, servings: int = None, current_us
     if not context:
         raise HTTPException(status_code=409, detail="Please search and save this recipe again to include your pantry.")
     try:
-        result = await run_in_threadpool(run_nosh, context["ingredients"],
+        # Authentication loads the latest user document for this request.
+        # The saved context keeps the cooking request, not pantry availability.
+        result = await run_in_threadpool(run_nosh, current_user.get("ingredients", []),
             user_query=context.get("user_query", ""), selected_recipe_id=source_id,
             servings=servings)
     except Exception as exc:
@@ -129,5 +131,14 @@ async def get_recipe(recipe_id: str):
     doc = await collection.find_one({"_id": oid})
     if not doc:
         raise HTTPException(status_code=404, detail="Recipe not found")
+    if recipe_id.startswith("rag:"):
+        # Saved Mongo documents are snapshots. Read the current indexed source
+        # before rendering details, not only when generating instructions.
+        try:
+            doc = await run_in_threadpool(load_rag_source, recipe_id)
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="The current recipe source is unavailable. Please try again.") from exc
     return recipe_data(doc)
 

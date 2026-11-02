@@ -5,7 +5,7 @@ import * as ImagePicker from "expo-image-picker";
 import { File } from "expo-file-system";
 
 // Network endpoints for web app and backend API
-const HOST = "192.168.1.6";               // <- only line to change on a new network
+const HOST = "10.152.170.246";               // <- only line to change on a new network
 const APP_URL = `http://${HOST}:5173`;    // the React site (Vite)
 const API = `http://${HOST}:8000`;        // the FastAPI backend
 
