@@ -116,6 +116,25 @@ def _pluralize(unit: str, value: float) -> str:
     return _PLURAL.get(unit, unit + "s")
 
 
+def _depluralize(word: str) -> str:
+    """Convert a simple English plural to its singular form.
+
+    Handles the most common recipe patterns: regular +s, +oes, +ies, and
+    consonant-cluster +es (e.g. peaches).  Words that are already singular
+    or have irregular plurals are returned unchanged.
+    """
+    w = word.lower()
+    if w.endswith("oes") and len(w) > 4:
+        return word[:-2]                            # tomatoes → tomato, potatoes → potato
+    if w.endswith("ies") and len(w) > 4:
+        return word[:-3] + "y"                      # berries → berry
+    if w.endswith("es") and len(w) > 4 and w[-3] in "shxzc":
+        return word[:-2]                            # peaches → peach, dishes → dish
+    if w.endswith("s") and not w.endswith("ss") and not w.endswith("us") and len(w) > 3:
+        return word[:-1]                            # lemons → lemon, eggs → egg
+    return word                                     # asparagus, grass → unchanged
+
+
 def _scale_line(line: str, ratio: float) -> str:
     """Scale all quantity+unit pairs found in a single ingredient line."""
     line = _normalize_unicode(line)
@@ -165,20 +184,23 @@ def _scale_line(line: str, ratio: float) -> str:
 
     scaled = pattern.sub(replace_match, line)
 
-    # Add (s) to count nouns (no unit) that are > 1 and sit immediately before a
-    # comma or end-of-string.  Lookahead skips adjectives: in "6 ripe bananas,"
-    # "ripe" is followed by " bananas," so it won't match; only "bananas" would,
-    # but it's already plural.  "2 egg," → "2 egg(s)".
-    def _add_count_plural(m):
+    # Fix count noun pluralization for scaled quantities that sit before a comma or
+    # end-of-string: plurals scaled to 1 are de-pluralized ("1 lemons" → "1 lemon");
+    # singulars scaled above 1 gain an (s) suffix ("2 egg" → "2 egg(s)").
+    def _fix_count_noun(m):
         qty_str, word = m.group(1), m.group(2)
         qty = _parse_quantity(qty_str.strip())
-        if qty and qty > 1 and word.lower() not in _UNIT_MAP:
+        if qty is None or word.lower() in _UNIT_MAP:
+            return m.group(0)
+        if qty > 1:
             return f"{qty_str} {word}(s)"
+        if qty == 1:
+            return f"{qty_str} {_depluralize(word)}"
         return m.group(0)
 
     scaled = re.sub(
         r"(\d+\s+\d+/\d+|\d+/\d+|\d+(?:\.\d+)?)\s+([a-zA-Z]+)(?=\s*(?:,|$))",
-        _add_count_plural, scaled
+        _fix_count_noun, scaled
     )
 
     return scaled

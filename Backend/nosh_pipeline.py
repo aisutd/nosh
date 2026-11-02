@@ -107,13 +107,14 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
     # Adapt one source recipe so the response has a clear, traceable source.
     original_context = format_recipes_for_llm(recipes, top_k=1)
 
+    # Parse the recipe's stated serving size so we can include it in every response
+    # (the frontend shows it in the "Original (N)" dropdown label).
+    raw_servings = recipes[0]["metadata"].get("servings", "")
+    _m = re.search(r"\d+", str(raw_servings))
+    src_servings = original_servings if original_servings is not None else (int(_m.group()) if _m else None)
+
     # Scale ingredient quantities if a serving size was requested.
-    if servings is not None:
-        src_servings = original_servings
-        if src_servings is None:
-            raw = recipes[0]["metadata"].get("servings", "")
-            m = re.search(r"\d+", str(raw))
-            src_servings = int(m.group()) if m else 4
+    if servings is not None and src_servings is not None:
         context = scale_recipe_context(original_context,
                                        original_servings=src_servings,
                                        requested_servings=servings)
@@ -141,6 +142,7 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
             "source_url": recipes[0]["url"],
             "similarity": recipes[0]["similarity"],
             "judge_verdict": "skipped (serving size scaling)",
+            "original_servings": src_servings,
             "recipes": recipes,
         }
 
@@ -173,6 +175,7 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
         "inventory_ingredients": build_inventory_ingredients(recipes[0], substitutions) if passed else None,
         "judge_verdict": verdict,
         "substitutions": substitutions if passed else [],
+        "original_servings": src_servings,
         "recipes": recipes,
     }
 
