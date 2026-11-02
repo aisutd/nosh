@@ -1,0 +1,32 @@
+[
+  {
+    "name": "chicken_breast",
+    "count": 2,
+    "confidence": 0.4409
+  },
+  {
+    "name": "sweet_potato",
+    "count": 1,
+    "confidence": 0.8265
+  },
+  {
+    "name": "milk",
+    "count": 3,
+    "confidence": 0.347
+  },
+  {
+    "name": "butter",
+    "count": 1,
+    "confidence": 0.516
+  },
+  {
+    "name": "sugar",
+    "count": 1,
+    "confidence": 0.1417
+  },
+  {
+    "name": "cheese",
+    "count": 1,
+    "confidence": 0.222
+  }
+]
