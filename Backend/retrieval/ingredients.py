@@ -67,7 +67,7 @@ ALIASES = {
 }
 
 UNITS = r"(?:cups?|tablespoons?|teaspoons?|tbsp|tsp|pounds?|ounces?|lbs?|oz|grams?|kilograms?|ml|liters?|cloves?|slices?|pinch|pinches|cans?|packages?|sheets?|stalks?|sprigs?|heads?|bunches?|pieces?|filets?|fillets?)"
-PREP = r"(?:chopped|diced|minced|sliced|peeled|quartered|cored|seeded|pitted|crushed|grated|shredded|melted|softened|beaten|divided|rinsed|drained|thawed|sifted|juiced|torn|halved|trimmed|blanched|toasted|roasted|mashed|packed|squeezed|zested|cubed|crumbled|julienned|deveined|deboned|broken|separated|cooled|steamed|boiled|fried|baked|grilled|smoked|canned|frozen|dried|ground)"
+PREP = r"(?:hulled|chopped|diced|minced|sliced|peeled|quartered|cored|seeded|pitted|crushed|grated|shredded|melted|softened|beaten|divided|rinsed|drained|thawed|sifted|juiced|torn|halved|trimmed|blanched|toasted|roasted|mashed|packed|squeezed|zested|cubed|crumbled|julienned|deveined|deboned|broken|separated|cooled|steamed|boiled|fried|baked|grilled|smoked|canned|frozen|dried|ground)"
 
 # Words that are never food ingredients on their own; discard fragment if this
 # is all that remains after prep/unit stripping.
@@ -92,7 +92,7 @@ def normalize_name(value):
                    r'finely|roughly|lightly|thinly|freshly|coarsely|firmly|evenly|into)\b', '', value)
     # Strip trailing purpose phrases: "for garnish", "for decoration", "for serving", etc.
     value = re.sub(r'\s+for\s+\w+$', '', value)
-    value = ' '.join(value.split()).strip(' .')
+    value = ' '.join(value.split()).strip(' .–—-')
     if value in ALIASES:
         return ALIASES[value]
     words = value.split()
