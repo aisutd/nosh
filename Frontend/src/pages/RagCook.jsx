@@ -115,7 +115,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
         onChange={(e) => { setServings(e.target.value ? Number(e.target.value) : null); setResult(null); }}
       >
         <option value="">Original ({result?.original_servings ?? context?.servings ?? "?"})</option>
-        {[1, 2, 4, 6, 8, 10, 12].map((n) => (
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((n) => (
           <option key={n} value={n}>{n}</option>
         ))}
       </select>
