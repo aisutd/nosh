@@ -1,9 +1,11 @@
 """Check request scope, retrieve a recipe, generate once, and judge the answer."""
+import re
 from retrieval.nosh_retrieval import (
     normalize_ingredients,
     format_recipes_for_llm,
 )
 from retrieval.hybrid_search import hybrid_search_recipes as search_recipes
+from retrieval.scaler import scale_recipe_context
 from llm.nosh_generation import (
     generate_recipe,
     evaluate_generation,
@@ -15,11 +17,17 @@ from llm.nosh_generation import (
 )
 
 
-def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection=None, retrieve_only=False, selected_recipe_id=None):
+def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection=None,
+             retrieve_only=False, selected_recipe_id=None,
+             servings=None, original_servings=None):
     """Return only judge-approved generation; refusals use message, not recipe.
 
     Ingredient labels or comma-separated ingredients are accepted. Free-form
     requests go in user_query. Model-based scope and judgment are fallible.
+
+    Pass servings to scale ingredient quantities before the LLM sees them.
+    original_servings defaults to the recipe's stated serving size (parsed from
+    metadata); if unavailable it falls back to 4.
     """
     if not isinstance(user_query, str):
         raise ValueError("user_query must be a string")
@@ -97,19 +105,50 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
         return {"status": "ok", "message": "Choose a recipe to cook.", "recipe": None, "recipes": recipes}
 
     # Adapt one source recipe so the response has a clear, traceable source.
-    context = format_recipes_for_llm(recipes, top_k=1)
+    original_context = format_recipes_for_llm(recipes, top_k=1)
+
+    # Parse the recipe's stated serving size so we can include it in every response
+    # (the frontend shows it in the "Original (N)" dropdown label).
+    raw_servings = recipes[0]["metadata"].get("servings", "")
+    _m = re.search(r"\d+", str(raw_servings))
+    src_servings = original_servings if original_servings is not None else (int(_m.group()) if _m else None)
+
+    # Scale ingredient quantities if a serving size was requested.
+    if servings is not None and src_servings is not None:
+        context = scale_recipe_context(original_context,
+                                       original_servings=src_servings,
+                                       requested_servings=servings)
+    else:
+        context = original_context
+
     from llm.source_adaptation import build_source_adaptation, build_inventory_ingredients
     answer = build_source_adaptation(recipes[0], substitutions)
     source_preserving = answer is not None
     if answer is None:
         answer = generate_recipe(available_ingredients=available, retrieved_context=context,
-                                 user_query=user_query, max_time=max_time, substitutions=substitutions)
+                                 user_query=user_query, max_time=max_time,
+                                 servings=servings, substitutions=substitutions)
     if answer in (INSUFFICIENT_CONTEXT, OUT_OF_SCOPE):
         return {"status": "insufficient_context" if answer == INSUFFICIENT_CONTEXT else "out_of_scope",
                 "message": answer, "recipe": None, "recipes": recipes}
-    verdict = evaluate_generation(available, context, answer,
-                                  user_query=user_query, max_time=max_time, substitutions=substitutions,
-                                  source_preserving=source_preserving)
+
+    # When servings are scaled, skip the judge — scaled quantities won't match source.
+    if servings is not None:
+        return {
+            "status": "ok",
+            "message": f"Recipe scaled to {servings} serving(s).",
+            "recipe": answer,
+            "source_recipe": recipes[0]["title"],
+            "source_url": recipes[0]["url"],
+            "similarity": recipes[0]["similarity"],
+            "judge_verdict": "skipped (serving size scaling)",
+            "original_servings": src_servings,
+            "recipes": recipes,
+        }
+
+    verdict = evaluate_generation(available, original_context, answer,
+                                  user_query=user_query, max_time=max_time,
+                                  substitutions=substitutions, source_preserving=source_preserving)
     passed = judge_passed(verdict)
     if not passed:
         # One bounded correction attempt; failed drafts are never cooking instructions.
@@ -136,6 +175,7 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
         "inventory_ingredients": build_inventory_ingredients(recipes[0], substitutions) if passed else None,
         "judge_verdict": verdict,
         "substitutions": substitutions if passed else [],
+        "original_servings": src_servings,
         "recipes": recipes,
     }
 
@@ -152,6 +192,7 @@ def main():
     parser.add_argument("--query", default="", help="Optional cooking request")
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--max-time", type=float, help="Maximum total recipe time in minutes")
+    parser.add_argument("--servings", type=int, help="Scale recipe to this many servings")
     args = parser.parse_args()
     if args.show_drafts and not args.chat:
         parser.error("--show-drafts requires --chat")
@@ -160,7 +201,8 @@ def main():
         from cooking_session import CookingSession
         session = CookingSession()
     runner = session.start if session else run_nosh
-    result = runner(args.ingredients, user_query=args.query, top_k=args.top_k, max_time=args.max_time)
+    result = runner(args.ingredients, user_query=args.query, top_k=args.top_k,
+                    max_time=args.max_time, servings=args.servings)
     if args.debug:
         diagnostics = {
             "status": result["status"],

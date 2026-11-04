@@ -1,0 +1,82 @@
+{
+  "description": "Live development checks; status success is not independent answer-quality proof.",
+  "results": [
+    {
+      "question": "How should i juice this lemon?",
+      "expected_status": "ok",
+      "reply": {
+        "status": "ok",
+        "answer": "General cooking tip: roll the lemon on the counter, cut it in half, then squeeze over a bowl and remove the seeds."
+      },
+      "passed": true
+    },
+    {
+      "question": "how can i juice this lemon?",
+      "expected_status": "ok",
+      "reply": {
+        "status": "ok",
+        "answer": "General cooking tip: roll the lemon on the counter, cut it in half, then squeeze over a bowl and remove the seeds."
+      },
+      "passed": true
+    },
+    {
+      "question": "whos the president of the united states",
+      "expected_status": "out_of_scope",
+      "reply": {
+        "status": "out_of_scope",
+        "message": "not something I can search about"
+      },
+      "passed": true
+    },
+    {
+      "question": "Who is the best person ever?",
+      "expected_status": "out_of_scope",
+      "reply": {
+        "status": "out_of_scope",
+        "message": "not something I can search about"
+      },
+      "passed": true
+    },
+    {
+      "question": "Am I able to juice this lemon with a fork?",
+      "expected_status": "ok",
+      "reply": {
+        "status": "ok",
+        "answer": "Yes. As a general technique, gently twist a fork in the cut pulp while squeezing over a bowl; keep the tines pointed away from your hand and remove the seeds."
+      },
+      "passed": true
+    },
+    {
+      "question": "How much sugar does this recipe use?",
+      "expected_status": "ok",
+      "reply": {
+        "status": "ok",
+        "answer": "The recipe uses 1 cup of sugar."
+      },
+      "passed": true
+    },
+    {
+      "question": "What exact temperature should I chill it to?",
+      "expected_status": "insufficient_context",
+      "reply": {
+        "status": "insufficient_context",
+        "message": "I don't have enough recipe information to answer that."
+      },
+      "passed": true
+    },
+    {
+      "question": "Replace the sugar with honey.",
+      "expected_status": "change_requested",
+      "reply": {
+        "status": "change_requested",
+        "message": "This chat explains the current recipe. Start a new recipe request to change ingredients or cooking methods."
+      },
+      "passed": true
+    },
+    {
+      "case": "contradictory_changes",
+      "verdict": "{\"result\": \"FAIL\", \"explanation\": \"Invalid generation input or output.\", \"violations\": [\"Ingredient 'lemon' is both omitted and replaced\"]}",
+      "passed": true
+    }
+  ]
+}

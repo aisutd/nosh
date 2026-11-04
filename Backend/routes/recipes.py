@@ -89,7 +89,7 @@ async def save_recipe(recipe_id: str, context: SaveContext | None = None,
 
 
 @router.post("/recipes/saved-generate/{recipe_id}")
-async def generate_saved_recipe(recipe_id: str, current_user: dict = Depends(get_current_user)):
+async def generate_saved_recipe(recipe_id: str, servings: int | None = None, current_user: dict = Depends(get_current_user)):
     if recipe_id not in current_user.get("saved_recipes", []) or not recipe_id.startswith("rag:"):
         raise HTTPException(status_code=404, detail="Saved recipe not found")
     source_id = recipe_id.removeprefix("rag:")
@@ -100,7 +100,8 @@ async def generate_saved_recipe(recipe_id: str, current_user: dict = Depends(get
         # Authentication loads the latest user document for this request.
         # The saved context keeps the cooking request, not pantry availability.
         result = await run_in_threadpool(run_nosh, current_user.get("ingredients", []),
-            user_query=context.get("user_query", ""), selected_recipe_id=source_id)
+            user_query=context.get("user_query", ""), selected_recipe_id=source_id,
+            servings=servings)
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Recipe generation is unavailable. Check Ollama and the recipe index.") from exc
     return {"result": result}

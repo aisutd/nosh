@@ -370,6 +370,31 @@ button:hover {                 /* mouse is over the button */
   font-size: 30px;
 }
 
+/* Serving size selector */
+.servings-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.servings-selector label {
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.servings-selector select {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
 /* Numbered steps list */
 .cook-list {                   /* ingredients / directions list */
   text-align: left;            /* lists read better left-aligned than centered */

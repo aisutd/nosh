@@ -79,6 +79,7 @@ async def recipes_from_image(
 class GenerateRecipeRequest(BaseModel):
     ingredients: list[str] = Field(min_length=1)
     user_query: str = ""
+    servings: int | None = None
 
 
 @router.post("/recipes/generate")
@@ -92,7 +93,8 @@ async def generate_recipe_from_pantry(request: GenerateRecipeRequest):
     if not ingredients:
         raise HTTPException(status_code=400, detail="Add at least one ingredient.")
     try:
-        result = await run_in_threadpool(run_nosh, ingredients, user_query=request.user_query)
+        result = await run_in_threadpool(run_nosh, ingredients, user_query=request.user_query,
+                                         servings=request.servings)
     except Exception as exc:
         import logging
         logging.getLogger(__name__).exception("Recipe generation failed")
@@ -148,6 +150,7 @@ async def generate_selected(request: SelectedRecipeRequest):
         result = await run_in_threadpool(
             run_nosh, request.ingredients, user_query=request.user_query,
             selected_recipe_id=request.recipe_id.removeprefix("rag:"),
+            servings=request.servings,
         )
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Recipe generation is unavailable. Check Ollama and the recipe index.") from exc

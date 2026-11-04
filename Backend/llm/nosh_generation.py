@@ -316,7 +316,8 @@ def normalize_recipe_format(output):
 
 def generate_recipe(available_ingredients: str, retrieved_context: str,
                     missing_ingredients=None, model: str = GEN_MODEL,
-                    *, user_query="", max_time=None, substitutions=None, repair_feedback=None) -> str:
+                    *, user_query="", max_time=None, servings=None,
+                    substitutions=None, repair_feedback=None) -> str:
     if not available_ingredients.strip() or not retrieved_context.strip():
         return INSUFFICIENT_CONTEXT
     from llm.source_adaptation import resolve_substitution_amounts
@@ -325,6 +326,14 @@ def generate_recipe(available_ingredients: str, retrieved_context: str,
                "assumed_staples": list(STAPLES),
                "source_context": ascii_fractions(retrieved_context), "request": user_query,
                "max_total_minutes": max_time, "substitutions": substitutions or []}
+    if servings is not None:
+        payload["servings"] = servings
+        payload["scaling_note"] = (
+            f"Ingredient quantities in source_context have already been pre-scaled "
+            f"for {servings} serving(s). Use exactly those scaled amounts in your steps. "
+            f"Do NOT rescale them. Keep oven temperatures and cooking times exactly as "
+            f"the source states — do not scale those."
+        )
     if repair_feedback is not None:
         payload["repair_feedback"] = repair_feedback
     if missing_ingredients is not None:

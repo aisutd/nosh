@@ -10,10 +10,10 @@ ALIASES = {
     "boiling water": "water",
     "half-and-half": "half and half", "half-and-half cream": "half and half",
     "mustard powder": "dry mustard", "ground mustard": "dry mustard",
-    # Temperature does not change the pantry requirement for water.
-    "cold water": "water", "warm water": "water", "hot water": "water",
     # Plurals
     "tomatoes": "tomato", "potatoes": "potato", "leaves": "leaf",
+    # Water temperature variants
+    "cold water": "water", "warm water": "water", "hot water": "water",
     # Sugar variations
     "white sugar": "sugar", "granulated sugar": "sugar",
     # Different sugar types are not interchangeable inventory items.
@@ -81,6 +81,7 @@ _NON_FOOD = frozenset({
 
 
 def normalize_name(value):
+    """Strip units, quantities, and prep words from a raw ingredient string and return a clean name."""
     value = unicodedata.normalize('NFKC', value.lower()).replace('⁄', '/')
     value = re.sub(r'\([^()]*\)', '', value)
     value = re.sub(r'^[\s\d./–-]+', '', value)
@@ -168,7 +169,6 @@ def required_ingredients(raw):
         if all(w in _NON_FOOD for w in name.split()):
             continue
         # A conventional paired seasoning is two requirements, not one name.
-        # Do not split arbitrary combinations such as "macaroni and cheese".
         if name == "salt and pepper":
             names.update({"salt", "pepper"})
         elif name == "salt and black pepper":
