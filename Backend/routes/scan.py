@@ -1,4 +1,7 @@
 """Authenticated refrigerator image scanning with the trained YOLO model."""
+import logging
+from urllib.error import URLError
+
 from fastapi import APIRouter, File, HTTPException, UploadFile, Depends
 from fastapi.concurrency import run_in_threadpool
 from security import get_current_user
@@ -33,10 +36,14 @@ async def scan(image: UploadFile = File(...), current_user: dict = Depends(get_c
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    warnings = []
     try:
         ocr_found = await run_in_threadpool(detect_text_ingredients, data)   # OCR on the same photo
-    except ValueError:
-        ocr_found = []                              # OCR couldn't read it, YOLO results still count
+    except (ValueError, URLError, OSError) as exc:
+        # Text recognition is optional; retain successful object detections.
+        logging.getLogger(__name__).warning("OCR unavailable; returning YOLO detections: %s", exc)
+        warnings.append("Text recognition is unavailable. Object detections are still included.")
+        ocr_found = []
     detections["ingredients"] += ocr_found          # add OCR results to YOLO's list
 
     ingredients = sorted({
@@ -50,4 +57,4 @@ async def scan(image: UploadFile = File(...), current_user: dict = Depends(get_c
             {"$setOnInsert": {"quantity": 1, "unit": "count"}},   # only set if it's new
             upsert=True,
         )
-    return {"ingredients": ingredients, "detections": detections}
+    return {"ingredients": ingredients, "detections": detections, "warnings": warnings}

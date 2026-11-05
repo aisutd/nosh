@@ -1,4 +1,7 @@
 import re
+import os
+from threading import Lock
+import certifi
 from collections import Counter
 from pathlib import Path
 
@@ -11,13 +14,20 @@ from retrieval.ingredients import normalize_name, required_ingredients, PANTRY
 
 CSV_PATH = Path(__file__).resolve().parent.parent / "data" / "processed" / "cleaned_recipes.csv"
 _reader = None                                   # OCR model, loaded on first use
+_reader_lock = Lock()
 _vocab = None                                    # ingredient names, built on first use
 
 
 def get_reader():
     global _reader
-    if _reader is None:
-        _reader = easyocr.Reader(["en"], gpu=False)
+    with _reader_lock:
+        if _reader is None:
+            # EasyOCR downloads via urllib, which uses OpenSSL's default CA paths.
+            # Python.org macOS installs may lack a usable default certificate file.
+            # Respect explicitly configured trust stores; never disable verification.
+            if not os.environ.get("SSL_CERT_FILE") and not os.environ.get("SSL_CERT_DIR"):
+                os.environ["SSL_CERT_FILE"] = certifi.where()
+            _reader = easyocr.Reader(["en"], gpu=False)
     return _reader
 
 _JUNK_START = {"and", "or", "at", "for", "with", "container"} 

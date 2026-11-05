@@ -64,6 +64,29 @@
       "recipe_name": "Southern-Style Baked Banana Pudding",
       "source_url": "https://www.allrecipes.com/recipe/273495/southern-style-baked-banana-pudding/",
       "imported_at": "2026-10-31T22:59:22.184568+00:00"
+    },
+    "https://www.allrecipes.com/recipe/255917/honduran-baleadas/": {
+      "ingredient_lines": [
+        "2 cups all-purpose flour",
+        "1 cup water",
+        "0.5 cup vegetable oil",
+        "1 egg",
+        "0.5 teaspoon salt",
+        "2 cups refried beans, warmed",
+        "1 avocado, sliced",
+        "0.5 cup crumbled queso fresco (fresh white cheese)",
+        "0.25 cup crema fresca (fresh cream)"
+      ],
+      "instruction_steps": [
+        "Make tortillas: Mix flour, water, vegetable oil, egg, and salt together in a large bowl until combined. Knead dough until smooth and no longer sticky. Form into 8 golf ball-sized balls. Cover and let rest at room temperature for about 20 minutes.",
+        "Stretch each dough ball into a thick tortilla.",
+        "Heat a large skillet over medium-high heat. Cook tortillas in the hot skillet until browned and lightly puffed, about 1 minute per side.",
+        "Add filling: Layer refried beans, avocado, and queso fresco onto warm tortillas, then drizzle crema over the top.",
+        "Fold tortillas in half to eat."
+      ],
+      "recipe_name": "Honduran Baleadas",
+      "source_url": "https://www.allrecipes.com/recipe/255917/honduran-baleadas/",
+      "imported_at": "2026-11-04T19:01:47.547485+00:00"
     }
   }
 }
