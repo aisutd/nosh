@@ -1,12 +1,14 @@
+import { request } from '../lib/api';
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { LuX, LuHeart } from "react-icons/lu";
 
-const API = `http://${window.location.hostname}:8000`;
+
 
 function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [browseError, setBrowseError] = useState('');
   const [browse, setBrowse] = useState([]);
   const [index, setIndex] = useState(0);
   const [dragX, setDragX] = useState(0);           // how far the card is dragged
@@ -15,10 +17,11 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
 
   useEffect(() => {
     if (ragSearch || recipes.length > 0) return;
-    fetch(`${API}/recipes/browse?limit=20`)
-      .then((res) => res.json())
-      .then(setBrowse)
-      .catch(() => setBrowse([]));
+    const controller = new AbortController();
+    request('/recipes/browse?limit=20', { signal: controller.signal })
+      .then(data => { if (!controller.signal.aborted) setBrowse(data); })
+      .catch(err => { if (!controller.signal.aborted) setBrowseError(err.message); });
+    return () => controller.abort();
   }, [recipes, ragSearch]);
 
   const deck = ragSearch || recipes.length > 0 ? recipes : browse;
@@ -60,7 +63,9 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
 
   return (
     <main className="swipe">
-      <h1 className="swipe-title">Swipe</h1>
+      <h1 className="swipe-title">On the menu</h1>
+      <p className="section-intro">Pick something you’d love to cook.</p>
+      {browseError && <p role="alert">{browseError}</p>}
       {error && <p role="alert">{error}</p>}
 
       {recipe ? (
@@ -78,10 +83,10 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
             }}
           > 
             {dragX > 40 && (
-              <span className="stamp stamp-yes" style={{ opacity: Math.min(dragX / 100, 1) }}>YESSIR</span>
+              <span className="stamp stamp-yes" style={{ opacity: Math.min(dragX / 100, 1) }}>SAVE</span>
             )}
             {dragX < -40 && (
-              <span className="stamp stamp-no" style={{ opacity: Math.min(-dragX / 100, 1) }}>HECKS NAH</span>
+              <span className="stamp stamp-no" style={{ opacity: Math.min(-dragX / 100, 1) }}>SKIP</span>
             )}
           <h2>{recipe.title}</h2>
             {ragSearch ? <>
@@ -89,6 +94,7 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
               <p>{recipe.total_time || "Time not listed"}</p>
               <p>{recipe.ingredients}</p>
               {/^https?:\/\//i.test(recipe.source_url || "") && <a href={recipe.source_url} target="_blank" rel="noreferrer">Source recipe</a>}
+              <Link className="recipe-cook-link" to={`/cook/rag/${encodeURIComponent(recipe.id)}`} state={{ ...ragSearch, title: recipe.title }} onPointerDown={event => event.stopPropagation()}>Cook this recipe →</Link>
               <p className="swipe-card-position">Option {index + 1} of {deck.length}</p>
             </> : <p>{recipe.ingredients.length} ingredients</p>}
           </div>
@@ -98,7 +104,7 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
           </div>
         </>
       ) : (
-        <div><p>{deck.length === 0 ? (ragSearch ? ragSearch.message : "Loading...") : "No more recipes."}</p>
+        <div><p>{deck.length === 0 ? (ragSearch ? ragSearch.message : browseError ? "Return to your pantry to try again." : "Loading recipe suggestions…") : "No more recipes."}</p>
           {deck.length > 0 && <button onClick={() => setIndex(0)}>Review options again</button>}
           <p><Link to="/pantry">Back to pantry</Link></p></div>
       )}

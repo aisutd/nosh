@@ -1,9 +1,9 @@
-import { authHeaders } from '../lib/api';
+import { LuMic, LuSquare } from 'react-icons/lu';
+import { API, authHeaders } from '../lib/api';
 import { CookingFeedback } from './CookingMemory.jsx';
 import { useEffect, useRef, useState } from 'react';
 import './VoiceAgent.css';
 
-const API = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000`;
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 export default function VoiceAgent({ ingredients = [], recipe = '' }) {
@@ -104,7 +104,7 @@ export default function VoiceAgent({ ingredients = [], recipe = '' }) {
     };
     mic.onerror = event => {
       if (event.error === 'aborted') return;
-      setError(event.error === 'not-allowed' ? 'Microphone access was denied. Allow it in browser settings, or type below.' : `Speech recognition stopped (${event.error}). Try again or type below.`);
+      setError(event.error === 'network' ? 'The browser could not connect to speech recognition. Try this page in Google Chrome, or type your question below.' : event.error === 'not-allowed' ? 'Microphone access was denied. Allow it in browser settings, or type below.' : `Speech recognition stopped (${event.error}). Try again or type below.`);
     };
     mic.onend = () => { setListening(false); if (!locked.current) setStatus('Ready'); };
     try { mic.start(); } catch { setError('Could not start the microphone. Try again or type below.'); }
@@ -112,12 +112,12 @@ export default function VoiceAgent({ ingredients = [], recipe = '' }) {
 
   return <section className="voice-agent" aria-label="NOSH voice assistant">
     <h2>Cook with NOSH</h2>
-    <p>Ask about your recipe, say “next step” or “repeat”. From your pantry, ask “What can I cook?”</p>
+    <p>A little help while your hands are busy. Ask a cooking question or say “next step”.</p>
     <div className="voice-controls">
       <button disabled={!Recognition || busy || !window.isSecureContext} aria-pressed={listening} onClick={() => {
         if (listening) { recognition.current?.abort(); setInterim(''); setStatus('Ready'); }
         else startListening();
-      }}>{listening ? '■ Stop listening' : '🎙 Start listening'}</button>
+      }}>{listening ? <><LuSquare aria-hidden="true" /> Stop listening</> : <><LuMic aria-hidden="true" /> Start listening</>}</button>
       <button onClick={() => { window.speechSynthesis?.cancel(); setStatus(busy ? 'NOSH is thinking…' : listening ? 'Listening…' : 'Ready'); }}>Stop speaking</button>
       <label><input type="checkbox" checked={spoken} onChange={event => {
         setSpoken(event.target.checked);

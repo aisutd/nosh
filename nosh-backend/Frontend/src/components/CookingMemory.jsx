@@ -83,7 +83,7 @@ export function CookingFeedback({ recipeTitle }) {
     catch (err) { setError(err.message); }
     finally { setBusy(false); }
   }
-  return <section className="cooking-memory"><h3>How did cooking go?</h3>
+  return <details className="cooking-memory cooking-feedback"><summary>How did cooking go?</summary>
     <p>Save feedback so NOSH can help with past difficulties in future sessions.</p>
     {saved ? <p role="status">Feedback saved. View your history in <Link to="/profile">Profile</Link>.</p> : <form className="memory-form" onSubmit={submit}>
       <label>Recipe name<input required maxLength={200} value={values.recipe_title} onChange={event => setValues({ ...values, recipe_title: event.target.value })} /></label>
@@ -94,5 +94,5 @@ export function CookingFeedback({ recipeTitle }) {
       <button className="btn-primary" disabled={busy}>{busy ? 'Saving…' : 'Save session feedback'}</button>
       {error && <p role="alert">{error}</p>}
     </form>}
-  </section>;
+  </details>;
 }

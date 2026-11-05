@@ -7,7 +7,7 @@
   --text: #f5f1ea;               /* main text (warm white) */
   --surface: #1c1918;            /* inputs, buttons, cards */
   --bg: #121010;                 /* page background */
-  --border: #0b0615;            /* borders (almost invisible on the dark bg) */
+  --border: #3b322b;            /* borders (almost invisible on the dark bg) */
   --muted: #a39d96;              /* grey text */
   --accent: #ff7a1a;             /* orange: buttons, links, active tab */
   --accent-dark: #d26619;        /* orange on hover */
@@ -26,5 +26,5 @@ body {
   color: var(--text);
 }
 
-button, input { font: inherit; } /* buttons/inputs use the page font */
+button, input, select, textarea { font: inherit; } /* buttons/inputs use the page font */
 a { color: inherit; }            /* links use the surrounding text color, not blue */

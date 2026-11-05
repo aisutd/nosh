@@ -3,7 +3,7 @@ import { LuRefrigerator, LuFlame, LuHeart, LuUser } from "react-icons/lu";
 
 function NavBar({ user }) {
   return (
-    <nav className="navbar">
+    <nav className="navbar" aria-label="Main navigation">
       <NavLink to="/pantry" end className="nav-item">
         <LuRefrigerator size={22} />
         <span>Pantry</span>
@@ -11,7 +11,7 @@ function NavBar({ user }) {
 
       <NavLink to="/swipe" className="nav-item">
         <LuFlame size={22} />
-        <span>Swipe</span>
+        <span>Discover</span>
       </NavLink>
 
       <NavLink to="/saved" className="nav-item">
@@ -22,7 +22,7 @@ function NavBar({ user }) {
       {user ? (
         <NavLink to="/profile" className="nav-item">
           <LuUser size={22} />
-          <span>Me</span>
+          <span>Profile</span>
         </NavLink>
       ) : (
         <NavLink to="/auth" className="nav-item">

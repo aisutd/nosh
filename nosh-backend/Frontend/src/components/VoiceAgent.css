@@ -1,10 +1,13 @@
-.voice-agent { margin: 1.5rem 0; padding: 1.25rem; border: 1px solid #aac7b0; border-radius: 1rem; background: #f6faf6; color: #183a27; text-align: left; }
-.voice-agent h2 { margin-top: 0; }
-.voice-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin: .8rem 0; }
-.voice-agent button { background: #245c3a; color: white; border: 0; padding: .7rem 1rem; border-radius: .6rem; cursor: pointer; }
-.voice-agent button:disabled { opacity: .5; cursor: default; }
-.voice-agent button[aria-pressed="true"] { background: #94372d; }
-.voice-agent input:not([type="checkbox"]) { flex: 1; min-width: 140px; padding: .7rem; border: 1px solid #658771; border-radius: .5rem; background: white; color: #183a27; }
-.voice-agent :focus-visible { outline: 3px solid #ca7516; outline-offset: 3px; }
-.voice-messages { max-height: 24rem; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
-.voice-messages p { padding: .75rem; border-radius: .5rem; background: white; }
+.voice-agent { padding: clamp(18px, 4vw, 28px); border: 1px solid var(--border); border-radius: 24px; background: var(--surface); text-align: left; }
+.voice-agent h2 { margin: 0 0 8px; font-size: 24px; }
+.voice-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 16px 0; }
+.voice-agent button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; }
+.voice-agent button[aria-pressed="true"] { color: #ffe6de; border-color: #eb785e; background: #542e25; }
+.voice-controls label { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; }
+.voice-agent input[type="checkbox"] { width: 17px; height: 17px; padding: 0; accent-color: var(--accent); }
+.voice-agent input:not([type="checkbox"]) { flex: 1; min-width: 0; width: 160px; border-radius: 12px; }
+.voice-agent [role="status"] { font-size: 14px; margin-bottom: 12px; }
+.voice-agent form > label { display: block; margin-top: 18px; font-weight: 500; }
+.voice-messages { max-height: 22rem; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; scroll-behavior: smooth; }
+.voice-messages p { padding: 14px 16px; margin: 8px 0; border: 1px solid var(--border); border-radius: 14px; background: var(--bg); color: var(--text); line-height: 1.65; }
+.voice-messages strong { color: var(--accent); }

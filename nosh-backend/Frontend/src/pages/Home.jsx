@@ -1,16 +1,18 @@
+import { request } from '../lib/api';
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-const API = `http://${window.location.hostname}:8000`;
+
 
 function Home() {
+  const [error, setError] = useState("");
   const [recipes, setRecipes] = useState([]);
   const rowRef = useRef(null);
   const pausedRef = useRef(false);
 
   useEffect(() => {
     const el = rowRef.current;
-    if (!el || recipes.length === 0) return;
+    if (!el || recipes.length === 0 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = setInterval(() => {
       if (pausedRef.current) return;
       el.scrollLeft += 1;                                   // move 1px
@@ -20,10 +22,11 @@ function Home() {
   }, [recipes]);
 
   useEffect(() => {
-    fetch(`${API}/recipes/browse?limit=10`)
-      .then((res) => res.json())
-      .then(setRecipes)
-      .catch(() => setRecipes([]));
+    const controller = new AbortController();
+    request('/recipes/browse?limit=10', { signal: controller.signal })
+      .then(data => { if (!controller.signal.aborted) setRecipes(data); })
+      .catch(err => { if (!controller.signal.aborted) setError(err.message); });
+    return () => controller.abort();
   }, []);
 
   return (
@@ -38,7 +41,8 @@ function Home() {
       <h1 className="hero">Let's get cooking.</h1>
       <p className="hero-sub">Scan, swipe, and cook.</p>
 
-      <h3 className="row-title">Trending tonight</h3>
+      <h3 className="row-title">A little inspiration</h3>
+      {error && <p role="alert">{error}</p>}
         <div
         className="row"
         ref={rowRef}

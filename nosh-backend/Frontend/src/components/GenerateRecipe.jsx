@@ -1,7 +1,7 @@
-import { authHeaders } from '../lib/api';
+import { request, authHeaders } from '../lib/api';
 import { useEffect, useRef, useState } from "react";
 
-const API = `http://${window.location.hostname}:8000`;
+
 
 export default function GenerateRecipe({ ingredients, onOptions }) {
   const [query, setQuery] = useState("");
@@ -21,17 +21,10 @@ export default function GenerateRecipe({ ingredients, onOptions }) {
     setError("");
     setResult(null);
     try {
-      const response = await fetch(`${API}/recipes/options`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ ingredients, user_query: query }),
-        signal: controller.signal,
+      const data = await request('/recipes/options', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ ingredients, user_query: query }), signal: controller.signal, timeout: 180000,
       });
-      const data = await response.json().catch(() => null);
-      if (!response.ok) {
-        const detail = data?.detail;
-        throw new Error(typeof detail === "string" ? detail : "Could not generate a recipe. Please try again.");
-      }
       if (!data?.status) throw new Error("The server returned an unexpected recipe response.");
       onOptions(data, { ingredients: [...ingredients], user_query: query });
     } catch (err) {
