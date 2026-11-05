@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import RecipeIngredients from "../components/RecipeIngredients";
 import { LuX, LuHeart, LuChevronUp, LuChevronDown, LuClock } from "react-icons/lu";
 
 const API = `http://${window.location.hostname}:8000`;
@@ -28,7 +27,7 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
   const [dragX, setDragX] = useState(0);            // how far the card is dragged
   const [dragging, setDragging] = useState(false);
   const startX = useRef(0);                         // where the drag started
-  const [staples, setStaples] = useState([]);        
+  const [staples, setStaples] = useState([]);      
 
   useEffect(() => {
     if (ragSearch || recipes.length > 0) return;
@@ -48,6 +47,11 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
   const deck = ragSearch || recipes.length > 0 ? recipes : browse;
 
   const recipe = deck[index];
+  const timingText = recipe?.metadata?.timing || recipe?.timing || "";
+  const servingCount =
+    recipe?.servings ??
+    recipe?.metadata?.servings ??
+    timingText.match(/servings:\s*(\d+)/i)?.[1];
   const next = () => { setIndex((i) => i + 1); setOpen(false); };
 
   const items = splitIngredients(recipe?.ingredients);
@@ -164,31 +168,16 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
                 <h2>{recipe.title}</h2>
                   <p className="sheet-meta">
                     <LuClock /> {recipe.total_time || "Time not listed"}
-                    {recipe.servings && <> · {recipe.servings} servings</>}
+                    {servingCount && <> · {servingCount} servings</>}
                   </p>                
-                {recipe.availability ? <>
-                  <RecipeIngredients availability={recipe.availability} />
-                  <h3>Source ingredients</h3>
-                  <p>{items.join(", ")}</p>
-                  <p>Directions below are from the original recipe. Adapted instructions are validated when you cook.</p>
-                </> : <>
-                <h3>Ingredients</h3>
-                <div className="sheet-chips">
-                  {items.map((line, i) => (
-                    <span key={i} className={`sheet-chip ${haveIt(line) ? "" : "missing"}`}>{line}</span>
-                  ))}
-                </div>
-                {recipe.substitutions?.length > 0 && <>
-                  <h3>Pantry substitutions</h3>
-                  <ul className="sheet-steps">
-                    {recipe.substitutions.map((swap) => <li key={swap.ingredient}>
-                      <strong>{swap.ingredient} → {swap.replacement_ingredients.join(" + ")}</strong>
-                      {" "}{swap.instructions} {swap.limitations}
-                    </li>)}
-                  </ul>
-                  <p>Directions below are from the original recipe. Adapted instructions are prepared when you cook.</p>
-                </>}
-                </>}
+                  <h3>Ingredients</h3>
+                  <div className="sheet-chips">
+                    {items.map((line, i) => (
+                      <span key={i} className="sheet-chip">
+                        {line}
+                      </span>
+                    ))}
+                  </div>
                   {steps.length > 0 && (
                     <>
                       <h3>Directions</h3>

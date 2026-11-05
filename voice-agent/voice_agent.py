@@ -3,6 +3,8 @@ import os
 import subprocess
 from pathlib import Path
 
+import pyttsx3
+
 import sounddevice as sd
 from scipy.io.wavfile import write
 from dotenv import load_dotenv
@@ -20,7 +22,7 @@ AUDIO_FILE = "recording.wav"
 
 # LOAD ENVIRONMENT VARIABLES
 
-env_path = Path(__file__).resolve().parent.parent / ".env"
+env_path = Path(__file__).resolve().parent.parent / "Backend" / ".env"
 load_dotenv(env_path)
 
 API_KEY = os.getenv("DEEPGRAM_API_KEY")
@@ -123,7 +125,14 @@ def listen():
 
 
 # TEXT TO SPEECH
+tts = pyttsx3.init()
 
+def speak(text):
+    print("NOSH:", text)
+    tts.say(text)
+    tts.runAndWait()
+
+'''
 def speak(text):
     """Print and read the given text aloud using macOS text-to-speech."""
     print("NOSH:", text)
@@ -131,6 +140,7 @@ def speak(text):
     subprocess.run(
         ["say", text]
     )
+'''
 
 
 # CHECK CURRENT RECIPE CONTEXT

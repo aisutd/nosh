@@ -25,6 +25,8 @@ export default function RagCook({ savedId = null, title = null, image = null, in
   const sourceIngredients = Array.isArray(rawIngredients) ? rawIngredients.join(", ") : rawIngredients;
   const consumptionIngredients = result?.inventory_ingredients ?? (substitutions.length ? null : ingredients);
 
+
+  
   useEffect(() => {
     if (!savedId && !context?.ingredients) return;
     const controller = new AbortController();
@@ -52,7 +54,46 @@ export default function RagCook({ savedId = null, title = null, image = null, in
     return () => { clearTimeout(timer); controller.abort(); };
   }, [id, context, attempt, savedId, servings]);
 
+  useEffect(() => {
+  const onVoiceDone = () => setTalking(false);
+  window.addEventListener("nosh-voice-done", onVoiceDone);
+  return () => window.removeEventListener("nosh-voice-done", onVoiceDone);
+}, []);
+
   const photo = image || context?.image;
+  function toggleVoiceCooking() {
+    if (talking) {
+      window.ReactNativeWebView?.postMessage(
+        JSON.stringify({ type: "voice-stop" })
+      );
+      setTalking(false);
+      return;
+    }
+
+    if (!steps.length) {
+      setError("Generate the recipe instructions first.");
+      return;
+    }
+
+    if (!window.ReactNativeWebView?.postMessage) {
+      setError("Open NOSH in Expo Go to hear the recipe.");
+      return;
+    }
+
+    window.ReactNativeWebView.postMessage(
+      JSON.stringify({
+        type: "voice-cook",
+        token: localStorage.getItem("access_token") || "",
+        recipe: {
+          title: title || context?.title || result?.source_recipe || "Recipe",
+          steps,
+          recipeText: result?.recipe || "",
+          ingredients: context?.ingredients || ingredients,
+        },
+      })
+    );
+    setTalking(true);
+  }
 
   // tell the backend this recipe is done, so it subtracts the ingredients from the inventory
   async function handleCooked() {
@@ -89,7 +130,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
     </div>
     <p>{talking ? "Listening..." : "Tap to cook hands-free with Nosh."}</p>
 
-    <button className="cta talk-btn" onClick={() => setTalking((t) => !t)}>
+      <button className="cta talk-btn" onClick={toggleVoiceCooking}>
       <LuMic /> {talking ? "Stop" : "Talk to Nosh"}
     </button>
 

@@ -25,6 +25,20 @@ class CookingSession:
         self._context = None
         self._history = []
         self._step_index = 0
+    
+        def load_approved_recipe(self, recipe_text, ingredients=None):
+            """Load the recipe already selected on the Cook page."""
+            self._context = {
+                "approved_recipe": recipe_text,
+                "source_context": recipe_text,
+                "available_ingredients": normalize_ingredients(ingredients or [])
+                    + ["water", "salt", "pepper"],
+                "original_request": "",
+                "max_total_minutes": None,
+            }
+
+            self._history = []
+            self._step_index = 0
 
     def start(self, ingredients, *, user_query='', top_k=5, max_time=None, collection=None):
         """Run the RAG pipeline to find and approve a recipe, storing it as the session context."""

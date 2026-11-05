@@ -3,7 +3,11 @@ import sys
 from pathlib import Path
 
 # Add repo root to sys.path so we can import retrieval/, llm/, etc.
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+REPO_ROOT = Path(__file__).resolve().parent.parent
+BACKEND_DIR = REPO_ROOT / "Backend"
+
+sys.path.insert(0, str(BACKEND_DIR))
+sys.path.insert(0, str(REPO_ROOT))
 
 from nosh_pipeline import run_nosh
 

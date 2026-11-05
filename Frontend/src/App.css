@@ -395,6 +395,17 @@ button:hover {                 /* mouse is over the button */
   cursor: pointer;
 }
 
+/* dark dropdown lists, like the other pills */
+select {
+  background-color: var(--surface);
+  color: var(--text);
+}
+
+select option {
+  background: #1c1816;      /* dark list background */
+  color: #f4efe9;           /* light text */
+}
+
 /* Numbered steps list */
 .cook-list {                   /* ingredients / directions list */
   text-align: left;            /* lists read better left-aligned than centered */
@@ -458,6 +469,10 @@ button:hover {                 /* mouse is over the button */
 }
 
 /* ===== Saved ("Liked") and Swipe pages share one layout ===== */
+
+html, body {
+  overflow-x: hidden;
+}
 
 .liked,
 .swipe {                       /* comma = same rules for both */
