@@ -1,4 +1,29 @@
-.env
+# Python environment and generated caches
+venv/
 .venv/
-recording.wav
 __pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Secrets and local config
+.env
+recording.wav
+
+# Local experiments and mock data
+local_tests/
+
+# Generated vector databases
+data/chroma_db*/
+rag/chroma_db*/
+**/data/chroma_db*/
+**/rag/chroma_db*/
+
+# YOLO model weights
+**/models/*.pt
+
+# Frontend build output
+node_modules/
+dist/
+
+# macOS metadata
+.DS_Store

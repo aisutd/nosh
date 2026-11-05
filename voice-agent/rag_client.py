@@ -13,6 +13,10 @@ BACKEND_URL = os.getenv(
 
 
 def generate_recipe(ingredients, user_query=""):
+    # HTTP remains the default for the integrated web/backend workflow.
+    # The standalone direct pipeline is available without starting FastAPI.
+    if os.getenv("NOSH_RAG_MODE", "http").lower() == "direct":
+        return _direct_result(ingredients, user_query)
     payload = {
         "ingredients": ingredients,
         "user_query": user_query
@@ -66,3 +70,28 @@ def generate_recipe(ingredients, user_query=""):
             "success": False,
             "message": "Something went wrong while contacting NOSH."
         }
+
+
+def _direct_result(ingredients, user_query):
+    """Load the standalone pipeline only when explicitly requested."""
+    import sys
+    root = str(Path(__file__).resolve().parent.parent)
+    if root not in sys.path:
+        sys.path.insert(0, root)
+    from nosh_pipeline import run_nosh
+    result = run_nosh(ingredients, user_query=user_query)
+    if result.get("status") == "ok":
+        return {"success": True, "recipe": result.get("recipe"),
+                "source_recipe": result.get("source_recipe"),
+                "source_url": result.get("source_url")}
+    return {"success": False, "message": result.get("message", "I could not find a recipe for that.")}
+
+
+def ask_rag(question, available_ingredients=None, recipe_context=None):
+    """Preserve Mock_Main's direct-client API for standalone callers.
+
+    recipe_context is retained for signature compatibility with Mock_Main.
+    Retrieval and source validation remain the standalone pipeline's responsibility.
+    """
+    result = _direct_result(available_ingredients or "", question)
+    return result.get("recipe") if result["success"] else result["message"]

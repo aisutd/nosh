@@ -1,0 +1,625 @@
+{
+  "timestamp_utc": "2026-10-09T21:14:27.387799+00:00",
+  "model": "all-MiniLM-L6-v2",
+  "distance_metric": "cosine",
+  "python": "3.13.2",
+  "versions": {
+    "chromadb": "1.5.9",
+    "sentence-transformers": "6.1.0",
+    "torch": "2.14.1"
+  },
+  "indexed_recipes": 961,
+  "top_k": 5,
+  "default_csv_sha256": "5b6787309d37422e6b66d4616827766e079d6035deb58b1e2d3d8786d9a11493",
+  "cases_sha256": "c4f56780f862ad03c5b9aa3320640cab036cd9eb988e21a155f3646a5a8eacb4",
+  "hit_rate_at_k": 0.9166666666666666,
+  "mrr_at_k": 0.8541666666666666,
+  "cases": [
+    {
+      "id": "guacamole",
+      "query": "A creamy mashed avocado dip with lime for tortilla chips",
+      "expected_titles": [
+        "World's Best Guacamole",
+        "Traditional Mexican Guacamole",
+        "Best Guacamole",
+        "Easy Never Forgotten Guacamole",
+        "Quick and Easy Guacamole",
+        "Mean Green Guacamole Salsa"
+      ],
+      "first_relevant_rank": 4,
+      "hit": true,
+      "reciprocal_rank": 0.25,
+      "query_seconds": 0.0106,
+      "results": [
+        {
+          "rank": 1,
+          "title": "Seven-Layer Dip",
+          "url": "https://www.allrecipes.com/recipe/23176/seven-layer-dip-ii/",
+          "distance": 0.3510061502456665,
+          "similarity": 0.6489938497543335
+        },
+        {
+          "rank": 2,
+          "title": "Avocado Dessert",
+          "url": "https://www.allrecipes.com/recipe/80784/avocado-dessert/",
+          "distance": 0.3557214140892029,
+          "similarity": 0.6442785859107971
+        },
+        {
+          "rank": 3,
+          "title": "Grilled Avocados",
+          "url": "https://www.allrecipes.com/recipe/238173/grilled-avocados/",
+          "distance": 0.3622584342956543,
+          "similarity": 0.6377415657043457
+        },
+        {
+          "rank": 4,
+          "title": "Traditional Mexican Guacamole",
+          "url": "https://www.allrecipes.com/recipe/221286/traditional-mexican-guacamole/",
+          "distance": 0.39072054624557495,
+          "similarity": 0.609279453754425
+        },
+        {
+          "rank": 5,
+          "title": "Mexican Baked Fish",
+          "url": "https://www.allrecipes.com/recipe/12745/mexican-baked-fish/",
+          "distance": 0.3943023085594177,
+          "similarity": 0.6056976914405823
+        }
+      ]
+    },
+    {
+      "id": "banana_bread",
+      "query": "Bake a sweet loaf using overripe bananas",
+      "expected_titles": [
+        "Joy's Easy Banana Bread",
+        "Janet's Rich Banana Bread",
+        "The Best Banana Bread",
+        "Brown Sugar Banana Bread",
+        "Simple Banana Bread",
+        "Almost No Fat Banana Bread",
+        "Cream Cheese Banana Bread"
+      ],
+      "first_relevant_rank": 1,
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "query_seconds": 0.0072,
+      "results": [
+        {
+          "rank": 1,
+          "title": "The Best Banana Bread",
+          "url": "https://www.allrecipes.com/recipe/16952/the-best-banana-bread/",
+          "distance": 0.27627992630004883,
+          "similarity": 0.7237200736999512
+        },
+        {
+          "rank": 2,
+          "title": "Almost No Fat Banana Bread",
+          "url": "https://www.allrecipes.com/recipe/23426/almost-no-fat-banana-bread/",
+          "distance": 0.28266626596450806,
+          "similarity": 0.7173337340354919
+        },
+        {
+          "rank": 3,
+          "title": "Banana Loaf",
+          "url": "https://www.allrecipes.com/recipe/20739/banana-loaf/",
+          "distance": 0.2829316258430481,
+          "similarity": 0.7170683741569519
+        },
+        {
+          "rank": 4,
+          "title": "Simple Banana Bread",
+          "url": "https://www.allrecipes.com/recipe/6757/simple-banana-bread/",
+          "distance": 0.2898246645927429,
+          "similarity": 0.7101753354072571
+        },
+        {
+          "rank": 5,
+          "title": "Easy Banana Loaf Cake",
+          "url": "https://www.allrecipes.com/recipe/8301/banana-loaf-cake-i/",
+          "distance": 0.2965419888496399,
+          "similarity": 0.7034580111503601
+        }
+      ]
+    },
+    {
+      "id": "lemonade",
+      "query": "A refreshing drink made with squeezed lemons water and sugar",
+      "expected_titles": [
+        "Old-Fashioned Lemonade",
+        "Refreshing Cucumber Lemonade"
+      ],
+      "first_relevant_rank": 1,
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "query_seconds": 0.0066,
+      "results": [
+        {
+          "rank": 1,
+          "title": "Old-Fashioned Lemonade",
+          "url": "https://www.allrecipes.com/recipe/20487/old-fashioned-lemonade/",
+          "distance": 0.37383222579956055,
+          "similarity": 0.6261677742004395
+        },
+        {
+          "rank": 2,
+          "title": "Refreshing Cucumber Lemonade",
+          "url": "https://www.allrecipes.com/recipe/197751/refreshing-cucumber-lemonade/",
+          "distance": 0.4259944558143616,
+          "similarity": 0.5740055441856384
+        },
+        {
+          "rank": 3,
+          "title": "Flavored Water",
+          "url": "https://www.allrecipes.com/recipe/246155/flavored-water/",
+          "distance": 0.4649277925491333,
+          "similarity": 0.5350722074508667
+        },
+        {
+          "rank": 4,
+          "title": "Orange Crush! Fresh Squeezed Orange and Vodka Cocktail",
+          "url": "https://www.allrecipes.com/recipe/233937/orange-crush-fresh-squeezed-orange-and-vodka-cocktail/",
+          "distance": 0.4669138789176941,
+          "similarity": 0.5330861210823059
+        },
+        {
+          "rank": 5,
+          "title": "Watermelon and Strawberry Lemonade",
+          "url": "https://www.allrecipes.com/recipe/143452/watermelon-and-strawberry-lemonade/",
+          "distance": 0.4691687226295471,
+          "similarity": 0.5308312773704529
+        }
+      ]
+    },
+    {
+      "id": "coconut_rice",
+      "query": "Rice simmered in coconut milk as a side dish",
+      "expected_titles": [
+        "Coconut Rice",
+        "Coconut Jasmine Rice",
+        "Coconut Lime Rice",
+        "Sweet Coconut Rice"
+      ],
+      "first_relevant_rank": 1,
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "query_seconds": 0.0062,
+      "results": [
+        {
+          "rank": 1,
+          "title": "Coconut Rice",
+          "url": "https://www.allrecipes.com/recipe/25346/coconut-rice/",
+          "distance": 0.3116520047187805,
+          "similarity": 0.6883479952812195
+        },
+        {
+          "rank": 2,
+          "title": "Sweet Coconut Rice",
+          "url": "https://www.allrecipes.com/recipe/237021/sweet-coconut-rice/",
+          "distance": 0.34709250926971436,
+          "similarity": 0.6529074907302856
+        },
+        {
+          "rank": 3,
+          "title": "Coconut Jasmine Rice",
+          "url": "https://www.allrecipes.com/recipe/238184/coconut-jasmine-rice/",
+          "distance": 0.35357946157455444,
+          "similarity": 0.6464205384254456
+        },
+        {
+          "rank": 4,
+          "title": "Coconut Lime Rice",
+          "url": "https://www.allrecipes.com/recipe/202656/coconut-lime-rice/",
+          "distance": 0.40452325344085693,
+          "similarity": 0.5954767465591431
+        },
+        {
+          "rank": 5,
+          "title": "Creamy Coconut Milk Rice Pudding",
+          "url": "https://www.allrecipes.com/recipe/234371/creamy-coconut-milk-rice-pudding/",
+          "distance": 0.4320976138114929,
+          "similarity": 0.5679023861885071
+        }
+      ]
+    },
+    {
+      "id": "mango_salsa",
+      "query": "Fresh Mango Salsa",
+      "expected_titles": [
+        "Fresh Mango Salsa"
+      ],
+      "first_relevant_rank": 1,
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "query_seconds": 0.006,
+      "results": [
+        {
+          "rank": 1,
+          "title": "Fresh Mango Salsa",
+          "url": "https://www.allrecipes.com/recipe/215631/fresh-mango-salsa/",
+          "distance": 0.2150043249130249,
+          "similarity": 0.7849956750869751
+        },
+        {
+          "rank": 2,
+          "title": "Mango Papaya Salsa",
+          "url": "https://www.allrecipes.com/recipe/37067/mango-papaya-salsa/",
+          "distance": 0.2374553680419922,
+          "similarity": 0.7625446319580078
+        },
+        {
+          "rank": 3,
+          "title": "Mango, Peach and Pineapple Salsa",
+          "url": "https://www.allrecipes.com/recipe/166482/mango-peach-and-pineapple-salsa/",
+          "distance": 0.29817306995391846,
+          "similarity": 0.7018269300460815
+        },
+        {
+          "rank": 4,
+          "title": "Avocado Mango Salsa",
+          "url": "https://www.allrecipes.com/recipe/89595/avocado-mango-salsa/",
+          "distance": 0.3124818801879883,
+          "similarity": 0.6875181198120117
+        },
+        {
+          "rank": 5,
+          "title": "Spicy Mango Salad",
+          "url": "https://www.allrecipes.com/recipe/85165/spicy-mango-salad/",
+          "distance": 0.3663727045059204,
+          "similarity": 0.6336272954940796
+        }
+      ]
+    },
+    {
+      "id": "apple_crisp",
+      "query": "Baked apples with a crunchy oat and cinnamon topping",
+      "expected_titles": [
+        "Apple Crisp",
+        "Easy Apple Crisp with Oat Topping",
+        "Apple Crisp - Perfect and Easy",
+        "Apple Oatmeal Crisp"
+      ],
+      "first_relevant_rank": 1,
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "query_seconds": 0.0062,
+      "results": [
+        {
+          "rank": 1,
+          "title": "Easy Apple Crisp with Oat Topping",
+          "url": "https://www.allrecipes.com/recipe/229088/apple-crisp-with-oat-topping/",
+          "distance": 0.1907731294631958,
+          "similarity": 0.8092268705368042
+        },
+        {
+          "rank": 2,
+          "title": "Apple Crisp",
+          "url": "https://www.allrecipes.com/recipe/12409/apple-crisp-ii/",
+          "distance": 0.24716299772262573,
+          "similarity": 0.7528370022773743
+        },
+        {
+          "rank": 3,
+          "title": "Apple Oatmeal Crisp",
+          "url": "https://www.allrecipes.com/recipe/24127/apple-oatmeal-crisp/",
+          "distance": 0.2521646022796631,
+          "similarity": 0.7478353977203369
+        },
+        {
+          "rank": 4,
+          "title": "Apple Cinnamon Oatmeal Muffins",
+          "url": "https://www.allrecipes.com/recipe/244987/apple-cinnamon-oatmeal-muffins/",
+          "distance": 0.28183287382125854,
+          "similarity": 0.7181671261787415
+        },
+        {
+          "rank": 5,
+          "title": "Apple and Pear Crumble",
+          "url": "https://www.allrecipes.com/recipe/229252/apple-and-pear-crumble/",
+          "distance": 0.3018859624862671,
+          "similarity": 0.6981140375137329
+        }
+      ]
+    },
+    {
+      "id": "banana_smoothie",
+      "query": "Blend banana and peanut butter into a breakfast drink",
+      "expected_titles": [
+        "Peanut Butter Banana Smoothie"
+      ],
+      "first_relevant_rank": 1,
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "query_seconds": 0.0059,
+      "results": [
+        {
+          "rank": 1,
+          "title": "Peanut Butter Banana Smoothie",
+          "url": "https://www.allrecipes.com/recipe/221261/peanut-butter-banana-smoothie/",
+          "distance": 0.35117530822753906,
+          "similarity": 0.6488246917724609
+        },
+        {
+          "rank": 2,
+          "title": "Chocolate Banana Peanut Butter Protein Shake",
+          "url": "https://www.allrecipes.com/recipe/244959/chocolate-banana-peanut-butter-protein-shake/",
+          "distance": 0.40682458877563477,
+          "similarity": 0.5931754112243652
+        },
+        {
+          "rank": 3,
+          "title": "Strawberry Banana Protein Smoothie",
+          "url": "https://www.allrecipes.com/recipe/160708/strawberry-banana-protein-smoothie/",
+          "distance": 0.4213460087776184,
+          "similarity": 0.5786539912223816
+        },
+        {
+          "rank": 4,
+          "title": "Mango Oatmeal Breakfast Smoothie",
+          "url": "https://www.allrecipes.com/recipe/241023/mango-oatmeal-breakfast-smoothie/",
+          "distance": 0.42545628547668457,
+          "similarity": 0.5745437145233154
+        },
+        {
+          "rank": 5,
+          "title": "Healthy Chocolate Smoothie",
+          "url": "https://www.allrecipes.com/recipe/245061/healthy-chocolate-smoothie/",
+          "distance": 0.4297301769256592,
+          "similarity": 0.5702698230743408
+        }
+      ]
+    },
+    {
+      "id": "salmon",
+      "query": "Bake salmon with lemon in a foil packet",
+      "expected_titles": [
+        "Baked Salmon in Foil",
+        "Parchment Baked Salmon",
+        "Lemon Rosemary Salmon"
+      ],
+      "first_relevant_rank": 1,
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "query_seconds": 0.0061,
+      "results": [
+        {
+          "rank": 1,
+          "title": "Baked Salmon in Foil",
+          "url": "https://www.allrecipes.com/recipe/263217/baked-salmon-in-foil/",
+          "distance": 0.23548322916030884,
+          "similarity": 0.7645167708396912
+        },
+        {
+          "rank": 2,
+          "title": "Parchment Baked Salmon",
+          "url": "https://www.allrecipes.com/recipe/229032/parchment-baked-salmon/",
+          "distance": 0.2925456166267395,
+          "similarity": 0.7074543833732605
+        },
+        {
+          "rank": 3,
+          "title": "Lemon Rosemary Salmon",
+          "url": "https://www.allrecipes.com/recipe/80388/lemon-rosemary-salmon/",
+          "distance": 0.30255407094955444,
+          "similarity": 0.6974459290504456
+        },
+        {
+          "rank": 4,
+          "title": "Blackened Salmon Tacos with Chunky Mango Avocado Salsa",
+          "url": "https://www.allrecipes.com/recipe/246845/blackened-salmon-tacos-with-chunky-mango-avocado-salsa/",
+          "distance": 0.43327444791793823,
+          "similarity": 0.5667255520820618
+        },
+        {
+          "rank": 5,
+          "title": "Smoked Salmon Poke Bowl",
+          "url": "https://www.allrecipes.com/recipe/268086/smoked-salmon-poke-bowl/",
+          "distance": 0.46761465072631836,
+          "similarity": 0.5323853492736816
+        }
+      ]
+    },
+    {
+      "id": "stuffed_dates",
+      "query": "Sweet dates stuffed with cheese and wrapped in crispy bacon",
+      "expected_titles": [
+        "Bacon Wrapped Dates Stuffed with Blue Cheese",
+        "Bacon Wrapped Dates",
+        "Devils on Horseback",
+        "Bacon and Date Appetizer"
+      ],
+      "first_relevant_rank": 1,
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "query_seconds": 0.006,
+      "results": [
+        {
+          "rank": 1,
+          "title": "Bacon Wrapped Dates Stuffed with Blue Cheese",
+          "url": "https://www.allrecipes.com/recipe/75417/bacon-wrapped-dates-stuffed-with-blue-cheese/",
+          "distance": 0.30604588985443115,
+          "similarity": 0.6939541101455688
+        },
+        {
+          "rank": 2,
+          "title": "Bacon and Date Appetizer",
+          "url": "https://www.allrecipes.com/recipe/22694/bacon-and-date-appetizer/",
+          "distance": 0.34023505449295044,
+          "similarity": 0.6597649455070496
+        },
+        {
+          "rank": 3,
+          "title": "Bacon Wrapped Dates",
+          "url": "https://www.allrecipes.com/recipe/242444/bacon-wrapped-dates/",
+          "distance": 0.34382396936416626,
+          "similarity": 0.6561760306358337
+        },
+        {
+          "rank": 4,
+          "title": "Date Balls",
+          "url": "https://www.allrecipes.com/recipe/230456/date-balls/",
+          "distance": 0.42844706773757935,
+          "similarity": 0.5715529322624207
+        },
+        {
+          "rank": 5,
+          "title": "Date-Nut Balls",
+          "url": "https://www.allrecipes.com/recipe/240653/date-nut-balls/",
+          "distance": 0.4538113474845886,
+          "similarity": 0.5461886525154114
+        }
+      ]
+    },
+    {
+      "id": "avocado_toast",
+      "query": "Toast topped with avocado and an egg for breakfast",
+      "expected_titles": [
+        "Avocado Toast with Egg",
+        "Avocado Breakfast Sandwich"
+      ],
+      "first_relevant_rank": 1,
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "query_seconds": 0.0061,
+      "results": [
+        {
+          "rank": 1,
+          "title": "Avocado Toast with Egg",
+          "url": "https://www.allrecipes.com/recipe/265304/avocado-toast-with-egg/",
+          "distance": 0.23470360040664673,
+          "similarity": 0.7652963995933533
+        },
+        {
+          "rank": 2,
+          "title": "Avocado Breakfast Sandwich",
+          "url": "https://www.allrecipes.com/recipe/258099/avocado-breakfast-sandwich/",
+          "distance": 0.27796173095703125,
+          "similarity": 0.7220382690429688
+        },
+        {
+          "rank": 3,
+          "title": "Avocado Toast (Vegan)",
+          "url": "https://www.allrecipes.com/recipe/246803/avocado-toast-vegan/",
+          "distance": 0.33170247077941895,
+          "similarity": 0.668297529220581
+        },
+        {
+          "rank": 4,
+          "title": "Avocado Egg Salad",
+          "url": "https://www.allrecipes.com/recipe/170446/avocado-egg-salad/",
+          "distance": 0.33731091022491455,
+          "similarity": 0.6626890897750854
+        },
+        {
+          "rank": 5,
+          "title": "Meyer Lemon Avocado Toast",
+          "url": "https://www.allrecipes.com/recipe/257457/meyer-lemon-avocado-toast/",
+          "distance": 0.3619421720504761,
+          "similarity": 0.6380578279495239
+        }
+      ]
+    },
+    {
+      "id": "quick_guacamole",
+      "query": "Avocado lime dip",
+      "max_time": 15,
+      "expected_titles": [
+        "World's Best Guacamole",
+        "Traditional Mexican Guacamole",
+        "Best Guacamole",
+        "Easy Never Forgotten Guacamole",
+        "Quick and Easy Guacamole",
+        "Mean Green Guacamole Salsa"
+      ],
+      "first_relevant_rank": null,
+      "hit": false,
+      "reciprocal_rank": 0,
+      "query_seconds": 0.0067,
+      "results": [
+        {
+          "rank": 1,
+          "title": "Grilled Avocados",
+          "url": "https://www.allrecipes.com/recipe/238173/grilled-avocados/",
+          "distance": 0.4307231307029724,
+          "similarity": 0.5692768692970276
+        },
+        {
+          "rank": 2,
+          "title": "Avocado Salad",
+          "url": "https://www.allrecipes.com/recipe/19960/avocado-salad/",
+          "distance": 0.4543626308441162,
+          "similarity": 0.5456373691558838
+        },
+        {
+          "rank": 3,
+          "title": "Filipino Avocado Milkshake",
+          "url": "https://www.allrecipes.com/recipe/139425/filipino-avocado-milkshake/",
+          "distance": 0.4564964771270752,
+          "similarity": 0.5435035228729248
+        },
+        {
+          "rank": 4,
+          "title": "Avocado Dressing",
+          "url": "https://www.allrecipes.com/recipe/241148/avocado-dressing/",
+          "distance": 0.4589015245437622,
+          "similarity": 0.5410984754562378
+        },
+        {
+          "rank": 5,
+          "title": "Meyer Lemon Avocado Toast",
+          "url": "https://www.allrecipes.com/recipe/257457/meyer-lemon-avocado-toast/",
+          "distance": 0.46646666526794434,
+          "similarity": 0.5335333347320557
+        }
+      ]
+    },
+    {
+      "id": "blueberry_muffins",
+      "query": "To Die For Blueberry Muffins",
+      "expected_titles": [
+        "To Die For Blueberry Muffins"
+      ],
+      "first_relevant_rank": 1,
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "query_seconds": 0.0058,
+      "results": [
+        {
+          "rank": 1,
+          "title": "To Die For Blueberry Muffins",
+          "url": "https://www.allrecipes.com/recipe/6865/to-die-for-blueberry-muffins/",
+          "distance": 0.35901689529418945,
+          "similarity": 0.6409831047058105
+        },
+        {
+          "rank": 2,
+          "title": "Todd's Famous Blueberry Pancakes",
+          "url": "https://www.allrecipes.com/recipe/20177/todds-famous-blueberry-pancakes/",
+          "distance": 0.4926775097846985,
+          "similarity": 0.5073224902153015
+        },
+        {
+          "rank": 3,
+          "title": "Melt in Your Mouth Blueberry Cake",
+          "url": "https://www.allrecipes.com/recipe/7358/melt-in-your-mouth-blueberry-cake/",
+          "distance": 0.5101581811904907,
+          "similarity": 0.4898418188095093
+        },
+        {
+          "rank": 4,
+          "title": "Homemade Blueberry Pie",
+          "url": "https://www.allrecipes.com/recipe/12196/blueberry-pie/",
+          "distance": 0.5117357969284058,
+          "similarity": 0.48826420307159424
+        },
+        {
+          "rank": 5,
+          "title": "Easy Blueberry Cobbler",
+          "url": "https://www.allrecipes.com/recipe/223253/easy-blueberry-cobbler/",
+          "distance": 0.5215224027633667,
+          "similarity": 0.4784775972366333
+        }
+      ]
+    }
+  ]
+}
