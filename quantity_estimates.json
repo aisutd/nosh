@@ -1,0 +1,38 @@
+{
+  "chicken_breast": {
+    "quantity": 2,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "untracked_detections": 0
+  },
+  "sweet_potato": {
+    "quantity": 1,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "untracked_detections": 0
+  },
+  "milk": {
+    "quantity": 3,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "untracked_detections": 0
+  },
+  "butter": {
+    "quantity": 1,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "untracked_detections": 0
+  },
+  "sugar": {
+    "quantity": 1,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "untracked_detections": 0
+  },
+  "cheese": {
+    "quantity": 1,
+    "unit": "objects",
+    "method": "persistent_unique_track_ids",
+    "untracked_detections": 0
+  }
+}
