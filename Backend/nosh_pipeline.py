@@ -19,7 +19,7 @@ from llm.nosh_generation import (
 
 def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection=None,
              retrieve_only=False, selected_recipe_id=None,
-             servings=None, original_servings=None):
+             servings=None, original_servings=None, personalization=None):
     """Return only judge-approved generation; refusals use message, not recipe.
 
     Ingredient labels or comma-separated ingredients are accepted. Free-form
@@ -98,6 +98,9 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
     if not recipes:
         return {"status": "no_recipes_found", "recipe": None, "recipes": [],
                 "message": "No recipes can be made with your available ingredients and supported substitutions."}
+    from personalization import rank_recipes
+    recipes = rank_recipes(recipes, personalization)
+    # Availability stays primary; memory breaks ties among equally eligible recipes.
     recipes.sort(key=lambda recipe: availability_rank(recipe["availability"]))
     substitutions = recipes[0]["substitutions"]
 
@@ -127,7 +130,7 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
     if answer is None:
         answer = generate_recipe(available_ingredients=available, retrieved_context=context,
                                  user_query=user_query, max_time=max_time,
-                                 servings=servings, substitutions=substitutions)
+                                 servings=servings, substitutions=substitutions, personalization=personalization)
     if answer in (INSUFFICIENT_CONTEXT, OUT_OF_SCOPE):
         return {"status": "insufficient_context" if answer == INSUFFICIENT_CONTEXT else "out_of_scope",
                 "message": answer, "recipe": None, "recipes": recipes}
@@ -156,6 +159,7 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
             available_ingredients=available, retrieved_context=context,
             user_query=user_query, max_time=max_time, substitutions=substitutions,
             repair_feedback={"previous_output": answer, "validation": verdict},
+            personalization=personalization,
         )
         if corrected not in (INSUFFICIENT_CONTEXT, OUT_OF_SCOPE):
             verdict = evaluate_generation(available, context, corrected,

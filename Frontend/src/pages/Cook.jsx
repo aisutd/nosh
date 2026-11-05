@@ -1,9 +1,10 @@
+import { API } from '../lib/api';
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import RagCook from "./RagCook.jsx";
 
-const API = `http://${window.location.hostname}:8000`;
+
 
 function Cook() {
   const { id } = useParams();              // the id from the URL: /cook/<id>

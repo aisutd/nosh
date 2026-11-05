@@ -8,7 +8,7 @@ from security import (
     hash_password, verify_password, 
     create_access_token, get_current_user
     )
-from routes import scan, ingredients, recipes, pipeline, inventory
+from routes import memory, voice, scan, ingredients, recipes, pipeline, inventory
 
 #Check and print connection to MongoDB is successful
 @asynccontextmanager
@@ -84,3 +84,10 @@ app.include_router(ingredients.router)
 app.include_router(recipes.router)
 app.include_router(pipeline.router)
 app.include_router(inventory.router)
+app.include_router(memory.router)
+app.include_router(voice.router)
+
+
+@app.get("/health")
+def health():
+    return {"app": "nosh", "capabilities": ["recipes", "inventory", "voice", "memory"]}

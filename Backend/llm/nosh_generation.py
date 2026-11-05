@@ -317,7 +317,7 @@ def normalize_recipe_format(output):
 def generate_recipe(available_ingredients: str, retrieved_context: str,
                     missing_ingredients=None, model: str = GEN_MODEL,
                     *, user_query="", max_time=None, servings=None,
-                    substitutions=None, repair_feedback=None) -> str:
+                    substitutions=None, repair_feedback=None, personalization=None) -> str:
     if not available_ingredients.strip() or not retrieved_context.strip():
         return INSUFFICIENT_CONTEXT
     from llm.source_adaptation import resolve_substitution_amounts
@@ -336,11 +336,13 @@ def generate_recipe(available_ingredients: str, retrieved_context: str,
         )
     if repair_feedback is not None:
         payload["repair_feedback"] = repair_feedback
+    from personalization import MEMORY_RULES
+    payload["personalization"] = personalization or {}
     if missing_ingredients is not None:
         payload["missing_ingredients"] = missing_ingredients
     response = ollama.chat(
         model=model,
-        messages=[{"role": "system", "content": BASE_SYSTEM_RULES},
+        messages=[{"role": "system", "content": BASE_SYSTEM_RULES + MEMORY_RULES},
                   {"role": "user", "content": json.dumps(payload)}],
         options={"temperature": 0.1},
     )

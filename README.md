@@ -1,4 +1,52 @@
 # NOSH
+
+## One app, one launch path
+
+Use the repository-root **Backend/** and **Frontend/**. Voice, memory,
+personalization, inventory, substitutions and serving controls run together there.
+The old nested `nosh-backend/` app has been consolidated and removed. Stop old
+backend and Vite processes before starting this checkout.
+
+### macOS / Linux quick start
+
+From the repository root:
+
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r Backend/requirements.txt
+cp Backend/.env.example Backend/.env
+# Fill Backend/.env with your own configuration; never commit it.
+cd Backend
+python -m uvicorn main:app --reload --port 8000
+```
+
+In a second terminal, from the same repository root:
+
+```sh
+cd Frontend
+npm ci
+npm run dev
+```
+
+Open http://localhost:5173 in **Google Chrome**. Check
+http://localhost:8000/health: it should list `recipes`, `inventory`, `voice`, `memory`.
+The web mic uses browser speech recognition; do not run the desktop voice script
+for the web app. MongoDB and SECRET_KEY must be configured in Backend/.env.
+Ollama and a built recipe index are needed for RAG. Voice uses the same signed-in
+user and current pantry as the rest of the app.
+
+Vite uses port 5173 strictly so a second accidental launch fails rather than
+silently opening an old app on 5174. VITE_API_URL can override the backend address;
+restart Vite after changing it.
+
+Desktop users may still run voice-agent/voice_agent.py. The root nosh_pipeline.py
+is a compatibility entry point delegating to Backend/nosh_pipeline.py.
+Root requirements.txt is for evaluation tooling; Backend/requirements.txt is for
+the web application.
+
+See [consolidation notes](docs/app-consolidation.md).
+
 ## Description
 NOSH is an AI-powered student cooking assistant that turns ingredients from a refrigerator photo into practical, budget-friendly meals. It combines ingredient detection, recipe retrieval, and a hands-free voice interface for substitutions, timers, and step-by-step cooking guidance.
 Planned Technologies

@@ -84,6 +84,8 @@ def handle_turn(turn, personalization=None):
 async def voice_turn(turn: VoiceTurn, current_user: dict | None = Depends(get_optional_user)):
     if not turn.message.strip():
         raise HTTPException(400, 'Say or type a cooking question.')
+    if current_user is not None:
+        turn = turn.model_copy(update={"ingredients": current_user.get("ingredients", [])})
     try:
         return await run_in_threadpool(handle_turn, turn, memory_context(current_user))
     except Exception as exc:
