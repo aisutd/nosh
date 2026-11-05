@@ -1,0 +1,13 @@
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.env
+node_modules/
+dist/
+**/data/chroma_db*/
+**/rag/chroma_db*/
+**/models/*.pt
+.DS_Store
+
+local-backups/
