@@ -1,5 +1,13 @@
 """In-memory, bounded conversation about one approved recipe."""
 import re
+import sys
+from pathlib import Path
+
+# Standalone callers share the same backend pipeline as the web app.
+_BACKEND_DIR = str(Path(__file__).resolve().parent / "Backend")
+while _BACKEND_DIR in sys.path:
+    sys.path.remove(_BACKEND_DIR)
+sys.path.insert(0, _BACKEND_DIR)
 
 import httpx
 import ollama
