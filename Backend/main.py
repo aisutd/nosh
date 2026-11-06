@@ -14,9 +14,13 @@ from pathlib import Path
 BACKEND_DIR = Path(__file__).resolve().parent
 REPO_ROOT = BACKEND_DIR.parent
 
-for folder in (BACKEND_DIR, REPO_ROOT):
-    if str(folder) not in sys.path:
-        sys.path.insert(0, str(folder))
+# Backend modules must take precedence over legacy root-level modules,
+# regardless of the directory used to launch uvicorn.
+for folder in (REPO_ROOT, BACKEND_DIR):
+    path = str(folder)
+    while path in sys.path:
+        sys.path.remove(path)
+    sys.path.insert(0, path)
 from routes import scan, ingredients, recipes, pipeline, inventory, voice
 
 
