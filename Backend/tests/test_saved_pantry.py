@@ -34,7 +34,7 @@ class SavedPantryTests(unittest.IsolatedAsyncioTestCase):
         collection.get.return_value = {"ids": [rid], "documents": [f"Ingredients: {raw}"],
                                        "metadatas": [{"ingredients": raw, "recipe_name": "Test"}]}
         with patch("retrieval.nosh_retrieval.get_collection", return_value=collection), patch.object(pipeline, "classify_request", return_value={"status": "in_scope"}), patch.object(pipeline, "generate_recipe") as generate, patch.object(pipeline, "evaluate_generation") as judge:
-            result = (await routes.generate_saved_recipe("rag:" + rid, user))["result"]
+            result = (await routes.generate_saved_recipe("rag:" + rid, current_user=user))["result"]
             self.assertEqual(result["status"], "ingredients_changed")
             self.assertIsNone(result["recipe"])
             generate.assert_not_called()
@@ -67,7 +67,7 @@ class SavedPantryTests(unittest.IsolatedAsyncioTestCase):
         user = {"saved_recipes": ["rag:test"], "ingredients": ["flour", "egg"],
                 "rag_contexts": {"test": {"ingredients": ["flour"], "user_query": "Make pancakes"}}}
         with patch.object(routes, "run_in_threadpool", new_callable=AsyncMock, return_value={"status": "ok"}) as runner:
-            await routes.generate_saved_recipe("rag:test", user)
+            await routes.generate_saved_recipe("rag:test", current_user=user)
             self.assertEqual(runner.call_args.args[1], ["flour", "egg"])
             self.assertEqual(runner.call_args.kwargs["user_query"], "Make pancakes")
 
