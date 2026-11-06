@@ -1,8 +1,9 @@
+import { API } from '../lib/api';
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LuTrash2 } from "react-icons/lu";
 
-const API = `http://${window.location.hostname}:8000`;
+
 
 function authHeaders() {
   const token = localStorage.getItem("access_token");

@@ -1,9 +1,11 @@
+import VoiceAgent from '../components/VoiceAgent.jsx';
+import { API, authHeaders } from '../lib/api';
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { LuMic, LuArrowLeft } from "react-icons/lu";
+import { LuArrowLeft } from "react-icons/lu";
 import RecipeIngredients from "../components/RecipeIngredients";
 import "./RagCook.css";
-const API = `http://${window.location.hostname}:8000`;
+
 
 export default function RagCook({ savedId = null, title = null, image = null, ingredients = [], sourceRecipe = null}) {
   const { id } = useParams();
@@ -12,7 +14,6 @@ export default function RagCook({ savedId = null, title = null, image = null, in
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [talking, setTalking] = useState(false);
   const [cooked, setCooked] = useState(null);       // the consume result, once marked as cooked
   const [cooking, setCooking] = useState(false);
   const [servings, setServings] = useState(null);   // null = original serving size
@@ -33,7 +34,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
       try {
         const savedUrl = `${API}/recipes/saved-generate/${encodeURIComponent(savedId)}${servings ? `?servings=${servings}` : ""}`;
         const response = await fetch(savedId ? savedUrl : `${API}/recipes/generate-selected`, {
-          method: "POST", headers: { "Content-Type": "application/json", ...(savedId ? { Authorization: `Bearer ${localStorage.getItem("access_token") || ""}` } : {}) },
+          method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() },
           body: savedId ? undefined : JSON.stringify({ recipe_id: id, ingredients: context.ingredients, user_query: context.user_query, ...(servings ? { servings } : {}) }),
           signal: controller.signal,
         });
@@ -84,15 +85,6 @@ export default function RagCook({ savedId = null, title = null, image = null, in
       <h1 className="cook-hero-title">{title || context?.title || "Selected recipe"}</h1>
     </div>
 
-    <div className={`blob ${talking ? "talking" : ""}`} aria-hidden="true">
-      <span className="eye" /><span className="eye" />
-    </div>
-    <p>{talking ? "Listening..." : "Tap to cook hands-free with Nosh."}</p>
-
-    <button className="cta talk-btn" onClick={() => setTalking((t) => !t)}>
-      <LuMic /> {talking ? "Stop" : "Talk to Nosh"}
-    </button>
-
     {sourceIngredients && <section aria-label="Source ingredients">
       <h3>Source ingredients</h3>
       <p>{sourceIngredients}</p>
@@ -131,6 +123,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
         {steps.map((step, i) => <li key={i}>{step}</li>)}
       </ol>
 
+      <VoiceAgent key={result.recipe} recipe={result.recipe} ingredients={context?.ingredients || ingredients} />
       <div className="cook-actions">
         {substitutions.length > 0 && !consumptionIngredients && <p className="cook-warning">
           Please update inventory manually for this substitution; its quantities could not be converted reliably.

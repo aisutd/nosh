@@ -1,6 +1,7 @@
+import { API, authHeaders } from '../lib/api';
 import { useEffect, useRef, useState } from "react";
 
-const API = `http://${window.location.hostname}:8000`;
+
 
 export default function GenerateRecipe({ ingredients, onOptions }) {
   const [query, setQuery] = useState("");
@@ -22,7 +23,7 @@ export default function GenerateRecipe({ ingredients, onOptions }) {
     try {
       const response = await fetch(`${API}/recipes/options`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ ingredients, user_query: query }),
         signal: controller.signal,
       });

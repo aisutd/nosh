@@ -1,8 +1,9 @@
+import { API } from '../lib/api';
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { LuX, LuHeart, LuChevronUp, LuChevronDown, LuClock } from "react-icons/lu";
 
-const API = `http://${window.location.hostname}:8000`;
+
 
 // split "3 lemons, 8 cups cold water, or as needed" into chips,
 // keeping fragments like "or as needed" attached to the item before them
@@ -18,7 +19,7 @@ function splitIngredients(value) {
   return out;
 }
 
-function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
+function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [browse, setBrowse] = useState([]);
@@ -27,7 +28,7 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
   const [dragX, setDragX] = useState(0);            // how far the card is dragged
   const [dragging, setDragging] = useState(false);
   const startX = useRef(0);                         // where the drag started
-  const [staples, setStaples] = useState([]);        
+
 
   useEffect(() => {
     if (ragSearch || recipes.length > 0) return;
@@ -37,30 +38,12 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
       .catch(() => setBrowse([]));
   }, [recipes, ragSearch]);
 
-  useEffect(() => {
-    fetch(`${API}/staples`)
-      .then((res) => res.json())
-      .then((data) => setStaples(data.staples))
-      .catch(() => setStaples([]));
-  }, []);
-
   const deck = ragSearch || recipes.length > 0 ? recipes : browse;
 
   const recipe = deck[index];
   const next = () => { setIndex((i) => i + 1); setOpen(false); };
 
   const items = splitIngredients(recipe?.ingredients);
-  // "strawberries" -> "strawberry", "eggs" -> "egg", "tomatoes" -> "tomato"
-  const stem = (w) => w.replace(/ies$/, "y").replace(/(es|s)$/, "");
-  const norm = (s) => s.toLowerCase().split(/[^a-z]+/).filter(Boolean).map(stem).join(" ");
-
-  // true if the recipe swaps this ingredient for something else
-  const substituted = (line) => recipe?.substitutions?.some((swap) =>
-    (` ${norm(line)} `).includes(` ${norm(swap.ingredient)} `));
-
-  const haveIt = (line) => !substituted(line) && (
-    staples.some((s) => line.toLowerCase().includes(s)) ||
-    pantry.some((p) => norm(line).includes(norm(p))));
   const rawSteps = Array.isArray(recipe?.directions)
     ? recipe.directions
     : String(recipe?.directions || "").split(/\n|(?<=\.)\s+(?=[A-Z])/);
@@ -125,7 +108,7 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
               transform: `translateX(${dragX}px) rotate(${dragX / 20}deg)`,
               transition: dragging ? "none" : "transform 0.2s",
               touchAction: "pan-y",
-              cursor: open ? "default" : "grab",      
+              cursor: open ? "default" : "grab",
               // the photo fills the whole card, with a dark fade at the bottom so the title is readable
               backgroundImage: recipe.image && /^https?:\/\//i.test(recipe.image)
                 ? `linear-gradient(to top, rgba(0,0,0,0.85) 8%, transparent 55%), url("${recipe.image}")`
@@ -164,7 +147,7 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
                   <p className="sheet-meta">
                     <LuClock /> {recipe.total_time || "Time not listed"}
                     {recipe.servings && <> · {recipe.servings} servings</>}
-                  </p>                
+                  </p>
                   <h3>Ingredients</h3>
                   <div className="sheet-chips">
                     {items.map((line, i) => (

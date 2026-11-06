@@ -1,4 +1,6 @@
-import { useState, useEffect, useRef} from 'react'
+import { API } from './lib/api';
+import VoiceAgent from './components/VoiceAgent.jsx';
+import { useState, useEffect, useRef, useCallback} from 'react'
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
 import './App.css'
 import Auth from './pages/Auth.jsx'
@@ -15,7 +17,7 @@ import Inventory from "./pages/Inventory.jsx";
 import GenerateRecipe from "./components/GenerateRecipe.jsx";
 
 // Backend address. Uses whatever host the page was opened from, so it works on localhost and on the LAN IP
-const API = `http://${window.location.hostname}:8000`;
+
 
 // Adds the login token to a request so the backend knows who you are
 function authHeaders() {
@@ -108,6 +110,22 @@ useEffect(() => {
   loadSaved();
 }, [user]);
 
+const addItems = useCallback(async (items) => {
+  if (user) {
+    let latest = ingredients;
+    for (const item of items) {              // one request per item
+      const response = await fetch(
+        `${API}/ingredients/add?ingredient=${encodeURIComponent(item)}`,
+        { method: "POST", headers: authHeaders() }
+      );
+      if (response.ok) latest = (await response.json()).ingredients;
+    }
+    setIngredients(latest);
+  } else {
+    setIngredients((prev) => [...new Set([...prev, ...items])]);   // Set removes duplicates
+  }
+}, [user, ingredients]);
+
 // Phone app only: Mobile/App.js sends the scan result as a "nosh-scan" event
 useEffect(() => {
   function onScanResult(e) {
@@ -115,7 +133,7 @@ useEffect(() => {
   }
   window.addEventListener("nosh-scan", onScanResult);
   return () => window.removeEventListener("nosh-scan", onScanResult);   // cleanup so we don't add duplicate listeners
-}, [user, ingredients]);
+}, [addItems]);
 
 
 // ----- pantry actions -----
@@ -182,22 +200,6 @@ async function handleRemoving(ingredient) {
 // ----- scanning -----
 
 // Adds several ingredients at once (used by scan results)
-async function addItems(items) {
-  if (user) {
-    let latest = ingredients;
-    for (const item of items) {              // one request per item
-      const response = await fetch(
-        `${API}/ingredients/add?ingredient=${encodeURIComponent(item)}`,
-        { method: "POST", headers: authHeaders() }
-      );
-      if (response.ok) latest = (await response.json()).ingredients;
-    }
-    setIngredients(latest);
-  } else {
-    setIngredients((prev) => [...new Set([...prev, ...items])]);   // Set removes duplicates
-  }
-}
-
 // Scan box clicked: phone app opens its camera, a normal browser opens the file picker
 function handleScanClick() {
   if (!user) {
@@ -278,6 +280,7 @@ async function handleScan(e) {
             </li>
           ))}
         </ul>
+        <VoiceAgent key={user || "visitor"} ingredients={ingredients} />
         <GenerateRecipe
           key={JSON.stringify([user, ingredients])}
           ingredients={ingredients}

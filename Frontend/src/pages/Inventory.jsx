@@ -1,8 +1,9 @@
+import { API, request } from '../lib/api';
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { LuArrowLeft } from "react-icons/lu";
 
-const API = `http://${window.location.hostname}:8000`;
+
 const UNITS = ["count", "lb", "oz", "cup", "tbsp", "tsp", "can", "package", "bottle"];
 // stock groups for the summary cards
 function authHeaders() {
@@ -11,6 +12,7 @@ function authHeaders() {
 }
 
 function Inventory({ user }) {
+  const [error, setError] = useState("");
   const [items, setItems] = useState([]);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("name");        // "name" or "low"
@@ -39,7 +41,12 @@ function Inventory({ user }) {
   }
 
   useEffect(() => {
-    if (user) load();
+    if (!user) return;
+    const controller = new AbortController();
+    request('/inventory', { headers: authHeaders(), signal: controller.signal })
+      .then(data => { if (!controller.signal.aborted) setItems(data); })
+      .catch(err => { if (!controller.signal.aborted) setError(err.message); });
+    return () => controller.abort();
   }, [user]);
 
   // add a new item, or set the quantity of an existing one
@@ -56,6 +63,7 @@ function Inventory({ user }) {
     return (
       <main className="page">
         <h1>Inventory</h1>
+      {error && <p role="alert">{error}</p>}
         <p>Log in to track what you have.</p>
         <Link to="/auth" className="cta">Log in</Link>
       </main>

@@ -1,7 +1,9 @@
 """Image and detection JSON entry points for the hybrid RAG pipeline."""
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
+from security import get_optional_user
+from personalization import memory_context
 from nosh_pipeline import run_nosh
 from vision.detector import detect_ingredients
 
@@ -22,7 +24,7 @@ class RecipeFromDetectionsRequest(BaseModel):
     user_query: str = ""
 
 
-async def generate_from_detections(detections: DetectionOutput, user_query: str):
+async def generate_from_detections(detections: DetectionOutput, user_query: str, current_user=None):
     ingredients = sorted({
         item.name.replace("_", " ").strip().lower()
         for item in detections.ingredients
@@ -32,7 +34,7 @@ async def generate_from_detections(detections: DetectionOutput, user_query: str)
     if not ingredients:
         raise HTTPException(status_code=400, detail="No ingredient names were detected or provided.")
 
-    result = await run_in_threadpool(run_nosh, ingredients, user_query=user_query)
+    result = await run_in_threadpool(run_nosh, ingredients, user_query=user_query, personalization=memory_context(current_user))
     return {
         "detections": detections.model_dump(),
         "ingredients": ingredients,
@@ -41,8 +43,8 @@ async def generate_from_detections(detections: DetectionOutput, user_query: str)
 
 
 @router.post("/recipes/from-detections")
-async def recipes_from_detections(request: RecipeFromDetectionsRequest):
-    return await generate_from_detections(request.detections, request.user_query)
+async def recipes_from_detections(request: RecipeFromDetectionsRequest, current_user: dict | None = Depends(get_optional_user)):
+    return await generate_from_detections(request.detections, request.user_query, current_user)
 
 
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
@@ -52,6 +54,7 @@ MAX_IMAGE_BYTES = 10 * 1024 * 1024
 async def recipes_from_image(
     image: UploadFile = File(...),
     user_query: str = Form(""),
+    current_user: dict | None = Depends(get_optional_user),
 ):
     """Detect ingredients in an image and generate a recipe from retrieved sources."""
     try:
@@ -71,7 +74,7 @@ async def recipes_from_image(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    return await generate_from_detections(DetectionOutput.model_validate(output), user_query)
+    return await generate_from_detections(DetectionOutput.model_validate(output), user_query, current_user)
 
 
 
@@ -83,7 +86,7 @@ class GenerateRecipeRequest(BaseModel):
 
 
 @router.post("/recipes/generate")
-async def generate_recipe_from_pantry(request: GenerateRecipeRequest):
+async def generate_recipe_from_pantry(request: GenerateRecipeRequest, current_user: dict | None = Depends(get_optional_user)):
     """Use the reviewed pantry, including manual corrections, for RAG."""
     ingredients = sorted({
         name.replace("_", " ").strip().lower()
@@ -94,7 +97,7 @@ async def generate_recipe_from_pantry(request: GenerateRecipeRequest):
         raise HTTPException(status_code=400, detail="Add at least one ingredient.")
     try:
         result = await run_in_threadpool(run_nosh, ingredients, user_query=request.user_query,
-                                         servings=request.servings)
+                                         servings=request.servings, personalization=memory_context(current_user))
     except Exception as exc:
         import logging
         logging.getLogger(__name__).exception("Recipe generation failed")
@@ -115,10 +118,10 @@ def pretty_minutes(m):
 
 
 @router.post("/recipes/options")
-async def recipe_options(request: GenerateRecipeRequest):
+async def recipe_options(request: GenerateRecipeRequest, current_user: dict | None = Depends(get_optional_user)):
     try:
         result = await run_in_threadpool(
-            run_nosh, request.ingredients, user_query=request.user_query, retrieve_only=True, top_k=15,
+            run_nosh, request.ingredients, user_query=request.user_query, retrieve_only=True, top_k=15, personalization=memory_context(current_user),
         )
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Recipe search is unavailable. Check Ollama and the recipe index.") from exc
@@ -145,12 +148,12 @@ class SelectedRecipeRequest(GenerateRecipeRequest):
 
 
 @router.post("/recipes/generate-selected")
-async def generate_selected(request: SelectedRecipeRequest):
+async def generate_selected(request: SelectedRecipeRequest, current_user: dict | None = Depends(get_optional_user)):
     try:
         result = await run_in_threadpool(
             run_nosh, request.ingredients, user_query=request.user_query,
             selected_recipe_id=request.recipe_id.removeprefix("rag:"),
-            servings=request.servings,
+            servings=request.servings, personalization=memory_context(current_user),
         )
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Recipe generation is unavailable. Check Ollama and the recipe index.") from exc

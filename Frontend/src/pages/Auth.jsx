@@ -1,8 +1,9 @@
+import { API } from '../lib/api';
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 // Where backend runs
-const API = `http://${window.location.hostname}:8000`;
+
 
 // FastAPi sends errors which get turn into text
 function errorText(detail) {
