@@ -8,7 +8,17 @@ from security import (
     hash_password, verify_password, 
     create_access_token, get_current_user
     )
-from routes import scan, ingredients, recipes, pipeline, inventory
+import sys
+from pathlib import Path
+
+BACKEND_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BACKEND_DIR.parent
+
+for folder in (BACKEND_DIR, REPO_ROOT):
+    if str(folder) not in sys.path:
+        sys.path.insert(0, str(folder))
+from routes import scan, ingredients, recipes, pipeline, inventory, voice
+
 
 #Check and print connection to MongoDB is successful
 @asynccontextmanager
@@ -27,9 +37,9 @@ router = APIRouter()
 #Connect frontend to backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://192.168.1.6:5173"],
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):\d+",
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["*"],          # needs PUT and DELETE for the inventory
     allow_headers=["*"],
 )
 
@@ -84,3 +94,4 @@ app.include_router(ingredients.router)
 app.include_router(recipes.router)
 app.include_router(pipeline.router)
 app.include_router(inventory.router)
+app.include_router(voice.router)

@@ -17,6 +17,7 @@ from llm.nosh_generation import (
 
 
 def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection=None,
+             retrieve_only=False, selected_recipe_id=None,
              servings: int = None, original_servings: int = None):
     """Return only judge-approved generation; refusals use message, not recipe.
 

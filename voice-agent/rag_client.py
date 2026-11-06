@@ -1,97 +1,27 @@
-import os
-import requests
+"""Calls the NOSH RAG pipeline directly so the voice agent doesn't need a running backend."""
+import sys
 from pathlib import Path
-from dotenv import load_dotenv
 
-env_path = Path(__file__).resolve().parent.parent / ".env"
-load_dotenv(env_path)
+# Add repo root to sys.path so we can import retrieval/, llm/, etc.
+REPO_ROOT = Path(__file__).resolve().parent.parent
+BACKEND_DIR = REPO_ROOT / "Backend"
 
-BACKEND_URL = os.getenv(
-    "BACKEND_URL",
-    "http://127.0.0.1:8000"
-)
+sys.path.insert(0, str(BACKEND_DIR))
+sys.path.insert(0, str(REPO_ROOT))
 
-
-def generate_recipe(ingredients, user_query=""):
-    # HTTP remains the default for the integrated web/backend workflow.
-    # The standalone direct pipeline is available without starting FastAPI.
-    if os.getenv("NOSH_RAG_MODE", "http").lower() == "direct":
-        return _direct_result(ingredients, user_query)
-    payload = {
-        "ingredients": ingredients,
-        "user_query": user_query
-    }
-
-    try:
-        response = requests.post(
-            f"{BACKEND_URL}/recipes/generate",
-            json=payload,
-            timeout=60
-        )
-
-        response.raise_for_status()
-
-        data = response.json()
-
-        result = data.get("result", {})
-
-        if result.get("status") == "ok":
-            return {
-                "success": True,
-                "recipe": result.get("recipe"),
-                "source_recipe": result.get("source_recipe"),
-                "source_url": result.get("source_url")
-            }
-
-        return {
-            "success": False,
-            "message": result.get(
-                "message",
-                "No recipe could be generated."
-            )
-        }
-
-    except requests.exceptions.ConnectionError:
-        return {
-            "success": False,
-            "message": "The NOSH backend is unavailable."
-        }
-
-    except requests.exceptions.Timeout:
-        return {
-            "success": False,
-            "message": "The recipe system took too long to respond."
-        }
-
-    except Exception as error:
-        print("Backend error:", error)
-
-        return {
-            "success": False,
-            "message": "Something went wrong while contacting NOSH."
-        }
-
-
-def _direct_result(ingredients, user_query):
-    """Load the standalone pipeline only when explicitly requested."""
-    import sys
-    root = str(Path(__file__).resolve().parent.parent)
-    if root not in sys.path:
-        sys.path.insert(0, root)
-    from nosh_pipeline import run_nosh
-    result = run_nosh(ingredients, user_query=user_query)
-    if result.get("status") == "ok":
-        return {"success": True, "recipe": result.get("recipe"),
-                "source_recipe": result.get("source_recipe"),
-                "source_url": result.get("source_url")}
-    return {"success": False, "message": result.get("message", "I could not find a recipe for that.")}
+from nosh_pipeline import run_nosh
 
 
 def ask_rag(question, available_ingredients=None, recipe_context=None):
-    """Preserve Mock_Main's direct-client API for standalone callers.
+    """Call the NOSH RAG pipeline directly (no HTTP backend needed)."""
+    result = run_nosh(
+        available_ingredients or "",
+        user_query=question,
+    )
+    if result["status"] == "ok":
+        return result["recipe"]
+    return result.get("message", "I could not find a recipe for that.")
 
-    recipe_context is retained for signature compatibility with Mock_Main.
-    Retrieval and source validation remain the standalone pipeline's responsibility.
-    """
-    result = _direct_result(available_ingredients or "", question)
-    return result.get("recipe") if result["success"] else result["message"]
+
+if __name__ == "__main__":
+    print(ask_rag("How do I cook pasta?", available_ingredients="pasta, garlic, olive oil"))

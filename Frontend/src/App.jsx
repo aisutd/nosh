@@ -244,7 +244,7 @@ async function handleScan(e) {
     </div>
 
     <h1><BiFoodMenu /> Nosh</h1>
-      <p>The Best Cooking Assistant App frfr</p>
+      <p>The Best Cooking Assistant App</p>
 
       {/* hidden file picker, opened by the scan box on a normal browser */}
       <input

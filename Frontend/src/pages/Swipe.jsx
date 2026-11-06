@@ -27,7 +27,7 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
   const [dragX, setDragX] = useState(0);            // how far the card is dragged
   const [dragging, setDragging] = useState(false);
   const startX = useRef(0);                         // where the drag started
-  const [staples, setStaples] = useState([]);        
+  const [staples, setStaples] = useState([]);      
 
   useEffect(() => {
     if (ragSearch || recipes.length > 0) return;
@@ -47,6 +47,11 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
   const deck = ragSearch || recipes.length > 0 ? recipes : browse;
 
   const recipe = deck[index];
+  const timingText = recipe?.metadata?.timing || recipe?.timing || "";
+  const servingCount =
+    recipe?.servings ??
+    recipe?.metadata?.servings ??
+    timingText.match(/servings:\s*(\d+)/i)?.[1];
   const next = () => { setIndex((i) => i + 1); setOpen(false); };
 
   const items = splitIngredients(recipe?.ingredients);
@@ -163,7 +168,7 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
                 <h2>{recipe.title}</h2>
                   <p className="sheet-meta">
                     <LuClock /> {recipe.total_time || "Time not listed"}
-                    {recipe.servings && <> · {recipe.servings} servings</>}
+                    {servingCount && <> · {servingCount} servings</>}
                   </p>                
                   <h3>Ingredients</h3>
                   <div className="sheet-chips">

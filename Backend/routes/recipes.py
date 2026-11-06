@@ -5,6 +5,11 @@ from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 from retrieval.nosh_retrieval import get_collection
 from nosh_pipeline import run_nosh
+import inspect
+import nosh_pipeline
+
+print("Loaded pipeline from:", nosh_pipeline.__file__)
+print("run_nosh signature:", inspect.signature(run_nosh))
 from database.schemas import FindRequest, Recipe
 from database.models import recipes_list, recipe_data
 from database.configurations import collection, user
@@ -62,7 +67,7 @@ def load_rag_source(recipe_id):
             "title": meta.get("recipe_name", "Untitled"),
             "ingredients": [i.strip() for i in meta.get("ingredients", "").split(",") if i.strip()],
             "directions": [i.strip() for i in meta.get("directions", "").splitlines() if i.strip()],
-            "link": meta.get("url", ""), "image": meta.get("img_src"), "ner": []}
+            "link": meta.get("url", ""), "image": meta.get("img_src"), "ner": [], "total_time": meta.get("total_time"),}
 
 
 # Save MongoDB recipes or persist a RAG source with the user's reviewed pantry.
@@ -75,6 +80,11 @@ async def save_recipe(recipe_id: str, context: SaveContext | None = None,
             raise HTTPException(status_code=400, detail="Reviewed ingredients are required to save this recipe.")
         source = await run_in_threadpool(load_rag_source, recipe_id)
         await collection.update_one({"_id": recipe_id}, {"$setOnInsert": source}, upsert=True)
+        if source.get("total_time"):
+            await collection.update_one(
+                {"_id": recipe_id},
+                {"$set": {"total_time": source["total_time"]}},
+            )
         update["$set"] = {f"rag_contexts.{source['rag_source_id']}": context.model_dump()}
     else:
         try:
@@ -103,7 +113,14 @@ async def generate_saved_recipe(recipe_id: str, servings: int | None = None, cur
             user_query=context.get("user_query", ""), selected_recipe_id=source_id,
             servings=servings)
     except Exception as exc:
-        raise HTTPException(status_code=503, detail="Recipe generation is unavailable. Check Ollama and the recipe index.") from exc
+        import logging
+        logging.getLogger(__name__).exception(
+            "Saved recipe generation failed for %s", recipe_id
+        )
+        raise HTTPException(
+            status_code=503,
+            detail="Recipe generation is unavailable. Check Ollama and the recipe index.",
+        ) from exc
     return {"result": result}
 
 # Unsave a recipe

@@ -60,7 +60,8 @@ class ScanTests(unittest.IsolatedAsyncioTestCase):
         ocr.detect_text_ingredients = MagicMock(side_effect=ocr_error, return_value=[{'name': 'milk', 'confidence': .8}])
         route = load_file('scan_test', 'routes/scan.py', {
             'security': security, 'database.configurations': database,
-            'vision.detector': detector, 'vision.ocr': ocr})
+            'vision.detector': detector, 'vision.ocr': ocr,
+            'vision.video_detector': MagicMock()})
         return route
 
     def upload(self):
