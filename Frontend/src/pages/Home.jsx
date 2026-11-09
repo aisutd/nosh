@@ -1,7 +1,8 @@
+import { API } from '../lib/api';
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-const API = `http://${window.location.hostname}:8000`;
+
 
 function Home() {
   const [recipes, setRecipes] = useState([]);

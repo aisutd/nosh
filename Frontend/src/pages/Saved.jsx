@@ -1,3 +1,4 @@
+import { API } from '../lib/api';
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { LuTrash2, LuClock, LuHeart, LuUtensils, LuArrowRight } from "react-icons/lu";
@@ -14,7 +15,7 @@ function isQuickRecipe(recipe) {
   return minutes > 0 && minutes <= 30;
 }
 
-const API = `http://${window.location.hostname}:8000`;
+
 
 function authHeaders() {
   const token = localStorage.getItem("access_token");

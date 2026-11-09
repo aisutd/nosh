@@ -108,8 +108,8 @@ class ChromaIntegrationTests(unittest.TestCase):
                                  available_ingredients=['lemons', 'sugar'])
         self.assertEqual([r['title'] for r in results], ['Old-Fashioned Lemonade'])
         self.assertEqual(results[0]['rank'], 1)
-        self.assertEqual(search_recipes('lemonade', collection=self.collection,
-                                       available_ingredients=['lemon']), [])
+        self.assertIn('Old-Fashioned Lemonade', [r['title'] for r in search_recipes('lemonade', collection=self.collection,
+                                       available_ingredients=['lemon'])])  # sugar is a shared staple
         self.assertEqual(search_recipes('lemonade', collection=self.collection,
                                        available_ingredients=[], max_time=15), [])
         self.assertEqual(search_recipes('lemonade', collection=self.collection,
@@ -119,7 +119,7 @@ class ChromaIntegrationTests(unittest.TestCase):
         import nosh_pipeline
         with patch.object(nosh_pipeline, 'classify_request', return_value={'status': 'in_scope'}), \
                 patch.object(nosh_pipeline, 'generate_recipe') as generate:
-            result = nosh_pipeline.run_nosh(['lemon'], collection=self.collection)
+            result = nosh_pipeline.run_nosh(['nonexistentingredient'], collection=self.collection)
         self.assertEqual(result['status'], 'no_recipes_found')
         generate.assert_not_called()
 

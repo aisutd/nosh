@@ -1,19 +1,21 @@
+import VoiceAgent from '../components/VoiceAgent.jsx';
+import { API, authHeaders } from '../lib/api';
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { LuMic, LuArrowLeft, LuUtensils, LuClock } from "react-icons/lu";
 import RecipeTabs from "../components/RecipeTabs";
 import RecipeIngredients from "../components/RecipeIngredients";
 import "./RagCook.css";
-const API = `http://${window.location.hostname}:8000`;
+
 
 export default function RagCook({ savedId = null, title = null, image = null, ingredients = [], sourceRecipe = null}) {
   const { id } = useParams();
   const { state: context } = useLocation();
+  const [talking, setTalking] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [talking, setTalking] = useState(false);
   const [cooked, setCooked] = useState(null);       // the consume result, once marked as cooked
   const [cooking, setCooking] = useState(false);
   const [servings, setServings] = useState(null);   // null = original serving size
@@ -27,7 +29,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
   const consumptionIngredients = result?.inventory_ingredients ?? (substitutions.length ? null : ingredients);
 
 
-  
+
   useEffect(() => {
     if (!savedId && !context?.ingredients) return;
     const controller = new AbortController();
@@ -36,7 +38,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
       try {
         const savedUrl = `${API}/recipes/saved-generate/${encodeURIComponent(savedId)}${servings ? `?servings=${servings}` : ""}`;
         const response = await fetch(savedId ? savedUrl : `${API}/recipes/generate-selected`, {
-          method: "POST", headers: { "Content-Type": "application/json", ...(savedId ? { Authorization: `Bearer ${localStorage.getItem("access_token") || ""}` } : {}) },
+          method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() },
           body: savedId ? undefined : JSON.stringify({ recipe_id: id, ingredients: context.ingredients, user_query: context.user_query, ...(servings ? { servings } : {}) }),
           signal: controller.signal,
         });
@@ -174,14 +176,15 @@ export default function RagCook({ savedId = null, title = null, image = null, in
       {!result && <p>{loading ? "Your steps will appear here once generation finishes." : "No cooking instructions available yet."}</p>}
     {result && (result.status === "ok" && result.recipe ? <>
       <div className="recipe-steps-heading"><h2>Let’s get cooking</h2>
-        <button className="recipe-voice-button" onClick={toggleVoiceCooking}>
+        {window.ReactNativeWebView?.postMessage && <button className="recipe-voice-button" onClick={toggleVoiceCooking}>
           <LuMic aria-hidden="true" /> {talking ? "Stop voice" : "Talk to Nosh"}
-        </button>
+        </button>}
       </div>
       <ol className="cook-list recipe-numbered-steps">
         {steps.map((step, i) => <li key={i}>{step}</li>)}
       </ol>
 
+      {!window.ReactNativeWebView?.postMessage && <VoiceAgent key={result.recipe} recipe={result.recipe} ingredients={context?.ingredients || ingredients} />}
       <div className="cook-actions">
         {substitutions.length > 0 && !consumptionIngredients && <p className="cook-warning">
           Please update inventory manually for this substitution; its quantities could not be converted reliably.

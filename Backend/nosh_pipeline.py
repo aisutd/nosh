@@ -19,7 +19,7 @@ from llm.nosh_generation import (
 
 def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection=None,
              retrieve_only=False, selected_recipe_id=None,
-             servings: int = None, original_servings: int = None):
+             servings=None, original_servings=None, personalization=None):
     """Return only judge-approved generation; refusals use message, not recipe.
 
     Ingredient labels or comma-separated ingredients are accepted. Free-form
@@ -167,16 +167,11 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
     ]
 
     if not recipes:
-        return {
-            "status": "no_recipes_found",
-            "recipe": None,
-            "recipes": [],
-            "message": (
-                "No recipes can be made with your available ingredients "
-                "and supported substitutions."
-            ),
-        }
-
+        return {"status": "no_recipes_found", "recipe": None, "recipes": [],
+                "message": "No recipes can be made with your available ingredients and supported substitutions."}
+    from personalization import rank_recipes
+    recipes = rank_recipes(recipes, personalization)
+    # Availability stays primary; memory breaks ties among equally eligible recipes.
     recipes.sort(key=lambda recipe: availability_rank(recipe["availability"]))
     substitutions = recipes[0]["substitutions"]
 
@@ -219,15 +214,9 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
     source_preserving = answer is not None
 
     if answer is None:
-        answer = generate_recipe(
-            available_ingredients=available,
-            retrieved_context=context,
-            user_query=user_query,
-            max_time=max_time,
-            servings=servings,
-            substitutions=substitutions,
-        )
-
+        answer = generate_recipe(available_ingredients=available, retrieved_context=context,
+                                 user_query=user_query, max_time=max_time,
+                                 servings=servings, substitutions=substitutions, personalization=personalization)
     if answer in (INSUFFICIENT_CONTEXT, OUT_OF_SCOPE):
         return {
             "status": (
@@ -284,15 +273,10 @@ def run_nosh(detected_ings, *, user_query="", top_k=5, max_time=None, collection
     if not passed:
         # One bounded correction attempt; failed drafts are never cooking instructions.
         corrected = generate_recipe(
-            available_ingredients=available,
-            retrieved_context=context,
-            user_query=user_query,
-            max_time=max_time,
-            substitutions=substitutions,
-            repair_feedback={
-                "previous_output": answer,
-                "validation": verdict,
-            },
+            available_ingredients=available, retrieved_context=context,
+            user_query=user_query, max_time=max_time, substitutions=substitutions,
+            repair_feedback={"previous_output": answer, "validation": verdict},
+            personalization=personalization,
         )
 
         if corrected not in (INSUFFICIENT_CONTEXT, OUT_OF_SCOPE):

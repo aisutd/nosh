@@ -1,28 +1,23 @@
-"""Voice agent that fetches a recipe from RAG based on spoken ingredients, then guides the user step by step."""
 import os
+import string
 import subprocess
 from pathlib import Path
-
-import pyttsx3
 
 import sounddevice as sd
 from scipy.io.wavfile import write
 from dotenv import load_dotenv
 from deepgram import DeepgramClient
 
-from rag_client import ask_rag
+from rag_client import generate_recipe
 
-
-# SETTINGS
 
 SAMPLE_RATE = 16000
 DURATION = 5
 AUDIO_FILE = "recording.wav"
 
 
-# LOAD ENVIRONMENT VARIABLES
-
-env_path = Path(__file__).resolve().parent.parent / "Backend" / ".env"
+# Load environment variables
+env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(env_path)
 
 API_KEY = os.getenv("DEEPGRAM_API_KEY")
@@ -33,59 +28,39 @@ if not API_KEY:
         "Make sure your .env file is in the repository root."
     )
 
-
-# DEEPGRAM
-
 deepgram = DeepgramClient(api_key=API_KEY)
 
 
-# RECIPE STATE (populated at startup via RAG)
+# ---------------------------------------------------------
+# Voice-agent state
+# ---------------------------------------------------------
 
-recipe_name = ""
-recipe_steps = []
-recipe_context = ""
+user_ingredients = []
+
+current_recipe = None
+current_recipe_steps = []
 current_step = 0
 
 
-def parse_recipe(rag_response):
-    """Pull name and steps out of the LLM's structured response.
+# ---------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------
 
-    Expected format:
-        Recipe Name: <name>
-        Changes:
-        - none
-        Steps:
-        1. <step>
-        2. <step>
-    """
-    import re
-    name = ""
-    steps = []
+def clean_ingredient(ingredient):
+    ingredient = ingredient.strip().lower()
 
-    name_match = re.search(r"Recipe Name:\s*(.+)", rag_response)
-    if name_match:
-        name = name_match.group(1).strip()
-
-    steps = re.findall(r"^\d+\.\s+(.+)", rag_response, re.MULTILINE)
-
-    return name, steps
-
-
-def fetch_recipe(ingredients):
-    """Call RAG with the user's ingredients and return (name, steps, full_text)."""
-    speak("Looking up a recipe for you, one moment.")
-    response = ask_rag(
-        "Find me a recipe I can make",
-        available_ingredients=ingredients,
+    ingredient = ingredient.translate(
+        str.maketrans("", "", string.punctuation)
     )
-    name, steps = parse_recipe(response)
-    return name, steps, response
+
+    return ingredient.strip()
 
 
-# SPEECH TO TEXT
+# ---------------------------------------------------------
+# Speech to Text
+# ---------------------------------------------------------
 
 def listen():
-    """Record 5 seconds of audio, send it to Deepgram, and return the transcribed text."""
     print("\nListening... Speak now!")
 
     audio = sd.rec(
@@ -97,7 +72,11 @@ def listen():
 
     sd.wait()
 
-    write(AUDIO_FILE, SAMPLE_RATE, audio)
+    write(
+        AUDIO_FILE,
+        SAMPLE_RATE,
+        audio
+    )
 
     print("Sending audio to Deepgram Nova-3...")
 
@@ -124,204 +103,357 @@ def listen():
     return command
 
 
-# TEXT TO SPEECH
-tts = pyttsx3.init()
+# ---------------------------------------------------------
+# Text to Speech
+# ---------------------------------------------------------
 
 def speak(text):
-    print("NOSH:", text)
-    tts.say(text)
-    tts.runAndWait()
-
-'''
-def speak(text):
-    """Print and read the given text aloud using macOS text-to-speech."""
     print("NOSH:", text)
 
     subprocess.run(
-        ["say", text]
+        ["say", str(text)]
     )
-'''
 
 
-# CHECK CURRENT RECIPE CONTEXT
+# ---------------------------------------------------------
+# Ingredient handling
+# ---------------------------------------------------------
 
-def answer_from_recipe_context(question):
-    """Answer simple questions from the current recipe context without calling RAG."""
-    question = question.lower()
+def add_ingredient(ingredient):
+    ingredient = clean_ingredient(ingredient)
 
-    if "what recipe" in question or "what are we making" in question:
-        return f"We are currently making {recipe_name}."
+    if not ingredient:
+        return "Please tell me which ingredient to add."
 
-    if "ingredient" in question:
-        return f"The recipe context has the full ingredient list: {recipe_context[:300]}"
+    if ingredient in user_ingredients:
+        return f"{ingredient} is already in your ingredient list."
 
-    if "what step" in question or "current step" in question:
+    user_ingredients.append(ingredient)
+
+    print("Current ingredients:", user_ingredients)
+
+    return f"Added {ingredient}."
+
+
+def remove_ingredient(ingredient):
+    ingredient = clean_ingredient(ingredient)
+
+    if not ingredient:
+        return "Please tell me which ingredient to remove."
+
+    if ingredient not in user_ingredients:
+        return f"{ingredient} is not in your ingredient list."
+
+    user_ingredients.remove(ingredient)
+
+    print("Current ingredients:", user_ingredients)
+
+    return f"Removed {ingredient}."
+
+
+def list_ingredients():
+    if not user_ingredients:
+        return "You have not added any ingredients yet."
+
+    return (
+        "Your ingredients are "
+        + ", ".join(user_ingredients)
+        + "."
+    )
+
+
+def clear_ingredients():
+    user_ingredients.clear()
+
+    print("Current ingredients:", user_ingredients)
+
+    return "I cleared your ingredient list."
+
+
+# ---------------------------------------------------------
+# RAG recipe generation
+# ---------------------------------------------------------
+
+def request_recipe(command):
+    global current_recipe
+    global current_recipe_steps
+    global current_step
+
+    if not user_ingredients:
         return (
-            f"You are on step {current_step + 1}. "
-            f"{recipe_steps[current_step]}"
+            "Please add some ingredients before "
+            "asking me to generate a recipe."
         )
 
-    if "how many steps" in question:
-        return f"This recipe has {len(recipe_steps)} steps."
+    print("\nSending request to NOSH RAG...")
+    print("Ingredients:", user_ingredients)
+    print("User query:", command)
+
+    result = generate_recipe(
+        user_ingredients,
+        user_query=command
+    )
+
+    if not result.get("success"):
+        return result.get(
+            "message",
+            "I could not generate a recipe."
+        )
+
+    current_recipe = result.get("recipe")
+
+    if not current_recipe:
+        return "The backend returned no recipe."
+
+    print("\nRAG RESPONSE:")
+    print(current_recipe)
+
+    source = result.get("source_recipe")
+
+    if source:
+        print("Source recipe:", source)
+
+    current_step = 0
+
+    current_recipe_steps = [
+        line.strip()
+        for line in str(current_recipe).split("\n")
+        if line.strip()
+    ]
+
+    return (
+        "I generated a recipe for you. "
+        + str(current_recipe)
+    )
+
+
+# ---------------------------------------------------------
+# Current recipe context
+# ---------------------------------------------------------
+
+def handle_recipe_context(command):
+    global current_step
+
+    if not current_recipe:
+        return None
+
+    if (
+        "repeat" in command
+        and current_recipe_steps
+    ):
+        return current_recipe_steps[current_step]
+
+    if (
+        "next" in command
+        and current_recipe_steps
+    ):
+        if current_step < len(current_recipe_steps) - 1:
+            current_step += 1
+            return current_recipe_steps[current_step]
+
+        return "You are at the end of the recipe."
+
+    if (
+        "back" in command
+        or "previous" in command
+    ):
+        if current_recipe_steps and current_step > 0:
+            current_step -= 1
+            return current_recipe_steps[current_step]
+
+        return "You are already at the beginning."
+
+    if (
+        "what recipe" in command
+        or "repeat the recipe" in command
+    ):
+        return str(current_recipe)
 
     return None
 
 
-# HANDLE USER QUESTION
-
-def handle_question(question):
-    """Try to answer from the current recipe context first; fall back to RAG if needed."""
-    # First check cached recipe context
-    context_answer = answer_from_recipe_context(question)
-
-    if context_answer:
-        print("Answer found in current recipe context.")
-        return context_answer
-
-    # If not available locally, send question to backend/RAG
-    print("Answer not found in cached context.")
-    print("Sending question to backend/RAG...")
-
-    rag_answer = ask_rag(
-        question,
-        available_ingredients=ingredients_input,
-        recipe_context=recipe_context,
-    )
-
-    return rag_answer
-
-
-# START VOICE AGENT
+# ---------------------------------------------------------
+# Main program
+# ---------------------------------------------------------
 
 speak(
     "Welcome to Nosh. "
-    "Please say the ingredients you have available."
-)
-
-# Listen for ingredients and fetch a recipe before entering the main loop
-ingredients_input = listen()
-recipe_name, recipe_steps, recipe_context = fetch_recipe(ingredients_input)
-
-if not recipe_steps:
-    speak("I could not find a recipe for those ingredients. Please restart and try again.")
-    exit()
-
-speak(
-    f"I found a recipe for {recipe_name}. "
-    "Say start cooking when you are ready."
+    "Tell me what ingredients you have."
 )
 
 
 while True:
 
     try:
+
         command = listen()
 
-        # No speech detected
         if not command:
             speak(
-                "I did not hear anything. Please try again."
+                "I did not hear anything. "
+                "Please try again."
             )
             continue
 
 
-        # -----------------------------------
-        # LOCAL VOICE COMMANDS
-        # -----------------------------------
+        # -------------------------------------------------
+        # Stop
+        # -------------------------------------------------
 
-        if "start" in command:
-
-            current_step = 0
-
-            speak(
-                f"Starting {recipe_name}. "
-                f"Step 1. {recipe_steps[current_step]}"
-            )
-
-
-        elif "next" in command:
-
-            if current_step < len(recipe_steps) - 1:
-
-                current_step += 1
-
-                speak(
-                    f"Step {current_step + 1}. "
-                    f"{recipe_steps[current_step]}"
-                )
-
-            else:
-
-                speak(
-                    "You have completed the recipe."
-                )
-
-
-        elif "repeat" in command:
-
-            speak(
-                f"Step {current_step + 1}. "
-                f"{recipe_steps[current_step]}"
-            )
-
-
-        elif (
-            "back" in command
-            or "previous" in command
+        if (
+            "stop cooking" in command
+            or "stop cooking mode" in command
+            or command == "stop"
+            or command == "exit"
         ):
+            speak("Cooking mode stopped.")
+            break
 
-            if current_step > 0:
 
-                current_step -= 1
-
-                speak(
-                    f"Step {current_step + 1}. "
-                    f"{recipe_steps[current_step]}"
-                )
-
-            else:
-
-                speak(
-                    "You are already on the first step."
-                )
-
+        # -------------------------------------------------
+        # Help
+        # -------------------------------------------------
 
         elif "help" in command:
 
             speak(
-                "You can say start cooking, next step, "
-                "repeat, go back, ask a cooking question, "
-                "or say stop cooking."
+                "You can say I have garlic, "
+                "add pasta, remove onions, "
+                "what ingredients do I have, "
+                "clear ingredients, "
+                "what can I cook, "
+                "make me something quick, "
+                "next step, repeat, "
+                "go back, "
+                "or stop cooking."
             )
 
 
+        # -------------------------------------------------
+        # Add ingredient
+        # -------------------------------------------------
+
+        elif command.startswith("i have "):
+
+            ingredient = command.replace(
+                "i have ",
+                "",
+                1
+            )
+
+            speak(
+                add_ingredient(ingredient)
+            )
+
+
+        elif command.startswith("add "):
+
+            ingredient = command.replace(
+                "add ",
+                "",
+                1
+            )
+
+            speak(
+                add_ingredient(ingredient)
+            )
+
+
+        # -------------------------------------------------
+        # Remove ingredient
+        # -------------------------------------------------
+
+        elif command.startswith("remove "):
+
+            ingredient = command.replace(
+                "remove ",
+                "",
+                1
+            )
+
+            speak(
+                remove_ingredient(ingredient)
+            )
+
+
+        # -------------------------------------------------
+        # Clear ingredients
+        # -------------------------------------------------
+
         elif (
-            "stop" in command
-            or "exit" in command
+            "clear ingredients" in command
+            or "clear my ingredients" in command
         ):
 
             speak(
-                "Cooking mode stopped."
+                clear_ingredients()
             )
 
-            break
+
+        # -------------------------------------------------
+        # Ingredient list
+        # -------------------------------------------------
+
+        elif (
+            "what ingredients" in command
+            or "list ingredients" in command
+            or "what do i have" in command
+        ):
+
+            speak(
+                list_ingredients()
+            )
 
 
-        # -----------------------------------
-        # COOKING QUESTION
-        # -----------------------------------
+        # -------------------------------------------------
+        # Current recipe navigation
+        # -------------------------------------------------
 
         else:
 
-            response = handle_question(command)
+            context_response = (
+                handle_recipe_context(command)
+            )
 
-            speak(response)
+            if context_response:
+                speak(context_response)
+                continue
+
+
+            # ---------------------------------------------
+            # Send cooking requests to RAG
+            # ---------------------------------------------
+
+            if (
+                "what can i cook" in command
+                or "what can i make" in command
+                or "make me" in command
+                or "generate" in command
+                or "recipe" in command
+                or "cook" in command
+            ):
+
+                response = request_recipe(command)
+
+                speak(response)
+
+                continue
+
+
+            # ---------------------------------------------
+            # Fallback
+            # ---------------------------------------------
+
+            speak(
+                "I understood what you said, "
+                "but I am not sure which cooking action "
+                "you want me to perform."
+            )
 
 
     except KeyboardInterrupt:
 
         print("\nVoice agent stopped.")
-
         break
 
 
@@ -330,5 +462,6 @@ while True:
         print("Error:", error)
 
         speak(
-            "Something went wrong while processing your voice."
+            "Something went wrong while "
+            "processing your voice."
         )

@@ -88,6 +88,7 @@ def is_category_only(answer):
 
 
 def answer_question(context, question, history):
+    from personalization import MEMORY_RULES
     payload = {**context, 'question': question, 'history': history}
     for attempt in range(2):
         repair = ("\nYour last response put a category in answer. Write a complete, useful "
@@ -95,7 +96,7 @@ def answer_question(context, question, history):
                   "kind/status. Do not echo those labels as the answer.") if attempt else ''
         response = ollama.chat(
             model=GEN_MODEL, format=ANSWER_SCHEMA,
-            messages=[{'role': 'system', 'content': CHAT_RULES + repair},
+            messages=[{'role': 'system', 'content': CHAT_RULES + MEMORY_RULES + repair},
                       {'role': 'user', 'content': json.dumps(payload)}],
             options={'temperature': 0.0},
         )

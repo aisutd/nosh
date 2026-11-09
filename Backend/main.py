@@ -21,7 +21,7 @@ for folder in (REPO_ROOT, BACKEND_DIR):
     while path in sys.path:
         sys.path.remove(path)
     sys.path.insert(0, path)
-from routes import scan, ingredients, recipes, pipeline, inventory, voice
+from routes import scan, ingredients, recipes, pipeline, inventory, memory, voice
 
 
 #Check and print connection to MongoDB is successful
@@ -98,4 +98,10 @@ app.include_router(ingredients.router)
 app.include_router(recipes.router)
 app.include_router(pipeline.router)
 app.include_router(inventory.router)
+app.include_router(memory.router)
 app.include_router(voice.router)
+
+
+@app.get("/health")
+def health():
+    return {"app": "nosh", "capabilities": ["recipes", "inventory", "voice", "memory"]}

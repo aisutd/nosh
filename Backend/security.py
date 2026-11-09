@@ -84,3 +84,11 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     if not db_user:
         raise HTTPException(status_code=401, detail="User not found")
     return db_user
+
+
+# Guests retain public cooking access; invalid supplied tokens still fail.
+optional_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
+
+
+async def get_optional_user(token: str | None = Depends(optional_oauth2_scheme)):
+    return await get_current_user(token) if token else None

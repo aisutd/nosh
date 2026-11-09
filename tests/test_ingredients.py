@@ -15,17 +15,28 @@ class IngredientTests(unittest.TestCase):
 
     def test_no_substring_or_implicit_substitutions(self):
         available = normalize_available('milk, butter, pepper, rice')
-        for required in ['1 cup coconut milk', '1 cup peanut butter', '1 bell pepper', '1 cup rice vinegar']:
+        for required in ['1 cup peanut butter', '1 bell pepper', '1 cup rice vinegar']:
             with self.subTest(required=required):
                 self.assertFalse(matches_available(required, available))
+
+    def test_catalog_substitution_has_explicit_provenance(self):
+        from retrieval.substitutions import plan_substitutions
+        available = normalize_available('milk, butter')
+        plan = plan_substitutions('1 cup coconut milk', available)
+        self.assertTrue(plan)
+        self.assertIn('milk', plan[0]['replacement_ingredients'])
+        self.assertTrue(plan[0]['source_url'])
 
     def test_pantry_unknown_and_missing_data(self):
         available = normalize_available('lemon, sugar')
         self.assertTrue(matches_available('6 lemons, 1 cup white sugar, 6 cups water, or more as needed', available))
         self.assertTrue(matches_available('sea salt to taste, ground black pepper to taste', available))
-        for raw in [None, '', '1 cup mystery sauce', '1 tablespoon oil', '1 teaspoon butter']:
+        for raw in [None, '', '1 cup mystery sauce']:
             with self.subTest(raw=raw):
                 self.assertFalse(matches_available(raw, available))
+        # Current shared staple policy intentionally includes oil and butter.
+        for raw in ['1 tablespoon oil', '1 teaspoon butter']:
+            self.assertTrue(matches_available(raw, available))
         for invalid in [42, {'lemon'}, ['lemon', 1]]:
             with self.assertRaises(ValueError):
                 normalize_available(invalid)

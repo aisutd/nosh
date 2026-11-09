@@ -28,3 +28,9 @@ def ask_rag(question, available_ingredients=None, recipe_context=None):
 
 if __name__ == "__main__":
     print(ask_rag("How do I cook pasta?", available_ingredients="pasta, garlic, olive oil"))
+
+
+def generate_recipe(ingredients, user_query=""):
+    """Adapt the shared pipeline result for the desktop voice command client."""
+    result = run_nosh(ingredients, user_query=user_query)
+    return {**result, "success": result.get("status") == "ok"}
