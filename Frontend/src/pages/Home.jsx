@@ -10,7 +10,7 @@ function Home() {
 
   useEffect(() => {
     const el = rowRef.current;
-    if (!el || recipes.length === 0) return;
+    if (!el || recipes.length === 0 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = setInterval(() => {
       if (pausedRef.current) return;
       el.scrollLeft += 1;                                   // move 1px
@@ -35,10 +35,11 @@ function Home() {
         <div className="blob" aria-hidden="true">
         <span className="eye" /><span className="eye" />
         </div>
-      <h1 className="hero">Let's get cooking.</h1>
-      <p className="hero-sub">Scan, swipe, and cook.</p>
+      <h1 className="hero">Your AI cooking buddy.</h1>
+      <p className="hero-sub">Good food starts with what’s already in your kitchen.</p>
 
-      <h3 className="row-title">Trending tonight</h3>
+      <div className="home-shortcuts"><Link to="/pantry">Find recipes <span>From your ingredients</span></Link><Link to="/saved">My recipes <span>Your saved favorites</span></Link></div>
+      <h3 className="row-title">A little cooking inspiration</h3>
         <div
         className="row"
         ref={rowRef}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { LuMic, LuArrowLeft } from "react-icons/lu";
+import { LuMic, LuArrowLeft, LuUtensils, LuClock } from "react-icons/lu";
+import RecipeTabs from "../components/RecipeTabs";
 import RecipeIngredients from "../components/RecipeIngredients";
 import "./RagCook.css";
 const API = `http://${window.location.hostname}:8000`;
@@ -117,35 +118,21 @@ export default function RagCook({ savedId = null, title = null, image = null, in
     }
   }
 
-  return <main className="page cook">
-    <Link className="back-link" to={savedId ? "/saved" : "/swipe"}>
-      <LuArrowLeft /> {savedId ? "Saved" : "Back"}
-    </Link>
-    <div className="cook-hero" style={photo ? { backgroundImage: `url("${photo}")` } : undefined}>
-      <h1 className="cook-hero-title">{title || context?.title || "Selected recipe"}</h1>
+  return <main className="page cook recipe-detail">
+    <div className="recipe-detail-hero">
+      <div className="recipe-detail-placeholder" aria-hidden="true"><LuUtensils /></div>
+      {photo && /^https?:\/\//i.test(photo) && <img key={photo} src={photo} alt={title || context?.title || "Selected recipe"}
+        onError={(event) => { event.currentTarget.style.display = "none"; }} />}
+      <Link className="recipe-detail-back" to={savedId ? "/saved" : "/swipe"}>
+        <LuArrowLeft aria-hidden="true" /> {savedId ? "My Recipes" : "Back"}
+      </Link>
     </div>
+    <div className="recipe-detail-content">
+      <h1>{title || context?.title || result?.source_recipe || "Selected recipe"}</h1>
+      {(sourceRecipe?.total_time || context?.total_time) && <p className="recipe-detail-time">
+        <LuClock aria-hidden="true" /> {sourceRecipe?.total_time || context?.total_time}
+      </p>}
 
-    <div className={`blob ${talking ? "talking" : ""}`} aria-hidden="true">
-      <span className="eye" /><span className="eye" />
-    </div>
-    <p>{talking ? "Listening..." : "Tap to cook hands-free with Nosh."}</p>
-
-      <button className="cta talk-btn" onClick={toggleVoiceCooking}>
-      <LuMic /> {talking ? "Stop" : "Talk to Nosh"}
-    </button>
-
-    {sourceIngredients && <section aria-label="Source ingredients">
-      <h3>Source ingredients</h3>
-      <p>{sourceIngredients}</p>
-    </section>}
-    {availability && <RecipeIngredients availability={availability} />}
-    {!availability && substitutions.length > 0 && <section aria-label="Pantry substitutions">
-      <h3>Pantry substitutions</h3>
-      <ul className="cook-list">{substitutions.map((swap) => <li key={swap.ingredient}>
-        <strong>{swap.ingredient} → {swap.replacement_ingredients.join(" + ")}</strong>
-        {" "}{swap.instructions} {swap.limitations}
-      </li>)}</ul>
-    </section>}
     {!savedId && !context?.ingredients && <p>Please <Link to="/pantry">search from your pantry</Link> to choose a recipe.</p>}
 
     <div className="servings-selector">
@@ -167,8 +154,31 @@ export default function RagCook({ savedId = null, title = null, image = null, in
       {servings ? `Scaling recipe to ${servings} serving(s)…` : "Preparing and validating instructions for your selected recipe…"}
     </p>}
     {error && <div role="alert"><p>{error}</p><button onClick={() => setAttempt(attempt + 1)}>Try again</button></div>}
+    <RecipeTabs key={savedId || id} ingredients={<>
+    {sourceIngredients && <section className="recipe-source-ingredients" aria-label="Source ingredients">
+      <header><LuUtensils aria-hidden="true" /><h3>Source ingredients</h3></header>
+      <p className="recipe-source-note">Original recipe quantities, before pantry substitutions.</p>
+      {Array.isArray(rawIngredients) ? <ul>{rawIngredients.map((line, index) => <li key={index}>{line}</li>)}</ul>
+        : <p className="recipe-source-text">{sourceIngredients}</p>}
+    </section>}
+    {availability && <RecipeIngredients availability={availability} />}
+    {!availability && substitutions.length > 0 && <section aria-label="Pantry substitutions">
+      <h3>Pantry substitutions</h3>
+      <ul className="cook-list">{substitutions.map((swap) => <li key={swap.ingredient}>
+        <strong>{swap.ingredient} → {swap.replacement_ingredients.join(" + ")}</strong>
+        {" "}{swap.instructions} {swap.limitations}
+      </li>)}</ul>
+    </section>}
+      {!sourceIngredients && !availability && <p>{loading ? "Loading ingredient details…" : "Ingredient details are not available."}</p>}
+    </>} steps={<>
+      {!result && <p>{loading ? "Your steps will appear here once generation finishes." : "No cooking instructions available yet."}</p>}
     {result && (result.status === "ok" && result.recipe ? <>
-      <ol className="cook-list">
+      <div className="recipe-steps-heading"><h2>Let’s get cooking</h2>
+        <button className="recipe-voice-button" onClick={toggleVoiceCooking}>
+          <LuMic aria-hidden="true" /> {talking ? "Stop voice" : "Talk to Nosh"}
+        </button>
+      </div>
+      <ol className="cook-list recipe-numbered-steps">
         {steps.map((step, i) => <li key={i}>{step}</li>)}
       </ol>
 
@@ -198,5 +208,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
     </> : <div role="status"><p>{result.message}</p>
       {result.status === "failed_validation" && <button className="btn-primary" onClick={() => setAttempt(attempt + 1)}>Try instructions again</button>}
     </div>)}
+    </>} />
+    </div>
   </main>;
 }

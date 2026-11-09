@@ -54,7 +54,7 @@ function Inventory({ user }) {
 
   if (!user) {
     return (
-      <main className="page">
+      <main className="page inventory-page">
         <h1>Inventory</h1>
         <p>Log in to track what you have.</p>
         <Link to="/auth" className="cta">Log in</Link>
@@ -63,7 +63,7 @@ function Inventory({ user }) {
   }
 
   return (
-    <main className="page">
+    <main className="page inventory-page">
       <Link to="/profile" className="inv-back" aria-label="Back to profile">
         <LuArrowLeft size={24} />
       </Link>

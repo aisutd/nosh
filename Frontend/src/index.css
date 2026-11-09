@@ -3,16 +3,23 @@
    App.css builds on top of these variables.
    ===================================================================== */
 
-:root {                          /* variables usable anywhere as var(--name) */
-  --text: #f5f1ea;               /* main text (warm white) */
-  --surface: #1c1918;            /* inputs, buttons, cards */
-  --bg: #121010;                 /* page background */
-  --border: #0b0615;            /* borders (almost invisible on the dark bg) */
-  --muted: #a39d96;              /* grey text */
-  --accent: #ff7a1a;             /* orange: buttons, links, active tab */
-  --accent-dark: #d26619;        /* orange on hover */
-  --blob: #ff7a1a;               /* mascot color */
-  font-family: "Outfit", system-ui, sans-serif;   /* app-wide font, falls back to the system font */
+:root {
+  color-scheme: light;
+  --text: #2f3a44;
+  --surface: #fff7f7;
+  --bg: #fadadd;
+  --border: #e8cbd1;
+  --muted: #665960;
+  --coral: #f26b7a;
+  --accent: #b74357;
+  --accent-dark: #983447;
+  --green: #4caf7d;
+  --teal: #6ba7a9;
+  --peach: #f7c59f;
+  --yellow: #f9d86e;
+  --blob: #f26b7a;
+  --card: #fff7f7;
+  font-family: "Outfit", system-ui, sans-serif;
 }
 
 * {

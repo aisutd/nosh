@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { LuX, LuHeart, LuChevronUp, LuChevronDown, LuClock } from "react-icons/lu";
+import { LuX, LuHeart, LuChevronUp, LuClock } from "react-icons/lu";
+
+import RecipeTabs from "../components/RecipeTabs";
+import RecipeIngredients from "../components/RecipeIngredients";
 
 const API = `http://${window.location.hostname}:8000`;
 
@@ -114,7 +117,7 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
 
   return (
     <main className="swipe">
-      <h1 className="swipe-title">Swipe</h1>
+      <h1 className="swipe-title">Recipes for you</h1>
       {ragSearch && recipe && <p className="swipe-position">Option {index + 1} of {deck.length}</p>}
       {error && <p role="alert">{error}</p>}
 
@@ -140,10 +143,10 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
             }}
           >
             {dragX > 40 && (
-              <span className="stamp stamp-yes" style={{ opacity: Math.min(dragX / 100, 1) }}>YESSIR</span>
+              <span className="stamp stamp-yes" style={{ opacity: Math.min(dragX / 100, 1) }}>SAVE</span>
             )}
             {dragX < -40 && (
-              <span className="stamp stamp-no" style={{ opacity: Math.min(-dragX / 100, 1) }}>HECKS NAH</span>
+              <span className="stamp stamp-no" style={{ opacity: Math.min(-dragX / 100, 1) }}>SKIP</span>
             )}
 
             {ragSearch ? <>
@@ -155,21 +158,24 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
             </>}
 
             <button
-              className="sheet-toggle"
+              className={`sheet-toggle ${open ? "is-open" : ""}`}
               onPointerDown={(e) => e.stopPropagation()}     // so tapping it doesn't start a drag
               onClick={() => setOpen((o) => !o)}
-              aria-label="Details"
+              aria-label={open ? "Close recipe details" : "Open recipe details"}
+              aria-expanded={open}
+              aria-controls="swipe-recipe-details"
             >
-              {open ? <LuChevronDown size={22} /> : <LuChevronUp size={22} />}
+              <LuChevronUp size={22} aria-hidden="true" />
             </button>
 
-            {open && (
-              <div className="sheet" onPointerDown={(e) => e.stopPropagation()}>
+            <div id="swipe-recipe-details" className={`sheet swipe-details ${open ? "is-open" : ""}`}
+                inert={!open} aria-hidden={!open} onPointerDown={(e) => e.stopPropagation()}>
                 <h2>{recipe.title}</h2>
                   <p className="sheet-meta">
                     <LuClock /> {recipe.total_time || "Time not listed"}
                     {servingCount && <> · {servingCount} servings</>}
                   </p>                
+                  <RecipeTabs key={recipe.id} ingredients={<>
                   <h3>Ingredients</h3>
                   <div className="sheet-chips">
                     {items.map((line, i) => (
@@ -178,6 +184,9 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
                       </span>
                     ))}
                   </div>
+                  {recipe.availability && <RecipeIngredients availability={recipe.availability} />}
+                  </>} steps={<>
+                    <p className="sheet-meta">Original source instructions. Pantry substitutions have not been applied here.</p>
                   {steps.length > 0 && (
                     <>
                       <h3>Directions</h3>
@@ -186,11 +195,12 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch, pantry = [] }) {
                       </ol>
                     </>
                   )}
+                    {!steps.length && <p>No source instructions available.</p>}
+                  </>} />
                 {/^https?:\/\//i.test(recipe.source_url || "") && (
                   <a className="sheet-source" href={recipe.source_url} target="_blank" rel="noreferrer">Source recipe</a>
                 )}
               </div>
-            )}
           </div>
 
           <div className="swipe-actions">

@@ -1,9 +1,50 @@
-.recipe-availability { margin-block: 1rem; }
+.recipe-availability {
+  container-type: inline-size;
+  margin-block: 1.5rem;
+  padding: clamp(1rem, 3vw, 1.75rem);
+  border: 1px solid #efcbd0;
+  border-radius: 24px;
+  background: #fadadd;
+  color: #2f3a44;
+  text-align: left;
+  line-height: 1.5;
+  font-size: .95rem;
+}
+.recipe-availability * { box-sizing: border-box; }
+.recipe-availability .ra-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+.recipe-availability .ra-eyebrow { font-size: .7rem; font-weight: 700; letter-spacing: .1em; color: #6d424b; margin: 0 0 .35rem; }
+.recipe-availability .ra-heading h3 { font-size: clamp(1.15rem, 2vw, 1.5rem); margin: 0; color: #2f3a44; }
+.recipe-availability .ra-matches { display: flex; flex-wrap: wrap; gap: .5rem; }
+.recipe-availability .ra-matches > span { padding: .5rem .75rem; background: #fff7f7; border-radius: 12px; font-size: .8rem; }
+.recipe-availability .ra-matches strong { color: #843a48; }
 .recipe-availability-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
-.recipe-availability-grid > section { min-width: 0; overflow-wrap: anywhere; }
-.recipe-availability-grid ul { padding-left: 1.1rem; }
-.recipe-availability-grid li { margin-block: .5rem; }
-.recipe-availability-grid li p { margin-block: .35rem; }
+.recipe-availability .ra-panel { min-width: 0; padding: 1rem; background: #fff7f7; border: 1px solid #efd9dc; border-radius: 18px; overflow-wrap: anywhere; }
+.recipe-availability .ra-panel > header { display: flex; align-items: center; gap: .5rem; }
+.recipe-availability .ra-panel > header > svg { flex-shrink: 0; color: #38745b; width: 1.15rem; height: 1.15rem; }
+.recipe-availability .ra-needed > header > svg { color: #96502b; }
+.recipe-availability .ra-swaps > header > svg { color: #38676a; }
+.recipe-availability h4 { margin: 0; font-size: 1rem; color: #2f3a44; }
+.recipe-availability .ra-count { margin-left: auto; padding: .1rem .5rem; border-radius: 9px; background: #f6e5e7; font-size: .75rem; font-weight: 700; }
+.recipe-availability .ra-description { margin: .5rem 0 1rem; font-size: .8rem; color: #665960; }
+.recipe-availability ul { list-style: none; padding: 0; margin: 0; }
+.recipe-availability li { margin: 0; padding-block: .75rem; border-top: 1px solid #efdee1; }
+.recipe-availability .ra-ingredient { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
+.recipe-availability .ra-status { display: inline-flex; align-items: center; gap: .25rem; width: fit-content; border-radius: 8px; padding: .2rem .5rem; font-size: .7rem; font-weight: 600; }
+.recipe-availability .ra-have { color: #285b43; background: #e2f1e8; }
+.recipe-availability .ra-missing { color: #854321; background: #ffe9d8; }
+.recipe-availability .ra-missing-item { display: flex; flex-direction: column; align-items: flex-start; gap: .4rem; }
+.recipe-availability .ra-swap p { margin: 0; }
+.recipe-availability .ra-swap-from { font-size: .8rem; color: #665960; }
+.recipe-availability .ra-swap-to { color: #285e60; margin-top: .2rem; }
+.recipe-availability .ra-swap .ra-method { margin-top: .6rem; font-size: .85rem; }
+.recipe-availability .ra-swap .ra-caution { margin-top: .6rem; padding-left: .65rem; border-left: 3px solid #f7c59f; color: #6a4b37; font-size: .8rem; }
+.recipe-availability .ra-empty { padding: 1rem 0; margin: 0; font-size: .85rem; color: #665960; }
+.recipe-availability .ra-footnotes { margin-top: 1rem; color: #665960; font-size: .75rem; }
+.recipe-availability .ra-footnotes p + p { margin-top: .3rem; }
+.recipe-availability .ra-notice { margin: 1rem 0 0; padding: .8rem 1rem; border-radius: 12px; background: #fff7f7; border-left: 4px solid #b34c5d; font-size: .85rem; }
+@container (max-width: 720px) {
+  .recipe-availability-grid { grid-template-columns: 1fr; }
+}
 @media (max-width: 600px) {
-  .recipe-availability-grid { grid-template-columns: 1fr; gap: .25rem; }
+  .recipe-availability-grid { grid-template-columns: 1fr; }
 }
