@@ -70,19 +70,19 @@ function Auth({ onLogin }) {
         {/* Username needed when sign up */}
         {isRegistering && (
           <input
-            placeholder="Username"
+            aria-label="Username" autoComplete="username" placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
         )}
         <input
-          type="email"
+          type="email" aria-label="Email" autoComplete="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <input
-          type="password"
+          type="password" aria-label="Password" autoComplete={isRegistering ? "new-password" : "current-password"}
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}

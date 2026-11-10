@@ -34,3 +34,4 @@ pandas
 chromadb==1.5.9
 sentence-transformers==6.1.0
 rank-bm25
+httpx

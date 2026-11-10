@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
   const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || 'chrome' });
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const calls = [];
+  const recipe = 'Recipe Name: Toast\nChanges:\n- none\nSteps:\n1. Toast bread.\n2. Serve warm.';
   await page.addInitScript(() => {
     window.SpeechRecognition = class {
       start() { this.onstart?.(); window.testMic = this; }
@@ -18,9 +19,19 @@ const assert = require('node:assert/strict');
       if (body.message === 'fail') return route.fulfill({ status: 503, json: { detail: 'Recipe service unavailable' } });
       return route.fulfill({ json: { answer: body.message === 'next step' ? 'Step 1. Toast bread.' : 'Use a warm pan.', step: 0 } });
     }
+    if (route.request().url().includes('/recipes/saved-generate/')) {
+      return route.fulfill({ json: { result: { status: 'ok', recipe } } });
+    }
+    if (route.request().url().endsWith('/recipes/toast')) {
+      return route.fulfill({ json: { id: 'toast', title: 'Toast', ingredients: ['bread'] } });
+    }
     return route.fulfill({ json: {} });
   });
   await page.goto('http://127.0.0.1:5173/pantry');
+  await page.getByRole('heading', { name: 'Your ingredients' }).waitFor();
+  assert.equal(await page.getByRole('heading', { name: 'Cook with NOSH' }).count(), 0);
+  await page.goto('http://127.0.0.1:5173/cook/toast');
+  await page.getByRole('tab', { name: 'Steps', exact: true }).click();
   await page.getByLabel('Speak replies').uncheck();
   await page.getByLabel('Your cooking question').fill('How do I toast bread?');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
@@ -43,7 +54,12 @@ const assert = require('node:assert/strict');
   // Unsupported browsers retain the typed path.
   const unsupported = await browser.newPage();
   await unsupported.addInitScript(() => { window.SpeechRecognition = undefined; window.webkitSpeechRecognition = undefined; });
-  await unsupported.goto('http://127.0.0.1:5173/pantry');
+  await unsupported.route('**:8000/**', async route => {
+    if (route.request().url().includes('/recipes/saved-generate/')) return route.fulfill({ json: { result: { status: 'ok', recipe } } });
+    return route.fulfill({ json: { id: 'toast', title: 'Toast', ingredients: ['bread'] } });
+  });
+  await unsupported.goto('http://127.0.0.1:5173/cook/toast');
+  await unsupported.getByRole('tab', { name: 'Steps', exact: true }).click();
   await unsupported.getByText('Voice recognition is unavailable', { exact: false }).waitFor();
   assert(await unsupported.getByRole('button', { name: 'Start listening', exact: true }).isDisabled());
   console.log('PASS: typed questions, mic transcripts, step state, API errors/retry, denied permission, unsupported browser, mobile layout');

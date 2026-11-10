@@ -152,17 +152,17 @@ for frame_number, result in enumerate(results):
 
         if not video_writer.isOpened():
             raise ValueError("Could not create annotated video.")
-    
+
     if result.boxes is None:
         continue
-    
+
     for box in result.boxes:
         class_id = int(box.cls[0]) # gets the class ID of the detected ingredient from the box object
         confidence = float(box.conf[0]) # gets the confidence score of the detected ingredient from the box object
         name = result.names[class_id] # gets the name of the detected ingredient using the class ID and the names dictionary in the result object
-        
+
         track_id = None # assumes that the detection doesn't have a tracking id yet
-        
+
         if box.id is not None:
             track_id = int(box.id[0]) # gets the tracking id and converts it to an integer if there is a tracking id
 
@@ -174,7 +174,7 @@ for frame_number, result in enumerate(results):
 
         # adds ingredient name only
         draw_label(frame, name, x1, y1, x2, y2, occupied_labels)
-        
+
         # appends the detected ingredient, its confidence score, tracking id, timestamp, and bounding box coordinates to the ingredients list
         ingredients.append({
             "name": name,
@@ -224,13 +224,13 @@ for name in class_names:
         if counted_track_confidences
         else None
     ) # calculates the overall average confidence for this ingredient class across all tracks
-    
+
     ingredient_summary.append({
         "name": name,
         "quantity": len(track_confidences[name]),
         "average_confidence": round(average_confidence, 4) if average_confidence is not None else None
         }
-    ) 
+    )
 
 # Save detections and quantity estimates separately.
 with open(INGREDIENTS_OUTPUT_PATH, "w") as f:

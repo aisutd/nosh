@@ -1,8 +1,8 @@
 import { API } from './lib/api';
-import VoiceAgent from './components/VoiceAgent.jsx';
 import { useState, useEffect, useRef, useCallback} from 'react'
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
 import './App.css'
+import './Theme.css'
 import Auth from './pages/Auth.jsx'
 import Saved from "./pages/Saved.jsx";
 import NavBar from "./components/NavBar.jsx";
@@ -10,10 +10,11 @@ import Home from "./pages/Home.jsx";
 import Profile from "./pages/Profile.jsx";
 import Cook from "./pages/Cook.jsx";
 import Swipe from "./pages/Swipe.jsx";
-import { BiFoodMenu, BiX, BiPlus } from "react-icons/bi";
+import { BiFoodMenu, BiPlus } from "react-icons/bi";
 import { LuCamera } from "react-icons/lu";
 import RagCook from "./pages/RagCook.jsx";
 import Inventory from "./pages/Inventory.jsx";
+import PantryIngredients from "./components/PantryIngredients";
 import GenerateRecipe from "./components/GenerateRecipe.jsx";
 
 // Backend address. Uses whatever host the page was opened from, so it works on localhost and on the LAN IP
@@ -185,13 +186,15 @@ async function handleRemoving(ingredient) {
       `${API}/ingredients/remove?ingredient=${encodeURIComponent(ingredient)}`,
       { method: "POST", headers: authHeaders() }
     );
-    if (response.ok) setIngredients((await response.json()).ingredients);
-
-    // also remove it from inventory (a 404 just means it wasn't there)
-    fetch(`${API}/inventory/${encodeURIComponent(ingredient)}`, {
-      method: "DELETE",
-      headers: authHeaders(),
+    if (!response.ok) throw new Error("Could not remove pantry ingredient.");
+    // Keep failed inventory removals visible so they can be retried.
+    const inventoryResponse = await fetch(`${API}/inventory/${encodeURIComponent(ingredient)}`, {
+      method: "DELETE", headers: authHeaders(),
     });
+    if (!inventoryResponse.ok && inventoryResponse.status !== 404) {
+      throw new Error("Could not remove inventory entry.");
+    }
+    setIngredients((prev) => prev.filter((item) => item !== ingredient));
   } else {
     setIngredients((prev) => prev.filter((i) => i !== ingredient));
   }
@@ -234,7 +237,7 @@ async function handleScan(e) {
 
   // ----- the Pantry page (used at "/" when logged in, and at "/pantry") -----
   const home = (
-  <main className="page">
+  <main className="page pantry-page">
     <div className="topbar">
       {user ? (
         <>
@@ -245,8 +248,8 @@ async function handleScan(e) {
       )}
     </div>
 
-    <h1><BiFoodMenu /> Nosh</h1>
-      <p>The Best Cooking Assistant App frfr</p>
+    <h1><BiFoodMenu /> What’s cooking?</h1>
+      <p>Start with what you have. Find something you’ll love.</p>
 
       {/* hidden file picker, opened by the scan box on a normal browser */}
       <input
@@ -257,7 +260,7 @@ async function handleScan(e) {
         onChange={handleScan}
         hidden
       />
-      <button className="scan-box" onClick={handleScanClick}>
+      <button className="scan-box" onClick={handleScanClick} disabled={scanning}>
         <LuCamera size={28} />
         <span>{scanning ? "Scanning..." : "Scan fridge"}</span>
       </button>
@@ -272,15 +275,7 @@ async function handleScan(e) {
       </form>
 
         {/* the pantry list: one chip per ingredient */}
-        <ul className="chips">
-          {ingredients.map((ingredient) => (
-            <li key={ingredient} className="chip">
-              {ingredient}
-              <button onClick={() => handleRemoving(ingredient)}><BiX /></button>
-            </li>
-          ))}
-        </ul>
-        <VoiceAgent key={user || "visitor"} ingredients={ingredients} />
+        <PantryIngredients key={user || "guest"} ingredients={ingredients} onRemove={handleRemoving} />
         <GenerateRecipe
           key={JSON.stringify([user, ingredients])}
           ingredients={ingredients}

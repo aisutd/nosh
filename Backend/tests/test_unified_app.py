@@ -19,7 +19,11 @@ class UnifiedAppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(set(response.json()['capabilities']), {'recipes', 'inventory', 'voice', 'memory'})
         paths = set(self.client.get('/openapi.json').json()['paths'])
-        self.assertTrue({'/voice/turn', '/memory', '/inventory', '/inventory/consume', '/recipes/generate-selected', '/scan'}.issubset(paths))
+        self.assertTrue({'/voice/turn', '/voice/transcribe', '/voice/session', '/voice/ask', '/memory', '/inventory', '/inventory/consume', '/recipes/generate-selected', '/scan'}.issubset(paths))
+
+    def test_mobile_voice_requires_auth(self):
+        self.assertEqual(self.client.post('/voice/session', json={'recipe_text': 'Soup'}).status_code, 401)
+        self.assertEqual(self.client.post('/voice/ask', json={'question': 'Next step'}).status_code, 401)
 
     def test_voice_uses_current_authenticated_pantry(self):
         app.dependency_overrides[get_optional_user] = lambda: {'ingredients': ['rice'], 'cooking_preferences': {'skill_level': 'confident'}}

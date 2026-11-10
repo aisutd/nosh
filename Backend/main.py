@@ -8,7 +8,21 @@ from security import (
     hash_password, verify_password, 
     create_access_token, get_current_user
     )
-from routes import memory, voice, scan, ingredients, recipes, pipeline, inventory
+import sys
+from pathlib import Path
+
+BACKEND_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BACKEND_DIR.parent
+
+# Backend modules must take precedence over legacy root-level modules,
+# regardless of the directory used to launch uvicorn.
+for folder in (REPO_ROOT, BACKEND_DIR):
+    path = str(folder)
+    while path in sys.path:
+        sys.path.remove(path)
+    sys.path.insert(0, path)
+from routes import scan, ingredients, recipes, pipeline, inventory, memory, voice
+
 
 #Check and print connection to MongoDB is successful
 @asynccontextmanager
@@ -27,9 +41,9 @@ router = APIRouter()
 #Connect frontend to backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://192.168.1.6:5173"],
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):\d+",
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["*"],          # needs PUT and DELETE for the inventory
     allow_headers=["*"],
 )
 

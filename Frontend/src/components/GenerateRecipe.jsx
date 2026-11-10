@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 
 
 export default function GenerateRecipe({ ingredients, onOptions }) {
-  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -24,7 +23,7 @@ export default function GenerateRecipe({ ingredients, onOptions }) {
       const response = await fetch(`${API}/recipes/options`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ ingredients, user_query: query }),
+        body: JSON.stringify({ ingredients, user_query: "" }),
         signal: controller.signal,
       });
       const data = await response.json().catch(() => null);
@@ -33,7 +32,7 @@ export default function GenerateRecipe({ ingredients, onOptions }) {
         throw new Error(typeof detail === "string" ? detail : "Could not generate a recipe. Please try again.");
       }
       if (!data?.status) throw new Error("The server returned an unexpected recipe response.");
-      onOptions(data, { ingredients: [...ingredients], user_query: query });
+      onOptions(data, { ingredients: [...ingredients], user_query: "" });
     } catch (err) {
       if (err.name !== "AbortError") setError(err.message || "Could not reach the recipe service.");
     } finally {
@@ -47,15 +46,6 @@ export default function GenerateRecipe({ ingredients, onOptions }) {
   return (
     <section className="generated-recipe">
       <form onSubmit={generate}>
-        <label htmlFor="cooking-request">What would you like to make? (optional)</label>
-        <input
-          id="cooking-request"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="For example, make lemonade"
-          disabled={loading}
-          style={{ display: "block", width: "100%", boxSizing: "border-box", margin: "12px 0", padding: "12px" }}
-        />
         <button className="btn-primary" type="submit" disabled={loading || ingredients.length === 0}>
           {loading ? "Finding a recipe…" : "Find Recipes"}
         </button>
@@ -69,7 +59,7 @@ export default function GenerateRecipe({ ingredients, onOptions }) {
             <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{result.recipe}</p>
             {safeSource && <a href={safeSource} target="_blank" rel="noreferrer">View source recipe</a>}
           </>
-        ) : result && <p>{result.message || "No recipe could be generated. Try adjusting your ingredients or request."}</p>}
+        ) : result && <p>{result.message || "No recipe could be generated. Try adjusting your ingredients."}</p>}
       </div>
     </section>
   );

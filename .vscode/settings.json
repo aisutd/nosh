@@ -11,5 +11,8 @@
                 "requirements.txt"
             ]
         }
-    }
+    },
+    "python.analysis.extraPaths": [
+        "./Backend"
+    ]
 }

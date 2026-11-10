@@ -2,7 +2,8 @@ import VoiceAgent from '../components/VoiceAgent.jsx';
 import { API, authHeaders } from '../lib/api';
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { LuArrowLeft } from "react-icons/lu";
+import { LuMic, LuArrowLeft, LuUtensils, LuClock } from "react-icons/lu";
+import RecipeTabs from "../components/RecipeTabs";
 import RecipeIngredients from "../components/RecipeIngredients";
 import "./RagCook.css";
 
@@ -10,6 +11,7 @@ import "./RagCook.css";
 export default function RagCook({ savedId = null, title = null, image = null, ingredients = [], sourceRecipe = null}) {
   const { id } = useParams();
   const { state: context } = useLocation();
+  const [talking, setTalking] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,6 +27,8 @@ export default function RagCook({ savedId = null, title = null, image = null, in
   const rawIngredients = result?.recipes?.[0]?.ingredients || sourceRecipe?.ingredients || ingredients;
   const sourceIngredients = Array.isArray(rawIngredients) ? rawIngredients.join(", ") : rawIngredients;
   const consumptionIngredients = result?.inventory_ingredients ?? (substitutions.length ? null : ingredients);
+
+
 
   useEffect(() => {
     if (!savedId && !context?.ingredients) return;
@@ -53,7 +57,46 @@ export default function RagCook({ savedId = null, title = null, image = null, in
     return () => { clearTimeout(timer); controller.abort(); };
   }, [id, context, attempt, savedId, servings]);
 
+  useEffect(() => {
+  const onVoiceDone = () => setTalking(false);
+  window.addEventListener("nosh-voice-done", onVoiceDone);
+  return () => window.removeEventListener("nosh-voice-done", onVoiceDone);
+}, []);
+
   const photo = image || context?.image;
+  function toggleVoiceCooking() {
+    if (talking) {
+      window.ReactNativeWebView?.postMessage(
+        JSON.stringify({ type: "voice-stop" })
+      );
+      setTalking(false);
+      return;
+    }
+
+    if (!steps.length) {
+      setError("Generate the recipe instructions first.");
+      return;
+    }
+
+    if (!window.ReactNativeWebView?.postMessage) {
+      setError("Open NOSH in Expo Go to hear the recipe.");
+      return;
+    }
+
+    window.ReactNativeWebView.postMessage(
+      JSON.stringify({
+        type: "voice-cook",
+        token: localStorage.getItem("access_token") || "",
+        recipe: {
+          title: title || context?.title || result?.source_recipe || "Recipe",
+          steps,
+          recipeText: result?.recipe || "",
+          ingredients: context?.ingredients || ingredients,
+        },
+      })
+    );
+    setTalking(true);
+  }
 
   // tell the backend this recipe is done, so it subtracts the ingredients from the inventory
   async function handleCooked() {
@@ -77,26 +120,21 @@ export default function RagCook({ savedId = null, title = null, image = null, in
     }
   }
 
-  return <main className="page cook">
-    <Link className="back-link" to={savedId ? "/saved" : "/swipe"}>
-      <LuArrowLeft /> {savedId ? "Saved" : "Back"}
-    </Link>
-    <div className="cook-hero" style={photo ? { backgroundImage: `url("${photo}")` } : undefined}>
-      <h1 className="cook-hero-title">{title || context?.title || "Selected recipe"}</h1>
+  return <main className="page cook recipe-detail">
+    <div className="recipe-detail-hero">
+      <div className="recipe-detail-placeholder" aria-hidden="true"><LuUtensils /></div>
+      {photo && /^https?:\/\//i.test(photo) && <img key={photo} src={photo} alt={title || context?.title || "Selected recipe"}
+        onError={(event) => { event.currentTarget.style.display = "none"; }} />}
+      <Link className="recipe-detail-back" to={savedId ? "/saved" : "/swipe"}>
+        <LuArrowLeft aria-hidden="true" /> {savedId ? "My Recipes" : "Back"}
+      </Link>
     </div>
+    <div className="recipe-detail-content">
+      <h1>{title || context?.title || result?.source_recipe || "Selected recipe"}</h1>
+      {(sourceRecipe?.total_time || context?.total_time) && <p className="recipe-detail-time">
+        <LuClock aria-hidden="true" /> {sourceRecipe?.total_time || context?.total_time}
+      </p>}
 
-    {sourceIngredients && <section aria-label="Source ingredients">
-      <h3>Source ingredients</h3>
-      <p>{sourceIngredients}</p>
-    </section>}
-    {availability && <RecipeIngredients availability={availability} />}
-    {!availability && substitutions.length > 0 && <section aria-label="Pantry substitutions">
-      <h3>Pantry substitutions</h3>
-      <ul className="cook-list">{substitutions.map((swap) => <li key={swap.ingredient}>
-        <strong>{swap.ingredient} → {swap.replacement_ingredients.join(" + ")}</strong>
-        {" "}{swap.instructions} {swap.limitations}
-      </li>)}</ul>
-    </section>}
     {!savedId && !context?.ingredients && <p>Please <Link to="/pantry">search from your pantry</Link> to choose a recipe.</p>}
 
     <div className="servings-selector">
@@ -118,12 +156,35 @@ export default function RagCook({ savedId = null, title = null, image = null, in
       {servings ? `Scaling recipe to ${servings} serving(s)…` : "Preparing and validating instructions for your selected recipe…"}
     </p>}
     {error && <div role="alert"><p>{error}</p><button onClick={() => setAttempt(attempt + 1)}>Try again</button></div>}
+    <RecipeTabs key={savedId || id} ingredients={<>
+    {sourceIngredients && <section className="recipe-source-ingredients" aria-label="Source ingredients">
+      <header><LuUtensils aria-hidden="true" /><h3>Source ingredients</h3></header>
+      <p className="recipe-source-note">Original recipe quantities, before pantry substitutions.</p>
+      {Array.isArray(rawIngredients) ? <ul>{rawIngredients.map((line, index) => <li key={index}>{line}</li>)}</ul>
+        : <p className="recipe-source-text">{sourceIngredients}</p>}
+    </section>}
+    {availability && <RecipeIngredients availability={availability} />}
+    {!availability && substitutions.length > 0 && <section aria-label="Pantry substitutions">
+      <h3>Pantry substitutions</h3>
+      <ul className="cook-list">{substitutions.map((swap) => <li key={swap.ingredient}>
+        <strong>{swap.ingredient} → {swap.replacement_ingredients.join(" + ")}</strong>
+        {" "}{swap.instructions} {swap.limitations}
+      </li>)}</ul>
+    </section>}
+      {!sourceIngredients && !availability && <p>{loading ? "Loading ingredient details…" : "Ingredient details are not available."}</p>}
+    </>} steps={<>
+      {!result && <p>{loading ? "Your steps will appear here once generation finishes." : "No cooking instructions available yet."}</p>}
     {result && (result.status === "ok" && result.recipe ? <>
-      <ol className="cook-list">
+      <div className="recipe-steps-heading"><h2>Let’s get cooking</h2>
+        {window.ReactNativeWebView?.postMessage && <button className="recipe-voice-button" onClick={toggleVoiceCooking}>
+          <LuMic aria-hidden="true" /> {talking ? "Stop voice" : "Talk to Nosh"}
+        </button>}
+      </div>
+      <ol className="cook-list recipe-numbered-steps">
         {steps.map((step, i) => <li key={i}>{step}</li>)}
       </ol>
 
-      <VoiceAgent key={result.recipe} recipe={result.recipe} ingredients={context?.ingredients || ingredients} />
+      {!window.ReactNativeWebView?.postMessage && <VoiceAgent key={result.recipe} recipe={result.recipe} ingredients={context?.ingredients || ingredients} />}
       <div className="cook-actions">
         {substitutions.length > 0 && !consumptionIngredients && <p className="cook-warning">
           Please update inventory manually for this substitution; its quantities could not be converted reliably.
@@ -150,5 +211,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
     </> : <div role="status"><p>{result.message}</p>
       {result.status === "failed_validation" && <button className="btn-primary" onClick={() => setAttempt(attempt + 1)}>Try instructions again</button>}
     </div>)}
+    </>} />
+    </div>
   </main>;
 }
