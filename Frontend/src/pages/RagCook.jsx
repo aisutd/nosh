@@ -2,7 +2,7 @@ import VoiceAgent from '../components/VoiceAgent.jsx';
 import { API, authHeaders } from '../lib/api';
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { LuMic, LuArrowLeft, LuUtensils, LuClock } from "react-icons/lu";
+import { LuArrowLeft, LuUtensils, LuClock } from "react-icons/lu";
 import RecipeTabs from "../components/RecipeTabs";
 import RecipeIngredients from "../components/RecipeIngredients";
 import "./RagCook.css";
@@ -11,7 +11,6 @@ import "./RagCook.css";
 export default function RagCook({ savedId = null, title = null, image = null, ingredients = [], sourceRecipe = null}) {
   const { id } = useParams();
   const { state: context } = useLocation();
-  const [talking, setTalking] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -57,46 +56,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
     return () => { clearTimeout(timer); controller.abort(); };
   }, [id, context, attempt, savedId, servings]);
 
-  useEffect(() => {
-  const onVoiceDone = () => setTalking(false);
-  window.addEventListener("nosh-voice-done", onVoiceDone);
-  return () => window.removeEventListener("nosh-voice-done", onVoiceDone);
-}, []);
-
   const photo = image || context?.image;
-  function toggleVoiceCooking() {
-    if (talking) {
-      window.ReactNativeWebView?.postMessage(
-        JSON.stringify({ type: "voice-stop" })
-      );
-      setTalking(false);
-      return;
-    }
-
-    if (!steps.length) {
-      setError("Generate the recipe instructions first.");
-      return;
-    }
-
-    if (!window.ReactNativeWebView?.postMessage) {
-      setError("Open NOSH in Expo Go to hear the recipe.");
-      return;
-    }
-
-    window.ReactNativeWebView.postMessage(
-      JSON.stringify({
-        type: "voice-cook",
-        token: localStorage.getItem("access_token") || "",
-        recipe: {
-          title: title || context?.title || result?.source_recipe || "Recipe",
-          steps,
-          recipeText: result?.recipe || "",
-          ingredients: context?.ingredients || ingredients,
-        },
-      })
-    );
-    setTalking(true);
-  }
 
   // tell the backend this recipe is done, so it subtracts the ingredients from the inventory
   async function handleCooked() {
@@ -175,16 +135,18 @@ export default function RagCook({ savedId = null, title = null, image = null, in
     </>} steps={<>
       {!result && <p>{loading ? "Your steps will appear here once generation finishes." : "No cooking instructions available yet."}</p>}
     {result && (result.status === "ok" && result.recipe ? <>
-      <div className="recipe-steps-heading"><h2>Let’s get cooking</h2>
-        {window.ReactNativeWebView?.postMessage && <button className="recipe-voice-button" onClick={toggleVoiceCooking}>
-          <LuMic aria-hidden="true" /> {talking ? "Stop voice" : "Talk to Nosh"}
-        </button>}
+      <div className="recipe-steps-heading">
+        <h2>Let’s get cooking</h2>
       </div>
       <ol className="cook-list recipe-numbered-steps">
         {steps.map((step, i) => <li key={i}>{step}</li>)}
       </ol>
 
-      {!window.ReactNativeWebView?.postMessage && <VoiceAgent key={result.recipe} recipe={result.recipe} ingredients={context?.ingredients || ingredients} />}
+      <VoiceAgent
+        key={result.recipe}
+        recipe={result.recipe}
+        ingredients={context?.ingredients || ingredients}
+      />
       <div className="cook-actions">
         {substitutions.length > 0 && !consumptionIngredients && <p className="cook-warning">
           Please update inventory manually for this substitution; its quantities could not be converted reliably.

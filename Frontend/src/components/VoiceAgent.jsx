@@ -5,6 +5,11 @@ import { useEffect, useRef, useState } from 'react';
 import './VoiceAgent.css';
 
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const isNative = Boolean(window.ReactNativeWebView?.postMessage);
+
+function nativeMessage(message) {
+  window.ReactNativeWebView?.postMessage(JSON.stringify(message));
+}
 
 export default function VoiceAgent({ ingredients = [], recipe = '' }) {
   const [activeRecipe, setActiveRecipe] = useState(recipe);
@@ -22,6 +27,46 @@ export default function VoiceAgent({ ingredients = [], recipe = '' }) {
   const locked = useRef(false);
   const enabled = useRef(true);
   const latest = useRef({ ingredients, spoken });
+  const sendRef = useRef(null);
+  sendRef.current = send;
+
+  useEffect(() => {
+    if (!isNative) return;
+
+    function onNativeVoice(event) {
+      const {
+        status: nativeStatus,
+        transcript,
+        error: nativeError,
+      } = event.detail || {};
+
+      setListening(
+        nativeStatus === "listening" ||
+        nativeStatus === "transcribing"
+      );
+
+      setStatus(
+        nativeStatus === "listening"
+          ? "Listening… speak within 5 seconds."
+          : nativeStatus === "transcribing"
+            ? "Transcribing…"
+            : "Ready"
+      );
+
+      if (nativeError) setError(nativeError);
+
+      if (transcript?.trim()) {
+        void sendRef.current(transcript);
+      }
+    }
+
+    window.addEventListener("nosh-native-voice", onNativeVoice);
+
+    return () => {
+      window.removeEventListener("nosh-native-voice", onNativeVoice);
+      nativeMessage({ type: "native-listen-stop" });
+    };
+  }, [recipe]);
   useEffect(() => { latest.current = { ingredients, spoken }; }, [ingredients, spoken]);
 
   useEffect(() => {
@@ -52,7 +97,7 @@ export default function VoiceAgent({ ingredients = [], recipe = '' }) {
     setMessages(items => [...items, { who: 'You', text: message }]);
     const controller = new AbortController();
     request.current = controller;
-    const timeout = setTimeout(() => controller.abort(), 180000);
+    const timeout = setTimeout(() => controller.abort(), 900000);
     try {
       const response = await fetch(`${API}/voice/turn`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
@@ -67,7 +112,12 @@ export default function VoiceAgent({ ingredients = [], recipe = '' }) {
       session.current = { recipe: data.recipe ?? session.current.recipe, step: data.step };
       setMessages(items => [...items, { who: 'NOSH', text: data.answer }]);
       setStatus('Ready');
-      if (latest.current.spoken && window.speechSynthesis) {
+      if (latest.current.spoken && isNative) {
+        nativeMessage({
+          type: "native-speak",
+          text: data.answer,
+        });
+      } else if (latest.current.spoken && window.speechSynthesis) {
         const utterance = new SpeechSynthesisUtterance(data.answer);
         utterance.onstart = () => enabled.current && setStatus('NOSH is speaking…');
         utterance.onend = utterance.onerror = () => enabled.current && setStatus('Ready');
@@ -87,6 +137,21 @@ export default function VoiceAgent({ ingredients = [], recipe = '' }) {
   }
 
   function startListening() {
+    if (isNative) {
+      if (busy || listening) return;
+
+      setError("");
+      setInterim("");
+      setListening(true);
+      setStatus("Opening microphone…");
+
+      nativeMessage({
+        type: "native-listen",
+        token: localStorage.getItem("access_token") || "",
+      });
+
+      return;
+    }
     if (!Recognition || busy || listening) return;
     window.speechSynthesis?.cancel();
     setError(''); setInterim('');
@@ -114,19 +179,75 @@ export default function VoiceAgent({ ingredients = [], recipe = '' }) {
     <h2>Cook with NOSH</h2>
     <p>A little help while your hands are busy. Ask a cooking question or say “next step”.</p>
     <div className="voice-controls">
-      <button disabled={!Recognition || busy || !window.isSecureContext} aria-pressed={listening} onClick={() => {
-        if (listening) { recognition.current?.abort(); setInterim(''); setStatus('Ready'); }
-        else startListening();
-      }}>{listening ? <><LuSquare aria-hidden="true" /> Stop listening</> : <><LuMic aria-hidden="true" /> Start listening</>}</button>
-      <button onClick={() => { window.speechSynthesis?.cancel(); setStatus(busy ? 'NOSH is thinking…' : listening ? 'Listening…' : 'Ready'); }}>Stop speaking</button>
+    <button
+      disabled={
+        busy ||
+        (!isNative && (!Recognition || !window.isSecureContext))
+      }
+      aria-pressed={listening}
+      onClick={() => {
+        if (listening) {
+          if (isNative) {
+            nativeMessage({ type: "native-listen-stop" });
+          } else {
+            recognition.current?.abort();
+          }
+
+          setListening(false);
+          setInterim("");
+          setStatus("Ready");
+        } else {
+          startListening();
+        }
+      }}
+    >
+      {listening ? (
+        <>
+          <LuSquare aria-hidden="true" />
+          Stop listening
+        </>
+      ) : (
+        <>
+          <LuMic aria-hidden="true" />
+          Start listening
+        </>
+      )}
+    </button>
+    <button
+      onClick={() => {
+        nativeMessage({ type: "native-speak-stop" });
+        window.speechSynthesis?.cancel();
+
+        setStatus(
+          busy
+            ? "NOSH is thinking…"
+            : listening
+              ? "Listening…"
+              : "Ready"
+        );
+      }}
+    >
+      Stop speaking
+    </button>
       <label><input type="checkbox" checked={spoken} onChange={event => {
         setSpoken(event.target.checked);
         if (!event.target.checked) { window.speechSynthesis?.cancel(); setStatus('Ready'); }
       }} /> Speak replies</label>
     </div>
     <p role="status">{status}{interim && ` You: ${interim}`}</p>
-    {!Recognition && <p>Voice recognition is unavailable in this browser. You can type below.</p>}
-    {Recognition && !window.isSecureContext && <p>Microphone access requires HTTPS or localhost. You can type below.</p>}
+    {!isNative && !Recognition && (
+      <p>
+        Voice recognition is unavailable in this browser.
+        You can type below.
+      </p>
+    )}
+
+    {!isNative && Recognition && !window.isSecureContext && (
+      <p>
+        Microphone access requires HTTPS or localhost.
+        You can type below.
+      </p>
+    )}
     {error && <p role="alert">{error}</p>}
     <div className="voice-messages" role="log" aria-label="Conversation with NOSH" aria-live="polite">
       {messages.map((item, index) => <p key={index}><strong>{item.who}: </strong>{item.text}</p>)}

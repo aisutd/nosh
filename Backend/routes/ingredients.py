@@ -4,6 +4,8 @@ from database.configurations import user
 from security import get_current_user
 from database.configurations import inventory
 from retrieval.ingredients import normalize_name
+from fastapi.concurrency import run_in_threadpool
+from retrieval.ingredient_validation import validate_ingredient
 
 router = APIRouter()
 
@@ -21,18 +23,36 @@ async def get_ingredients(current_user: dict = Depends(get_current_user)):
 
 # Add an ingredient
 @router.post("/ingredients/add")
-async def add_ingredients(ingredient: str, current_user: dict = Depends(get_current_user)):
-    item = ingredient.strip().lower()
-    if not item:
-        raise HTTPException(status_code=400, detail="Ingredient cannot be empty")
-    # $addToSet adds the item to this user's array only if it isn't already there
-    await user.update_one({"_id": current_user["_id"]}, {"$addToSet": {"ingredients": item}})
+async def add_ingredients(
+    ingredient: str,
+    current_user: dict = Depends(get_current_user),
+):
+    if len(ingredient) > 200:
+        raise HTTPException(400, "Ingredient name is too long.")
+
+    try:
+        item = await run_in_threadpool(validate_ingredient, ingredient)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(
+            503, "Ingredient validation data is unavailable."
+        ) from exc
+
+    await user.update_one(
+        {"_id": current_user["_id"]},
+        {"$addToSet": {"ingredients": item}},
+    )
+
     await inventory.update_one(
-        {"user_id": current_user["_id"], "name": normalize_name(ingredient)},
-        {"$setOnInsert": {"quantity": 1, "unit": "count"}},   # only if it's new
+        {"user_id": current_user["_id"], "name": item},
+        {"$setOnInsert": {"quantity": 1, "unit": "count"}},
         upsert=True,
     )
-    return {"ingredients": await get_user_ingredients(current_user["_id"])}
+
+    return {
+        "ingredients": await get_user_ingredients(current_user["_id"])
+    }
 
 
 # Remove an ingredient

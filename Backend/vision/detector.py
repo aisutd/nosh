@@ -1,13 +1,13 @@
 from io import BytesIO
 from pathlib import Path
 from threading import Lock
-
+from collections import Counter
 from PIL import Image, UnidentifiedImageError
 from ultralytics import YOLO
 
 
 # Resolve the model location relative to this file.
-MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "best.pt"
+MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "best (1).pt"
 
 _model = None
 _model_lock = Lock()
@@ -56,4 +56,17 @@ def detect_ingredients(image_bytes: bytes) -> dict:
                     "confidence": round(confidence, 4),
                 })
 
-    return {"ingredients": ingredients}
+    counts = Counter(
+        item["name"].replace("_", " ").strip().lower()
+        for item in ingredients
+    )
+
+    quantity_estimates = {
+        name: {"quantity": count, "unit": "count"}
+        for name, count in counts.items()
+    }
+
+    return {
+        "ingredients": ingredients,
+        "quantity_estimates": quantity_estimates,
+    }

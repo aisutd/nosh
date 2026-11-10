@@ -103,17 +103,6 @@ from security import get_current_user
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
-
-
-voice_sessions = {}
-
-class VoiceSessionRequest(BaseModel):
-    recipe_text: str = Field(min_length=1, max_length=20000)
-    ingredients: list[str] = Field(default_factory=list)
-
-class VoiceQuestionRequest(BaseModel):
-    question: str = Field(min_length=1, max_length=4000)
-
 MAX_AUDIO_BYTES = 10 * 1024 * 1024
 
 
@@ -159,30 +148,3 @@ async def transcribe_voice(
     )
 
     return {"transcript": transcript}
-
-@router.post("/session")
-async def start_voice_session(
-    request: VoiceSessionRequest,
-    current_user: dict = Depends(get_current_user),
-):
-    from cooking_session import CookingSession
-
-    session = CookingSession()
-    session.load_approved_recipe(request.recipe_text, request.ingredients)
-    voice_sessions[str(current_user["_id"])] = session
-    return {"status": "ok"}
-
-@router.post("/ask")
-async def ask_voice_question(
-    request: VoiceQuestionRequest,
-    current_user: dict = Depends(get_current_user),
-):
-    session = voice_sessions.get(str(current_user["_id"]))
-    if not session:
-        raise HTTPException(status_code=409, detail="Start voice cooking first.")
-
-    result = await run_in_threadpool(session.ask, request.question)
-    return {
-        "status": result.get("status"),
-        "answer": result.get("answer") or result.get("message", ""),
-    }

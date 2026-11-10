@@ -37,7 +37,12 @@ function App() {
   const [savedIds, setSavedIds] = useState([]);        // ids of the recipes this user saved
   const fileInput = useRef(null);                      // points at the hidden file picker
   const [scanning, setScanning] = useState(false);     // true while the scan is running
+  const [mobileScanning, setMobileScanning] = useState(false);
   const location = useLocation();                      // which page we're on
+  const videoFileInput = useRef(null);
+  const [scanChoiceOpen, setScanChoiceOpen] = useState(false);
+  const [ingredientError, setIngredientError] = useState("");
+  const [scanError, setScanError] = useState("");
   const hideNav =                                      // hide the nav bar on login and on the visitor landing page
     location.pathname === "/auth" ||
     (location.pathname === "/" && !user);
@@ -136,27 +141,57 @@ useEffect(() => {
   return () => window.removeEventListener("nosh-scan", onScanResult);   // cleanup so we don't add duplicate listeners
 }, [addItems]);
 
+useEffect(() => {
+  function onScanStatus(event) {
+    setMobileScanning(Boolean(event.detail?.scanning));
+  }
+
+  window.addEventListener("nosh-scan-status", onScanStatus);
+
+  return () => {
+    window.removeEventListener("nosh-scan-status", onScanStatus);
+  };
+}, []);
+
 
 // ----- pantry actions -----
 
 // "Add" button: logged-in users save to the database, visitors just keep it on the page
 async function handleAdding(e) {
-  e.preventDefault();                        // stop the form from reloading the page
-  const item = input.trim().toLowerCase();   // clean the text
+  e.preventDefault();
+  setIngredientError("");
+
+  const item = input.trim().toLowerCase();
   if (!item) return;
 
-  if (user) {
-    // logged in: save to this user's account
-    const response = await fetch(
-      `${API}/ingredients/add?ingredient=${encodeURIComponent(item)}`,
-      { method: "POST", headers: authHeaders() }
-    );
-    if (response.ok) setIngredients((await response.json()).ingredients);
-  } else {
-    // visitor: keep it in the page only
-    setIngredients((prev) => (prev.includes(item) ? prev : [...prev, item]));   // skip duplicates
+  try {
+    if (user) {
+      const response = await fetch(
+        `${API}/ingredients/add?ingredient=${encodeURIComponent(item)}`,
+        { method: "POST", headers: authHeaders() }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          typeof data.detail === "string"
+            ? data.detail
+            : "Could not add ingredient."
+        );
+      }
+
+      setIngredients(data.ingredients);
+    } else {
+      setIngredients((prev) =>
+        prev.includes(item) ? prev : [...prev, item]
+      );
+    }
+
+    setInput("");
+  } catch (error) {
+    setIngredientError(error.message || "Could not add ingredient.");
   }
-  setInput("");                              // clear the text box
 }
 
 // Heart button: save or unsave a recipe (login required)
@@ -205,6 +240,7 @@ async function handleRemoving(ingredient) {
 // Adds several ingredients at once (used by scan results)
 // Scan box clicked: phone app opens its camera, a normal browser opens the file picker
 function handleScanClick() {
+  if (scanning || mobileScanning) return;
   if (!user) {
     navigate("/auth");            // scanning needs an account
     return;
@@ -215,7 +251,8 @@ function handleScanClick() {
       JSON.stringify({ type: "scan", token: localStorage.getItem("access_token") })
     );
   } else {
-    fileInput.current.click();    // clicks the hidden <input type="file">
+    setScanError("");
+    setScanChoiceOpen(true);
   }
 }
 
@@ -233,6 +270,43 @@ async function handleScan(e) {
   }
   setScanning(false);
   e.target.value = "";                   // lets you pick the same photo again
+}
+
+async function handleVideoScan(event) {
+  const picker = event.currentTarget;
+  const file = picker.files?.[0];
+  if (!file) return;
+
+  setScanning(true);
+  setScanError("");
+
+  try {
+    const form = new FormData();
+    form.append("video", file);
+
+    const response = await fetch(`${API}/scan-video`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: form,
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(
+        typeof data?.detail === "string"
+          ? data.detail
+          : "Video scan failed."
+      );
+    }
+
+    await addItems(data.ingredients || []);
+  } catch (error) {
+    setScanError(error.message || "Could not upload the video.");
+  } finally {
+    setScanning(false);
+    picker.value = "";
+  }
 }
 
   // ----- the Pantry page (used at "/" when logged in, and at "/pantry") -----
@@ -260,10 +334,73 @@ async function handleScan(e) {
         onChange={handleScan}
         hidden
       />
-      <button className="scan-box" onClick={handleScanClick} disabled={scanning}>
+      <input
+      type="file"
+      accept="video/*"
+      ref={videoFileInput}
+      onChange={handleVideoScan}
+      hidden
+      />
+      <button
+        className="scan-box"
+        onClick={handleScanClick}
+        disabled={scanning || mobileScanning}
+        aria-busy={scanning || mobileScanning}
+      >
         <LuCamera size={28} />
-        <span>{scanning ? "Scanning..." : "Scan fridge"}</span>
+        <span>
+          {scanning || mobileScanning ? "Scanning..." : "Scan fridge"}
+        </span>
       </button>
+      {scanError && <p role="alert">{scanError}</p>}
+
+      {scanChoiceOpen && (
+        <div
+          className="scan-choice-backdrop"
+          onClick={() => setScanChoiceOpen(false)}
+        >
+          <section
+            className="scan-choice-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="scan-choice-title"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setScanChoiceOpen(false);
+            }}
+          >
+            <h2 id="scan-choice-title">Scan fridge</h2>
+
+            <button
+              type="button"
+              autoFocus
+              onClick={() => {
+                setScanChoiceOpen(false);
+                fileInput.current?.click();
+              }}
+            >
+              Choose a photo
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setScanChoiceOpen(false);
+                videoFileInput.current?.click();
+              }}
+            >
+              Choose a video
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setScanChoiceOpen(false)}
+            >
+              Cancel
+            </button>
+          </section>
+        </div>
+      )}
 
       {/* type an ingredient by hand */}
       <form onSubmit={handleAdding} className="add-row">
@@ -273,6 +410,7 @@ async function handleScan(e) {
         />
         <button type="submit" className="btn-primary">Add <BiPlus /></button>
       </form>
+      {ingredientError && <p role="alert">{ingredientError}</p>}
 
         {/* the pantry list: one chip per ingredient */}
         <PantryIngredients key={user || "guest"} ingredients={ingredients} onRemove={handleRemoving} />

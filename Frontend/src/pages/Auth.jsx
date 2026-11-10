@@ -1,7 +1,7 @@
 import { API } from '../lib/api';
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-
+import { LuEye, LuEyeOff } from "react-icons/lu";
 // Where backend runs
 
 
@@ -19,6 +19,7 @@ function Auth({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   // Ask backend for login token
@@ -81,12 +82,26 @@ function Auth({ onLogin }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <input
-          type="password" aria-label="Password" autoComplete={isRegistering ? "new-password" : "current-password"}
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <div className="password-field">
+          <input
+            type={showPassword ? "text" : "password"}
+            aria-label="Password"
+            autoComplete={isRegistering ? "new-password" : "current-password"}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <button
+            type="button"
+            className="password-toggle"
+            onClick={() => setShowPassword((shown) => !shown)}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-pressed={showPassword}
+          >
+            {showPassword ? <LuEyeOff size={20} /> : <LuEye size={20} />}
+          </button>
+        </div>
         {/* Shown when error message */}
         {error && <p className="auth-error">{error}</p>}
         <button type="submit" className="btn-primary">
