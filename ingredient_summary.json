@@ -1,32 +1,37 @@
 [
   {
-    "name": "chicken_breast",
-    "count": 2,
-    "confidence": 0.4409
-  },
-  {
-    "name": "sweet_potato",
-    "count": 1,
-    "confidence": 0.8265
+    "name": "tomato",
+    "quantity": 2,
+    "average_confidence": 0.7325
   },
   {
     "name": "milk",
-    "count": 3,
-    "confidence": 0.347
+    "quantity": 3,
+    "average_confidence": 0.3703
   },
   {
-    "name": "butter",
-    "count": 1,
-    "confidence": 0.516
+    "name": "apple",
+    "quantity": 1,
+    "average_confidence": 0.4826
   },
   {
-    "name": "sugar",
-    "count": 1,
-    "confidence": 0.1417
+    "name": "chicken_breast",
+    "quantity": 1,
+    "average_confidence": 0.2584
   },
   {
-    "name": "cheese",
-    "count": 1,
-    "confidence": 0.222
+    "name": "spinach",
+    "quantity": 1,
+    "average_confidence": 0.4308
+  },
+  {
+    "name": "sweet_potato",
+    "quantity": 4,
+    "average_confidence": 0.522
+  },
+  {
+    "name": "eggs",
+    "quantity": 1,
+    "average_confidence": 0.1722
   }
 ]
