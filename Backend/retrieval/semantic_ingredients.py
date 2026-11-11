@@ -70,7 +70,7 @@ class SemanticIngredientMatcher:
             for frag in raw.split(","):
                 name = normalize_name(frag.strip())
                 # Keep only non-trivial names (skip pantry words, single chars, etc.)
-                if name and len(name) > 2 and " " not in name or len(name.split()) <= 4:
+                if name and len(name) > 2 and len(name.split()) <= 4:
                     canonical.add(name)
 
         self._canonical_names = sorted(canonical)

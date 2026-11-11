@@ -55,12 +55,27 @@ async def scan(image: UploadFile = File(...), current_user: dict = Depends(get_c
         for item in detections["ingredients"]
         if item["name"].replace("_", " ").strip()
     })
-    for name in ingredients:                      # list of names YOLO found
-        await inventory.update_one(
-            {"user_id": current_user["_id"], "name": normalize_name(name)},
-            {"$setOnInsert": {"quantity": 1, "unit": "count"}},   # only set if it's new
-            upsert=True,
-        )
+    quantity_estimates = detections.get("quantity_estimates", {})
+
+    for name in ingredients:
+        estimate = quantity_estimates.get(name)
+
+        if estimate:
+            await inventory.update_one(
+                {"user_id": current_user["_id"], "name": normalize_name(name)},
+                {"$set": {
+                    "quantity": estimate["quantity"],
+                    "unit": estimate.get("unit", "count"),
+                }},
+                upsert=True,
+            )
+        else:
+            # For OCR-only ingredients with no YOLO count
+            await inventory.update_one(
+                {"user_id": current_user["_id"], "name": normalize_name(name)},
+                {"$setOnInsert": {"quantity": 1, "unit": "count"}},
+                upsert=True,
+            )
     return {"ingredients": ingredients, "detections": detections, "warnings": warnings}
 
 @router.post("/scan-video")

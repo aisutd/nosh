@@ -61,3 +61,27 @@
 .recipe-source-ingredients ul { list-style: none; padding: 0; margin: 0; }
 .recipe-source-ingredients li { padding: .7rem 0; border-top: 1px solid #efdee1; line-height: 1.6; color: #2f3a44; }
 .recipe-detail .btn-primary:hover, .recipe-detail [role="alert"] button:hover { background: #983447; color: #fff; }
+.cook-actions > a {
+  display: table;
+  width: fit-content;
+  margin: 20px auto;
+  padding: 9px 18px;
+  border: 1px solid #e7bcc5;
+  border-radius: 999px;
+  background: #fff7f7;
+  color: #843d51;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.cook-actions > a:hover {
+  background: #f9dfe5;
+}
+
+.cook-actions > a:focus-visible {
+  outline: 2px solid #b9415d;
+  outline-offset: 3px;
+}

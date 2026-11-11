@@ -134,7 +134,7 @@ function Inventory({ user }) {
               type="number"
               min="0"
               step="any"
-              defaultValue={item.quantity}
+              defaultValue={Number(Number(item.quantity).toFixed(2))}
               onBlur={(e) => save({ ...item, quantity: Number(e.target.value) })}
               onKeyDown={(e) => e.key === "Enter" && e.target.blur()}
             />

@@ -2,8 +2,6 @@ import { API } from '../lib/api';
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { LuX, LuHeart, LuChevronUp, LuClock } from "react-icons/lu";
-
-import RecipeTabs from "../components/RecipeTabs";
 import RecipeIngredients from "../components/RecipeIngredients";
 
 
@@ -25,32 +23,32 @@ function splitIngredients(value) {
 function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [browse, setBrowse] = useState([]);
   const [index, setIndex] = useState(0);
-  const [open, setOpen] = useState(false);          // is the details sheet open?
   const [dragX, setDragX] = useState(0);            // how far the card is dragged
   const [dragging, setDragging] = useState(false);
-  const startX = useRef(0);                         // where the drag started
+  const startPoint = useRef(null);
+  const didDrag = useRef(false);
 
-
-  useEffect(() => {
-    if (ragSearch || recipes.length > 0) return;
-    fetch(`${API}/recipes/browse?limit=20`)
-      .then((res) => res.json())
-      .then(setBrowse)
-      .catch(() => setBrowse([]));
-  }, [recipes, ragSearch]);
-
-  const deck = ragSearch || recipes.length > 0 ? recipes : browse;
-
+  const deck = recipes;
   const recipe = deck[index];
+  const rawSourceUrl =
+    recipe?.source_url ||
+    recipe?.url ||
+    recipe?.link ||
+    recipe?.metadata?.url ||
+    "";
+
+  const sourceUrl = rawSourceUrl
+    ? /^https?:\/\//i.test(rawSourceUrl)
+      ? rawSourceUrl
+      : `https://${rawSourceUrl}`
+    : "";
   const timingText = recipe?.metadata?.timing || recipe?.timing || "";
   const servingCount =
     recipe?.servings ??
     recipe?.metadata?.servings ??
     timingText.match(/servings:\s*(\d+)/i)?.[1];
-  const next = () => { setIndex((i) => i + 1); setOpen(false); };
-
+  const next = () => setIndex((i) => i + 1);
   const items = splitIngredients(recipe?.ingredients);
   const rawSteps = Array.isArray(recipe?.directions)
     ? recipe.directions
@@ -79,29 +77,60 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
 
   // ----- dragging the card -----
   function onPointerDown(e) {
-    if (open) return;                               // sheet is open: no swiping
-    e.currentTarget.setPointerCapture(e.pointerId);
-    startX.current = e.clientX;
-    setDragging(true);
+    if (
+      e.target instanceof Element &&
+      e.target.closest("button, a, input, select, textarea")
+    ) {
+      return;
+    }
+
+    startPoint.current = { x: e.clientX, y: e.clientY };
+    didDrag.current = false;
   }
 
   function onPointerMove(e) {
-    if (dragging) setDragX(e.clientX - startX.current);
+    if (!startPoint.current) return;
+
+    const dx = e.clientX - startPoint.current.x;
+    const dy = e.clientY - startPoint.current.y;
+
+    // Let vertical movement scroll the page; only start a horizontal card drag.
+    if (Math.abs(dy) > Math.abs(dx) || Math.abs(dx) < 8) return;
+
+    if (!didDrag.current) {
+      didDrag.current = true;
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
+
+    setDragging(true);
+    setDragX(dx);
   }
 
   function onPointerUp() {
-    if (!dragging) return;
-    setDragging(false);
+    if (!startPoint.current) return;
+
     const moved = dragX;
-    setDragX(0);                                    // snap back
-    if (moved > 100) like();                        // dragged right = save
-    else if (moved < -100) next();                  // dragged left = skip
+    const wasDragged = didDrag.current;
+
+    startPoint.current = null;
+    didDrag.current = false;
+    setDragging(false);
+    setDragX(0);
+
+    if (wasDragged && moved > 100) like();
+    else if (wasDragged && moved < -100) next();
   }
 
   return (
     <main className="swipe">
       <h1 className="swipe-title">Recipes for you</h1>
-      {ragSearch && recipe && <p className="swipe-position">Option {index + 1} of {deck.length}</p>}
+      {ragSearch && recipe && (
+        <div className="swipe-position">
+          <span>Recipe</span>
+          <strong>{index + 1}</strong>
+          <span>of {deck.length}</span>
+        </div>
+      )}
       {error && <p role="alert">{error}</p>}
 
       {recipe ? (
@@ -113,78 +142,69 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
             style={{
-              transform: `translateX(${dragX}px) rotate(${dragX / 20}deg)`,
+              transform: `translateX(${dragX}px) rotate(${Math.max(-5, Math.min(5, dragX / 40))}deg)`,
               transition: dragging ? "none" : "transform 0.2s",
               touchAction: "pan-y",
-              cursor: open ? "default" : "grab",
-              // the photo fills the whole card, with a dark fade at the bottom so the title is readable
+              cursor: "default",
+            }}
+          >
+          <div
+            className="swipe-photo"
+            style={{
               backgroundImage: recipe.image && /^https?:\/\//i.test(recipe.image)
-                ? `linear-gradient(to top, rgba(0,0,0,0.85) 8%, transparent 55%), url("${recipe.image}")`
-                : undefined,
+                ? `linear-gradient(to top, rgba(0,0,0,.8), transparent 60%), url("${recipe.image}")`
+                : "linear-gradient(135deg, #c34b61, #f5b8c2)",
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
           >
-            {dragX > 40 && (
-              <span className="stamp stamp-yes" style={{ opacity: Math.min(dragX / 100, 1) }}>SAVE</span>
-            )}
-            {dragX < -40 && (
-              <span className="stamp stamp-no" style={{ opacity: Math.min(-dragX / 100, 1) }}>SKIP</span>
-            )}
+            {dragX > 40 && <span className="stamp stamp-yes">SAVE</span>}
+            {dragX < -40 && <span className="stamp stamp-no">SKIP</span>}
 
-            {ragSearch ? <>
+            <div className="swipe-photo-caption">
               <h2>{recipe.title}</h2>
-              <p className="swipe-meta"><LuClock /> {recipe.total_time || "Time not listed"}</p>
-            </> : <>
-              <h2>{recipe.title}</h2>
-              <p>{recipe.ingredients.length} ingredients</p>
-            </>}
-
-            <button
-              className={`sheet-toggle ${open ? "is-open" : ""}`}
-              onPointerDown={(e) => e.stopPropagation()}     // so tapping it doesn't start a drag
-              onClick={() => setOpen((o) => !o)}
-              aria-label={open ? "Close recipe details" : "Open recipe details"}
-              aria-expanded={open}
-              aria-controls="swipe-recipe-details"
-            >
-              <LuChevronUp size={22} aria-hidden="true" />
-            </button>
-
-            <div id="swipe-recipe-details" className={`sheet swipe-details ${open ? "is-open" : ""}`}
-                inert={!open} aria-hidden={!open} onPointerDown={(e) => e.stopPropagation()}>
-                <h2>{recipe.title}</h2>
-                  <p className="sheet-meta">
-                    <LuClock /> {recipe.total_time || "Time not listed"}
-                    {servingCount && <> · {servingCount} servings</>}
-                  </p>                
-                  <RecipeTabs key={recipe.id} ingredients={<>
-                  <h3>Ingredients</h3>
-                  <div className="sheet-chips">
-                    {items.map((line, i) => (
-                      <span key={i} className="sheet-chip">
-                        {line}
-                      </span>
-                    ))}
-                  </div>
-                  {recipe.availability && <RecipeIngredients availability={recipe.availability} />}
-                  </>} steps={<>
-                    <p className="sheet-meta">Original source instructions. Pantry substitutions have not been applied here.</p>
-                  {steps.length > 0 && (
-                    <>
-                      <h3>Directions</h3>
-                      <ol className="sheet-steps">
-                        {steps.map((s, i) => <li key={i}>{s}</li>)}
-                      </ol>
-                    </>
-                  )}
-                    {!steps.length && <p>No source instructions available.</p>}
-                  </>} />
-                {/^https?:\/\//i.test(recipe.source_url || "") && (
-                  <a className="sheet-source" href={recipe.source_url} target="_blank" rel="noreferrer">Source recipe</a>
-                )}
-              </div>
+              <p>
+                <LuClock /> {recipe.total_time || timingText || "Time not listed"}
+                {servingCount && ` · ${servingCount} servings`}
+              </p>
+            </div>
           </div>
+
+          <div className="swipe-details">
+            <h3>Ingredients</h3>
+            <div className="sheet-chips">
+              {items.map((line, i) => (
+                <span key={i} className="sheet-chip">{line}</span>
+              ))}
+            </div>
+
+            {recipe.availability && (
+              <RecipeIngredients availability={recipe.availability} />
+            )}
+
+            <h3>Directions</h3>
+            {steps.length ? (
+              <ol className="sheet-steps">
+                {steps.map((step, i) => <li key={i}>{step}</li>)}
+              </ol>
+            ) : (
+              <p>No source instructions available.</p>
+            )}
+
+            {sourceUrl && (
+            <a
+              className="sheet-source"
+              href={sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+            >
+              Source recipe
+            </a>
+            )}
+          </div>
+        </div>
 
           <div className="swipe-actions">
             <button className="swipe-btn" onClick={next} disabled={saving} aria-label="Skip"><LuX size={28} /></button>
@@ -192,7 +212,7 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
           </div>
         </>
       ) : (
-        <div><p>{deck.length === 0 ? (ragSearch ? ragSearch.message : "Loading...") : "No more recipes."}</p>
+        <div><p>{deck.length === 0? (ragSearch?.message || "Choose ingredients in your pantry and tap Find Recipes."): "No more recipes."}</p>
           {deck.length > 0 && <button onClick={() => setIndex(0)}>Review options again</button>}
           <p><Link to="/pantry">Back to pantry</Link></p></div>
       )}

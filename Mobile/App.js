@@ -1,23 +1,27 @@
 import { useRef, useState } from "react";
-import { Alert, Button, StyleSheet, Text, View,} from "react-native";
+import { Alert, StyleSheet, View, Button, Linking } from "react-native";
 import { SafeAreaProvider, SafeAreaView, } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import * as ImagePicker from "expo-image-picker";
-import * as Speech from "expo-speech";
 import { File } from "expo-file-system";
 import { fetch as expoFetch } from "expo/fetch";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { AudioModule, RecordingPresets, setAudioModeAsync, useAudioRecorder, } from "expo-audio";
+import {
+  AudioModule,
+  RecordingPresets,
+  setAudioModeAsync,
+  useAudioRecorder,
+} from "expo-audio";
+import * as Speech from "expo-speech";
 
 // Network endpoints for web app and backend API
-const HOST = "192.168.79.150";
+const HOST = "192.168.1.6";
 const APP_URL = `http://${HOST}:5173`;
 const API = `http://${HOST}:8000`;
 
 export default function App() {
   const webRef = useRef(null);
   const cameraRef = useRef(null);
-  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [videoMode, setVideoMode] = useState(false);
@@ -25,14 +29,14 @@ export default function App() {
   const [videoToken, setVideoToken] = useState("");
   const [cameraReady, setCameraReady] = useState(false);
 
-  const [voiceRecipe, setVoiceRecipe] = useState(null);
-  const [voiceToken, setVoiceToken] = useState("");
-  const [voiceStep, setVoiceStep] = useState(0);
-  const [voiceRecording, setVoiceRecording] = useState(false);
-  const [voiceBusy, setVoiceBusy] = useState(false);
-  const [voiceStatus, setVoiceStatus] = useState("");
-  const voiceActiveRef = useRef(false);
-
+  function notifyScanStatus(scanning) {
+    webRef.current?.injectJavaScript(`
+      window.dispatchEvent(new CustomEvent("nosh-scan-status", {
+        detail: { scanning: ${JSON.stringify(scanning)} }
+      }));
+      true;
+    `);
+  }
   // Take a fridge photo and send it to the backend.
   async function scanWithCamera(token) {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
@@ -48,6 +52,7 @@ export default function App() {
     const photo = result.assets[0];
 
     try {
+      notifyScanStatus(true);
       const form = new FormData();
       form.append("image", new File(photo.uri));
 
@@ -70,8 +75,103 @@ export default function App() {
       );
     } catch (e) {
       Alert.alert("Scan failed", e.message || String(e));
+    } finally {
+      notifyScanStatus(false);
     }
   }
+
+const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+const voiceRun = useRef(0);
+const recording = useRef(false);
+
+function sendVoiceEvent(detail) {
+  webRef.current?.injectJavaScript(`
+    window.dispatchEvent(new CustomEvent("nosh-native-voice", {
+      detail: ${JSON.stringify(detail)}
+    }));
+    true;
+  `);
+}
+
+async function stopNativeListening() {
+  voiceRun.current += 1;
+
+  if (recording.current) {
+    recording.current = false;
+    await audioRecorder.stop();
+  }
+
+  sendVoiceEvent({ status: "ready" });
+}
+
+async function startNativeListening(token) {
+  const run = ++voiceRun.current;
+
+  try {
+    const permission = await AudioModule.requestRecordingPermissionsAsync();
+
+    if (!permission.granted) {
+      throw new Error("Allow microphone access in your phone settings.");
+    }
+
+    await setAudioModeAsync({
+      allowsRecording: true,
+      playsInSilentMode: true,
+    });
+
+    await audioRecorder.prepareToRecordAsync();
+    if (run !== voiceRun.current) return;
+
+    audioRecorder.record();
+    recording.current = true;
+    sendVoiceEvent({ status: "listening" });
+
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    if (run !== voiceRun.current) return;
+
+    recording.current = false;
+    await audioRecorder.stop();
+
+    await setAudioModeAsync({
+      allowsRecording: false,
+      playsInSilentMode: true,
+    });
+
+    sendVoiceEvent({ status: "transcribing" });
+
+    if (!audioRecorder.uri) {
+      throw new Error("No audio was recorded.");
+    }
+
+    const form = new FormData();
+    form.append("audio", new File(audioRecorder.uri));
+
+    const response = await expoFetch(`${API}/voice/transcribe`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.detail || "Could not transcribe your recording.");
+    }
+
+    if (run === voiceRun.current) {
+      sendVoiceEvent({
+        status: "ready",
+        transcript: data.transcript || "",
+      });
+    }
+  } catch (error) {
+    if (run === voiceRun.current) {
+      sendVoiceEvent({
+        status: "ready",
+        error: error.message || String(error),
+      });
+    }
+  }
+}
 
   async function openVideoCamera(token) {
     let permission = cameraPermission;
@@ -92,6 +192,7 @@ export default function App() {
 
   async function uploadRecordedVideo(uri, token) {
     try {
+      notifyScanStatus(true);
       const form = new FormData();
       form.append("video", new File(uri));
 
@@ -114,6 +215,8 @@ export default function App() {
       );
     } catch (e) {
       Alert.alert("Video scan failed", e.message || String(e));
+    } finally {
+      notifyScanStatus(false);
     }
   }
   async function startOrStopVideoRecording() {
@@ -147,187 +250,12 @@ export default function App() {
     }
   }
 
-  function speak(text) {
-  return new Promise((resolve) => {
-    Speech.stop();
-    Speech.speak(text, {
-      rate: 0.95,
-      onDone: resolve,
-      onStopped: resolve,
-      onError: resolve,
-    });
-  });
-}
-
-async function speakStep(index, recipe) {
-  const step = recipe?.steps?.[index];
-  if (step) await speak(`Step ${index + 1}. ${step}`);
-}
-
-function stopVoiceCooking() {
-  voiceActiveRef.current = false;
-  Speech.stop();
-  setVoiceStatus("Stopped listening.");
-}
-
-async function beginVoiceCooking(recipe, token) {
-  if (!recipe?.steps?.length) {
-    setVoiceStatus("The Cook page doesn't have recipe steps yet.");
-    return;
-  }
-
-  try {
-    const permission = await AudioModule.requestRecordingPermissionsAsync();
-    if (!permission.granted) {
-      setVoiceStatus("Allow microphone access to use voice cooking.");
-      return;
-    }
-
-    const sessionResponse = await fetch(`${API}/voice/session`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        recipe_text: recipe.recipeText,
-        ingredients: recipe.ingredients || [],
-      }),
-    });
-
-    const sessionData = await sessionResponse.json();
-    if (!sessionResponse.ok) {
-      throw new Error(sessionData.detail || "Could not start the voice session.");
-    }
-
-    voiceActiveRef.current = true;
-    setVoiceRecipe(recipe);
-    setVoiceToken(token);
-    setVoiceStep(0);
-    setVoiceStatus("Starting voice cooking...");
-
-    await setAudioModeAsync({
-      allowsRecording: false,
-      playsInSilentMode: true,
-    });
-
-    await speak(
-      `Today we're making ${recipe.title}. I'll read the first step. Say next when you're ready. You can also ask a question, say repeat, or say stop.`
-    );
-    await speakStep(0, recipe);
-
-    await listenForVoiceCommand(token);
-  } catch (e) {
-    voiceActiveRef.current = false;
-    setVoiceStatus(`Voice cooking couldn't start: ${e.message || String(e)}`);
-  }
-}
-
-async function listenForVoiceCommand(token) {
-  if (!voiceActiveRef.current) return;
-
-  try {
-    setVoiceStatus("Listening… say next, repeat, back, or ask a question.");
-
-    await setAudioModeAsync({
-      allowsRecording: true,
-      playsInSilentMode: true,
-    });
-
-    await audioRecorder.prepareToRecordAsync();
-    await audioRecorder.record();
-
-    // Record a short clip, then transcribe it.
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-
-    if (!voiceActiveRef.current) {
-      await audioRecorder.stop();
-      return;
-    }
-
-    await audioRecorder.stop();
-    await setAudioModeAsync({
-      allowsRecording: false,
-      playsInSilentMode: true,
-    });
-
-    const uri = audioRecorder.uri;
-    if (!uri) {
-      return listenForVoiceCommand(token);
-    }
-
-    const form = new FormData();
-    form.append("audio", new File(uri));
-
-    const transcriptResponse = await expoFetch(`${API}/voice/transcribe`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: form,
-    });
-
-    const transcriptData = await transcriptResponse.json();
-    if (!transcriptResponse.ok) {
-      throw new Error(transcriptData.detail || "Could not transcribe that clip.");
-    }
-
-    const transcript = (transcriptData.transcript || "").trim();
-    if (!transcript) {
-      return listenForVoiceCommand(token);
-    }
-
-    if (/\b(stop|exit|quit)\b/i.test(transcript)) {
-      stopVoiceCooking();
-      await speak("Okay, I'll stop listening.");
-      return;
-    }
-
-    setVoiceStatus(`Heard: ${transcript}`);
-    const answerResponse = await fetch(`${API}/voice/ask`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ question: transcript }),
-    });
-
-    const answerData = await answerResponse.json();
-    if (!answerResponse.ok) {
-      throw new Error(answerData.detail || "NOSH couldn't answer that.");
-    }
-
-    const answer = answerData.answer || "I don't have an answer for that.";
-    const stepMatch = answer.match(/^Step (\d+)\b/i);
-    if (stepMatch) setVoiceStep(Number(stepMatch[1]) - 1);
-
-    setVoiceStatus(answer);
-    await speak(answer);
-
-    if (voiceActiveRef.current) {
-      await listenForVoiceCommand(token);
-    }
-  } catch (e) {
-    voiceActiveRef.current = false;
-    setVoiceStatus(`Voice chat stopped: ${e.message || String(e)}`);
-  }
-}
-
-  function handleWebMessage(event) {
+  async function handleWebMessage(event) {
     let msg;
 
     try {
       msg = JSON.parse(event.nativeEvent.data);
     } catch {
-      return;
-    }
-
-    if (msg.type === "voice-cook") {
-      beginVoiceCooking(msg.recipe, msg.token || "");
-      return;
-    }
-
-    if (msg.type === "voice-stop") {
-      stopVoiceCooking();
       return;
     }
 
@@ -344,17 +272,32 @@ async function listenForVoiceCommand(token) {
         },
       ]);
     }
-  }
+    if (msg.type === "native-listen") {
+      void startNativeListening(msg.token || "");
+      return;
+    }
 
-  function closeVoiceCooking() {
-    Speech.stop();
-    setVoiceRecipe(null);
-    setVoiceRecording(false);
+    if (msg.type === "native-listen-stop") {
+      void stopNativeListening();
+      return;
+    }
 
-    webRef.current?.injectJavaScript(
-      `window.dispatchEvent(new Event("nosh-voice-done")); true;`
-    );
-  }
+    if (msg.type === "native-speak") {
+      Speech.stop();
+      Speech.speak(msg.text, {
+        voice: "en-US-SMTf00",
+        language: "en-US",
+        rate: 0.95,
+        pitch: 1,
+      });
+      return;
+    }
+
+    if (msg.type === "native-speak-stop") {
+      Speech.stop();
+      return;
+    }
+      }
 
   return (
     <SafeAreaProvider>
@@ -368,15 +311,12 @@ async function listenForVoiceCommand(token) {
             javaScriptEnabled
             domStorageEnabled
             onMessage={handleWebMessage}
+            setSupportMultipleWindows={true}
+            onOpenWindow={({ nativeEvent }) => {
+              const url = nativeEvent.targetUrl;
+              if (url) Linking.openURL(url);
+            }}
           />
-
-          {voiceRecipe && !videoMode && (
-            <View style={styles.voicePanel}>
-              <Text style={styles.voiceTitle}>{voiceRecipe.title}</Text>
-              <Text style={styles.voiceText}>{voiceStatus}</Text>
-              <Button title="Stop listening" onPress={stopVoiceCooking} />
-            </View>
-          )}
 
           {videoMode && (
             <View style={StyleSheet.absoluteFill}>
@@ -426,24 +366,5 @@ const styles = StyleSheet.create({
     bottom: 20,
     alignSelf: "center",
     gap: 10,
-  },
-  voicePanel: {
-    position: "absolute",
-    left: 16,
-    right: 16,
-    bottom: 20,
-    padding: 16,
-    gap: 10,
-    borderRadius: 16,
-    backgroundColor: "#242020",
-  },
-  voiceTitle: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  voiceText: {
-    color: "white",
-    marginBottom: 4,
   },
 });

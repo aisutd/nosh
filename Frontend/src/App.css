@@ -127,6 +127,35 @@ button:hover {                 /* mouse is over the button */
   text-align: center;
 }
 
+.password-field {
+  position: relative;
+  width: 100%;
+}
+
+.password-field input {
+  width: 100%;
+  padding-right: 52px;
+  box-sizing: border-box;
+}
+
+.password-field .password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
 
 /* ===== Pantry page (the ingredients screen in App.jsx) ===== */
 
@@ -142,6 +171,37 @@ button:hover {                 /* mouse is over the button */
   gap: 10px;
   border: 1px dashed var(--accent);   /* dashed orange outline */
   border-radius: 24px;
+}
+
+.scan-choice-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(40 20 30 / 45%);
+}
+
+.scan-choice-dialog {
+  display: grid;
+  gap: 12px;
+  width: min(100%, 360px);
+  box-sizing: border-box;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: #fff7f7;
+  box-shadow: 0 12px 40px rgb(70 30 45 / 20%);
+}
+
+.scan-choice-dialog h2 {
+  margin: 0 0 8px;
+  text-align: center;
+}
+
+.scan-choice-dialog button {
+  width: 100%;
 }
 
 .add-row {                     /* the text box and the Add button on one line */
@@ -452,8 +512,26 @@ select option {
 }
 
 .cook-done {
-  margin: 16px auto;
-  max-width: 480px;
+  width: min(100%, 38rem);
+  margin: 1.5rem auto;
+  padding: 1rem 1.25rem;
+  border: 1px solid #efb8c0;
+  border-radius: 1.25rem;
+  background: #f9dfe3;
+  color: #3b2830;
+}
+
+.cook-done p {
+  margin: 0.25rem 0;
+}
+
+.cook-done p:first-child {
+  font-weight: 700;
+}
+
+.cook-done a {
+  color: #253b50;
+  font-weight: 600;
 }
 
 .cook-warning {
@@ -548,40 +626,151 @@ html, body {
 
 /* ----- Swipe page (Swipe.jsx) ----- */
 
+.swipe-card {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+  background: transparent !important;
+}
+
+.swipe-card a {
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.swipe-details {
+  position: static !important;
+  display: block !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  padding: 1.25rem !important;
+  border-radius: 0 0 24px 24px;
+  background: #fff7f7 !important;
+  color: #253b50 !important;
+}
+
+.swipe-details h3,
+.swipe-details p,
+.swipe-details li,
+.swipe-details a,
+.swipe-details span {
+  color: #253b50;
+}
+
+.swipe-card .swipe-photo {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  flex: 0 0 auto;
+  width: 100%;
+  height: 360px;
+  min-height: 360px;
+  overflow: hidden;
+  border-radius: 24px 24px 0 0;
+  background-size: cover;
+  background-position: center;
+}
+
+.swipe-photo-caption {
+  position: absolute;
+  left: 1.25rem;
+  bottom: 1rem;
+  color: white;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.swipe-photo-caption h2,
+.swipe-photo-caption p {
+  color: white;
+  margin: 0.25rem 0;
+}
+
+.swipe-card .swipe-details a.sheet-source {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  position: relative;
+  z-index: 10;
+}
+
+.swipe-card::before,
+.swipe-card::after,
+.swipe-details::before,
+.swipe-details::after {
+  pointer-events: none !important;
+}
+
+.swipe-card .sheet-source {
+  display: table;
+  width: fit-content;
+  margin: 1rem auto;
+  padding: 0;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
 .swipe-position {
-  margin: -8px 0 12px;         /* pulls it up under the title */
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  margin: 12px auto 36px;
+  padding: 6px 16px;
+  border: 1px solid #edc0ca;
+  border-radius: 999px;
+  background: #fff7f7;
+  color: #843d51;
   font-size: 14px;
+  font-weight: 600;
+}
+
+.swipe-position strong {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #b9415d;
+  color: white;
 }
 
 .swipe-card {
-  position: relative;          /* the stamps, chevron and sheet are placed inside it */
-  height: 480px;
-  border-radius: 28px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;   /* text sits at the bottom of the card */
-  text-align: left;
-  background: linear-gradient(160deg, #ff7a1a, #3a1500);   /* shown when there's no photo */
-  cursor: grab;
-  user-select: none;           /* don't highlight text while dragging */
+  margin-top: 0;
+  transform-origin: center top;
 }
 
-.swipe-card h2 {
-  margin: 0 0 4px;
+.swipe-card .sheet-source {
+  display: table;
+  width: fit-content;
+  margin: 20px auto 0;
+  padding: 9px 18px;
+  border: 1px solid #e7bcc5;
+  border-radius: 999px;
+  background: #fff7f7;
+  color: #843d51;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.swipe-card p {
-  color: #eee;
+.swipe-card .sheet-source:hover {
+  background: #f9dfe5;
 }
 
-.swipe-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
+.swipe-card .sheet-source:focus-visible {
+  outline: 2px solid #b9415d;
+  outline-offset: 3px;
 }
-
 /* YESSIR / HECKS NAH stamps that appear while dragging */
 .stamp {
   position: absolute;

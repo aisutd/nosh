@@ -60,12 +60,15 @@ MEASURES = {
     "ounce": "oz", "ounces": "oz", "oz": "oz",
     "gram": "g", "grams": "g", "g": "g", "kg": "kg", "ml": "ml",
     "liter": "l", "liters": "l", "pinch": "pinch",
-}
+    "count": "count", "can": "can", "cans": "can",
+    "package": "package", "packages": "package",
+    "bottle": "bottle", "bottles": "bottle",
+    "jar": "jar", "jars": "jar",}
 
 # "4 large eggs" -> (4.0, None)   "1 1/2 cups flour" -> (1.5, "cup")   "salt" -> (1, None)
 def parse_amount(line):
     text = unicodedata.normalize("NFKC", line.lower()).replace("\u2044", "/")   # turns ½ into 1/2
-    m = re.match(r"\s*(\d+\s+\d+/\d+|\d+/\d+|\d+(?:\.\d+)?)\s*([a-z]+)?", text)
+    m = re.match(r"^\s*(\d+\s+\d+/\d+|\d+/\d+|\d+(?:\.\d+)?)\s*([a-z]+)?",text,)
     if not m:
         return 1, None
     num = m.group(1)
@@ -98,6 +101,15 @@ def convert(amount, src, dst):
         return amount * a[1] / b[1]
     return None
 
+def pluralize_ingredient(name):
+    if name.endswith(("s", "ies")):
+        return name
+    if name.endswith("y"):
+        return name[:-1] + "ies"
+    if name.endswith(("ch", "sh", "x", "z")):
+        return name + "es"
+    return name + "s"
+
 # POST /inventory/consume: subtract a cooked recipe's ingredients, return warnings
 @router.post("/inventory/consume")
 async def consume(req: ConsumeRequest, current_user: dict = Depends(get_current_user)):
@@ -118,15 +130,15 @@ async def consume(req: ConsumeRequest, current_user: dict = Depends(get_current_
             elif unit == doc["unit"]:
                 deduct = amount                                    # same unit
             else:
-                deduct = convert(amount, unit, doc["unit"]) if unit else None   # tbsp -> cup, oz -> lb
-                if deduct is None:                                 # not convertible (cup vs lb...)
-                    if doc["unit"] in COUNTABLE:
-                        deduct = 1                                 # can / package / count: take 1
-                    else:
-                        warnings.append(
-                            f"Couldn't convert {unit or 'the recipe amount'} to {doc['unit']} for {name}; please check your amount"
-                        )
-                        continue                                   # don't guess, leave it alone
+                deduct = convert(amount, unit, doc["unit"]) if unit else None
+
+                if deduct is None:
+                    warnings.append(
+                        f"Couldn't match the recipe amount ({unit or 'count'}) "
+                        f"with your inventory unit ({doc['unit']}) for {name}; "
+                        "the amount was not changed."
+                    )
+                    continue
             deduct = round(deduct, 2)                              # no 0.0625000001 in the list
 
             doc = await inventory.find_one_and_update(
@@ -135,14 +147,35 @@ async def consume(req: ConsumeRequest, current_user: dict = Depends(get_current_
                 return_document=ReturnDocument.AFTER,
             )
             qty = round(doc["quantity"], 2)                        # no 1.3400000001
+            qty = max(0, qty)
+
+            await inventory.update_one(
+                {"_id": doc["_id"]},
+                {"$set": {"quantity": qty}},
+            )
+
+            doc["quantity"] = qty
             if qty <= 0:
                 await inventory.update_one({"_id": doc["_id"]}, {"$set": {"quantity": 0}})   # never go negative
                 doc["quantity"] = 0
                 warnings.append(f"You've run out of {name}")
             elif doc["unit"] == "count":
-                warnings.append(f"You have {qty:g} {name} left")                       # "You have 2 lemon left"
+                item_name = name if qty == 1 else pluralize_ingredient(name)
+                warnings.append(f"You have {qty:g} {item_name} left")
             else:
-                warnings.append(f"You have {qty:g} {doc['unit']} of {name} left")      # "You have 1.5 cup of milk left"
+                unit_name = doc["unit"]
+                if qty != 1:
+                    unit_name = {
+                        "cup": "cups",
+                        "lb": "lbs",
+                        "can": "cans",
+                        "package": "packages",
+                        "bottle": "bottles",
+                        "jar": "jars",
+                    }.get(unit_name, unit_name)
+
+                item_name = name if qty == 1 else pluralize_ingredient(name)
+                warnings.append(f"You have {qty:g} {unit_name} of {item_name} left")
             updated.append(item_out(doc))
 
     return {"updated": updated, "warnings": warnings}
