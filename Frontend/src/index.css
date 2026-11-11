@@ -1,0 +1,37 @@
+/* =====================================================================
+   index.css, global styles loaded once for the whole app (via main.jsx)
+   App.css builds on top of these variables.
+   ===================================================================== */
+
+:root {
+  color-scheme: light;
+  --text: #2f3a44;
+  --surface: #fff7f7;
+  --bg: #fadadd;
+  --border: #e8cbd1;
+  --muted: #665960;
+  --coral: #f26b7a;
+  --accent: #b74357;
+  --accent-dark: #983447;
+  --green: #4caf7d;
+  --teal: #6ba7a9;
+  --peach: #f7c59f;
+  --yellow: #f9d86e;
+  --blob: #f26b7a;
+  --card: #fff7f7;
+  font-family: "Outfit", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;        /* width includes padding, so nothing overflows */
+}
+
+body {
+  margin: 0;                     /* removes the default white edge */
+  min-height: 100vh;             /* at least full screen height */
+  background: var(--bg);
+  color: var(--text);
+}
+
+button, input { font: inherit; } /* buttons/inputs use the page font */
+a { color: inherit; }            /* links use the surrounding text color, not blue */
