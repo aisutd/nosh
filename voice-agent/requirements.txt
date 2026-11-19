@@ -1,5 +1,0 @@
-deepgram-sdk
-python-dotenv
-sounddevice
-scipy
-requests
