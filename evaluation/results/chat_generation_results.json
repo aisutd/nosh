@@ -1,0 +1,16 @@
+{
+  "description": "Live development checks; status success is not independent answer-quality proof.",
+  "results": [
+    {
+      "case": "contradictory_changes",
+      "verdict": "{\"result\": \"FAIL\", \"explanation\": \"Invalid generation input or output.\", \"violations\": [\"Ingredient 'lemon' is both omitted and replaced\"]}",
+      "passed": true
+    },
+    {
+      "case": "initial_generation",
+      "answer": "Recipe Name: Old-Fashioned Lemonade\n\nChanges:\n- none\nSteps:\n1. Juice 6 lemons.\n2. Mix the lemon juice with 1 cup white sugar and 6 cups water.\n3. Chill and serve.",
+      "verdict": "{\"result\": \"PASS\", \"explanation\": \"The recipe accurately reflects the source and uses available ingredients.\", \"violations\": []}",
+      "passed": true
+    }
+  ]
+}

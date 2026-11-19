@@ -1,0 +1,452 @@
+import { API } from './lib/api';
+import { useState, useEffect, useRef, useCallback} from 'react'
+import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
+import './App.css'
+import './Theme.css'
+import Auth from './pages/Auth.jsx'
+import Saved from "./pages/Saved.jsx";
+import NavBar from "./components/NavBar.jsx";
+import Home from "./pages/Home.jsx";
+import Profile from "./pages/Profile.jsx";
+import Cook from "./pages/Cook.jsx";
+import Swipe from "./pages/Swipe.jsx";
+import { BiFoodMenu, BiPlus } from "react-icons/bi";
+import { LuCamera } from "react-icons/lu";
+import RagCook from "./pages/RagCook.jsx";
+import Inventory from "./pages/Inventory.jsx";
+import PantryIngredients from "./components/PantryIngredients";
+import GenerateRecipe from "./components/GenerateRecipe.jsx";
+
+// Backend address. Uses whatever host the page was opened from, so it works on localhost and on the LAN IP
+
+
+// Adds the login token to a request so the backend knows who you are
+function authHeaders() {
+  const token = localStorage.getItem("access_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};   // visitors send no header
+}
+
+function App() {
+  // ----- state: values that make the screen update when they change -----
+  const [input, setInput] = useState("");              // text typed in the ingredient box
+  const [ingredients, setIngredients] = useState([]);  // the pantry list
+  const [ragSearch, setRagSearch] = useState(null);
+  const [recipes, setRecipes] = useState([]);          // results from "Find Recipes" (shown in Swipe)
+  const [user, setUser] = useState(null);              // username, or null if logged out
+  const navigate = useNavigate();                      // lets us change pages from code
+  const [savedIds, setSavedIds] = useState([]);        // ids of the recipes this user saved
+  const fileInput = useRef(null);                      // points at the hidden file picker
+  const [scanning, setScanning] = useState(false);     // true while the scan is running
+  const [mobileScanning, setMobileScanning] = useState(false);
+  const location = useLocation();                      // which page we're on
+  const videoFileInput = useRef(null);
+  const [scanChoiceOpen, setScanChoiceOpen] = useState(false);
+  const [ingredientError, setIngredientError] = useState("");
+  const [scanError, setScanError] = useState("");
+  const hideNav =                                      // hide the nav bar on login and on the visitor landing page
+    location.pathname === "/auth" ||
+    (location.pathname === "/" && !user);
+
+
+// ----- login / logout -----
+
+// Asks the backend who owns this token (returns the username)
+async function fetchMe(token) {
+  const response = await fetch(`${API}/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error("Not logged in");
+  const data = await response.json();
+  return data.username;
+}
+
+// Called by Auth.jsx after a successful login: store the token and set the user
+async function handleLogin(token) {
+  localStorage.setItem("access_token", token);
+  setUser(await fetchMe(token));
+}
+
+// Forget the token and clear everything that belongs to the user
+function handleLogout() {
+  localStorage.removeItem("access_token");
+  setUser(null);
+  setIngredients([]);
+  setRecipes([]);
+  setRagSearch(null);
+  setSavedIds([]);
+}
+
+// ----- effects: code that runs automatically -----
+
+// On page load: if a token is saved, log the user back in
+useEffect(() => {
+  async function restoreUser() {
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+    try {
+      setUser(await fetchMe(token));
+    } catch {
+      localStorage.removeItem("access_token");   // expired or invalid token
+      setUser(null);
+    }
+  }
+  restoreUser();
+}, []);                                     // [] = only once, when the app first loads
+
+// When the user logs in, load their saved ingredients
+useEffect(() => {
+  async function loadIngredients() {
+    if (!user) return;                      // visitors have no saved list
+    const response = await fetch(`${API}/ingredients`, { headers: authHeaders() });
+    if (response.ok) {
+      const data = await response.json();
+      setIngredients(data.ingredients);
+    }
+  }
+  loadIngredients();
+}, [user]);                                 // run again whenever user changes
+
+// When the user logs in, load the ids of their saved recipes (for the heart icons)
+useEffect(() => {
+  async function loadSaved() {
+    if (!user) return;
+    const response = await fetch(`${API}/recipes/saved-ids`, { headers: authHeaders() });
+    if (response.ok) setSavedIds((await response.json()).saved);
+  }
+  loadSaved();
+}, [user]);
+
+const addItems = useCallback(async (items) => {
+  if (user) {
+    let latest = ingredients;
+    for (const item of items) {              // one request per item
+      const response = await fetch(
+        `${API}/ingredients/add?ingredient=${encodeURIComponent(item)}`,
+        { method: "POST", headers: authHeaders() }
+      );
+      if (response.ok) latest = (await response.json()).ingredients;
+    }
+    setIngredients(latest);
+  } else {
+    setIngredients((prev) => [...new Set([...prev, ...items])]);   // Set removes duplicates
+  }
+}, [user, ingredients]);
+
+// Phone app only: Mobile/App.js sends the scan result as a "nosh-scan" event
+useEffect(() => {
+  function onScanResult(e) {
+    addItems(e.detail);          // e.detail is the list of ingredients
+  }
+  window.addEventListener("nosh-scan", onScanResult);
+  return () => window.removeEventListener("nosh-scan", onScanResult);   // cleanup so we don't add duplicate listeners
+}, [addItems]);
+
+useEffect(() => {
+  function onScanStatus(event) {
+    setMobileScanning(Boolean(event.detail?.scanning));
+  }
+
+  window.addEventListener("nosh-scan-status", onScanStatus);
+
+  return () => {
+    window.removeEventListener("nosh-scan-status", onScanStatus);
+  };
+}, []);
+
+
+// ----- pantry actions -----
+
+// "Add" button: logged-in users save to the database, visitors just keep it on the page
+async function handleAdding(e) {
+  e.preventDefault();
+  setIngredientError("");
+
+  const item = input.trim().toLowerCase();
+  if (!item) return;
+
+  try {
+    if (user) {
+      const response = await fetch(
+        `${API}/ingredients/add?ingredient=${encodeURIComponent(item)}`,
+        { method: "POST", headers: authHeaders() }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          typeof data.detail === "string"
+            ? data.detail
+            : "Could not add ingredient."
+        );
+      }
+
+      setIngredients(data.ingredients);
+    } else {
+      setIngredients((prev) =>
+        prev.includes(item) ? prev : [...prev, item]
+      );
+    }
+
+    setInput("");
+  } catch (error) {
+    setIngredientError(error.message || "Could not add ingredient.");
+  }
+}
+
+// Heart button: save or unsave a recipe (login required)
+async function handleToggleSave(recipeId, context = null) {
+  if (!user) {
+    navigate("/auth");                 // visitors must log in to save
+    return false;
+  }
+  const action = savedIds.includes(recipeId) ? "unsave" : "save";   // already saved? then unsave
+  const response = await fetch(`${API}/recipes/${action}/${recipeId}`, {
+    method: "POST",
+    headers: { ...authHeaders(), ...(context ? { "Content-Type": "application/json" } : {}) },
+    ...(context ? { body: JSON.stringify(context) } : {}),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(typeof data?.detail === "string" ? data.detail : "Could not update saved recipes.");
+  }
+  if (response.ok) setSavedIds((await response.json()).saved);      // backend returns the updated list
+  return true;
+}
+
+// X on a chip: remove an ingredient
+async function handleRemoving(ingredient) {
+  if (user) {
+    const response = await fetch(
+      `${API}/ingredients/remove?ingredient=${encodeURIComponent(ingredient)}`,
+      { method: "POST", headers: authHeaders() }
+    );
+    if (!response.ok) throw new Error("Could not remove pantry ingredient.");
+    // Keep failed inventory removals visible so they can be retried.
+    const inventoryResponse = await fetch(`${API}/inventory/${encodeURIComponent(ingredient)}`, {
+      method: "DELETE", headers: authHeaders(),
+    });
+    if (!inventoryResponse.ok && inventoryResponse.status !== 404) {
+      throw new Error("Could not remove inventory entry.");
+    }
+    setIngredients((prev) => prev.filter((item) => item !== ingredient));
+  } else {
+    setIngredients((prev) => prev.filter((i) => i !== ingredient));
+  }
+}
+
+// ----- scanning -----
+
+// Adds several ingredients at once (used by scan results)
+// Scan box clicked: phone app opens its camera, a normal browser opens the file picker
+function handleScanClick() {
+  if (scanning || mobileScanning) return;
+  if (!user) {
+    navigate("/auth");            // scanning needs an account
+    return;
+  }
+  if (window.ReactNativeWebView) {
+    // inside the phone app: pass the login token to it
+    window.ReactNativeWebView.postMessage(
+      JSON.stringify({ type: "scan", token: localStorage.getItem("access_token") })
+    );
+  } else {
+    setScanError("");
+    setScanChoiceOpen(true);
+  }
+}
+
+// A photo was picked in the browser: upload it to /scan and add the ingredients found
+async function handleScan(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  setScanning(true);                       // shows "Scanning..."
+  const form = new FormData();
+  form.append("image", file);              // the name must match `image` in the backend
+  const response = await fetch(`${API}/scan`, { method: "POST", headers: authHeaders(), body: form });
+  if (response.ok) {
+    const data = await response.json();
+    await addItems(data.ingredients);
+  }
+  setScanning(false);
+  e.target.value = "";                   // lets you pick the same photo again
+}
+
+async function handleVideoScan(event) {
+  const picker = event.currentTarget;
+  const file = picker.files?.[0];
+  if (!file) return;
+
+  setScanning(true);
+  setScanError("");
+
+  try {
+    const form = new FormData();
+    form.append("video", file);
+
+    const response = await fetch(`${API}/scan-video`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: form,
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(
+        typeof data?.detail === "string"
+          ? data.detail
+          : "Video scan failed."
+      );
+    }
+
+    await addItems(data.ingredients || []);
+  } catch (error) {
+    setScanError(error.message || "Could not upload the video.");
+  } finally {
+    setScanning(false);
+    picker.value = "";
+  }
+}
+
+  // ----- the Pantry page (used at "/" when logged in, and at "/pantry") -----
+  const home = (
+  <main className="page pantry-page">
+    <div className="topbar">
+      {user ? (
+        <>
+          <span>Hi, {user}</span>
+        </>
+      ) : (
+        <Link to="/auth" className="login-link">Log in</Link>
+      )}
+    </div>
+
+    <h1><BiFoodMenu /> What’s cooking?</h1>
+      <p>Start with what you have. Find something you’ll love.</p>
+
+      {/* hidden file picker, opened by the scan box on a normal browser */}
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        ref={fileInput}
+        onChange={handleScan}
+        hidden
+      />
+      <input
+      type="file"
+      accept="video/*"
+      ref={videoFileInput}
+      onChange={handleVideoScan}
+      hidden
+      />
+      <button
+        className="scan-box"
+        onClick={handleScanClick}
+        disabled={scanning || mobileScanning}
+        aria-busy={scanning || mobileScanning}
+      >
+        <LuCamera size={28} />
+        <span>
+          {scanning || mobileScanning ? "Scanning..." : "Scan fridge"}
+        </span>
+      </button>
+      {scanError && <p role="alert">{scanError}</p>}
+
+      {scanChoiceOpen && (
+        <div
+          className="scan-choice-backdrop"
+          onClick={() => setScanChoiceOpen(false)}
+        >
+          <section
+            className="scan-choice-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="scan-choice-title"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setScanChoiceOpen(false);
+            }}
+          >
+            <h2 id="scan-choice-title">Scan fridge</h2>
+
+            <button
+              type="button"
+              autoFocus
+              onClick={() => {
+                setScanChoiceOpen(false);
+                fileInput.current?.click();
+              }}
+            >
+              Choose a photo
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setScanChoiceOpen(false);
+                videoFileInput.current?.click();
+              }}
+            >
+              Choose a video
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setScanChoiceOpen(false)}
+            >
+              Cancel
+            </button>
+          </section>
+        </div>
+      )}
+
+      {/* type an ingredient by hand */}
+      <form onSubmit={handleAdding} className="add-row">
+        <input value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Enter an ingredient..."
+        />
+        <button type="submit" className="btn-primary">Add <BiPlus /></button>
+      </form>
+      {ingredientError && <p role="alert">{ingredientError}</p>}
+
+        {/* the pantry list: one chip per ingredient */}
+        <PantryIngredients key={user || "guest"} ingredients={ingredients} onRemove={handleRemoving} />
+        <GenerateRecipe
+          key={JSON.stringify([user, ingredients])}
+          ingredients={ingredients}
+          onOptions={(data, context) => {
+            setRecipes(data.recipes);
+            setRagSearch({ ...context, message: data.message });
+            navigate("/swipe");
+          }}
+        />
+    </main>
+  )  
+
+  // ----- which page shows at which URL -----
+  return (    
+    <>               
+      <Routes>
+        <Route path="/" element={user ? home : <Home />} />   {/* logged in: pantry, visitor: landing page */}
+        <Route path="/pantry" element={home} />
+        <Route path="/auth" element={<Auth onLogin={handleLogin} />} />
+        <Route
+          path="/saved"
+          element={<Saved user={user} savedIds={savedIds} onToggleSave={handleToggleSave} />}
+        />
+        <Route path="/profile" element={<Profile user={user} onLogout={handleLogout} />} />
+        <Route path="/cook/rag/:id" element={<RagCook />} />
+        <Route path="/cook/:id" element={<Cook />} />
+        <Route path="/swipe" element={<Swipe key={JSON.stringify([recipes, ragSearch])} ragSearch={ragSearch} 
+        recipes={recipes} onToggleSave={handleToggleSave} savedIds={savedIds} pantry={ingredients}/>} />
+        <Route path="/inventory" element={<Inventory user={user} />} />
+      </Routes>
+      {!hideNav && <NavBar user={user} />}                     {/* bottom nav bar, hidden on login/landing */}
+    </>
+  )
+}    
+
+export default App

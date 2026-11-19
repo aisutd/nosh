@@ -1,0 +1,41 @@
+.saved-page { box-sizing: border-box; width: calc(100% - 2rem); max-width: 900px; margin: 1.5rem auto 7rem; padding: clamp(1.25rem, 4vw, 2.5rem); border-radius: 28px; background: #fadadd; color: #2f3a44; text-align: left; }
+.saved-page * { box-sizing: border-box; }
+.saved-heading { margin-bottom: 1.75rem; }
+.saved-eyebrow { font-size: .7rem; letter-spacing: .12em; font-weight: 700; color: #754852; }
+.saved-page .saved-heading h1 { display: block; margin: .4rem 0; font-size: clamp(1.8rem, 4vw, 2.5rem); line-height: 1.2; color: #2f3a44; }
+.saved-heading > p { font-size: .9rem; color: #665960; }
+.saved-collection-label { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+.saved-collection-label > span { display: inline-flex; align-items: center; gap: .5rem; padding: .6rem 1.3rem; border-radius: 999px; background: #b74357; color: #fff; font-size: .9rem; font-weight: 700; }
+.saved-collection-label > p { font-size: .85rem; color: #665960; }
+.saved-page .saved-list { display: grid; grid-template-columns: 1fr; gap: .8rem; list-style: none; padding: 0; margin: 0; }
+.saved-card { display: flex; align-items: center; gap: .25rem; padding: .65rem; border: 1px solid #efd9dc; border-radius: 20px; background: #fff7f7; box-shadow: 0 4px 14px #713c4b08; min-width: 0; }
+.saved-recipe-link { display: flex; flex: 1; align-items: center; min-width: 0; gap: 1rem; text-decoration: none; border-radius: 12px; }
+.saved-photo { width: 100px; height: 100px; flex-shrink: 0; border-radius: 14px; overflow: hidden; background: #f6e5e7; }
+.saved-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.saved-photo-placeholder { display: grid; place-items: center; height: 100%; color: #8a505b; font-size: 1.75rem; }
+.saved-details { min-width: 0; padding-block: .4rem; }
+.saved-page .saved-details h2 { margin: 0 0 .5rem; color: #2f3a44; font-size: 1rem; line-height: 1.35; overflow-wrap: anywhere; }
+.saved-time { display: flex; align-items: center; gap: .35rem; color: #665960; font-size: .8rem; }
+.saved-open { display: inline-flex; align-items: center; gap: .4rem; margin-top: .5rem; color: #8a394a; font-size: .75rem; font-weight: 600; }
+.saved-page .saved-remove { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; min-width: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #7a5059; box-shadow: none; cursor: pointer; }
+.saved-page .saved-remove:hover { background: #fadadd; }
+.saved-page .saved-remove:disabled { opacity: .5; cursor: wait; }
+.saved-page a:focus-visible, .saved-page button:focus-visible { outline: 3px solid #38676a; outline-offset: 3px; }
+.saved-page .saved-empty { padding: 2rem 1.25rem; border-radius: 20px; background: #fff7f7; text-align: center; color: #665960; line-height: 1.6; }
+.saved-empty > svg { color: #a54255; width: 32px; height: 32px; }
+.saved-page .saved-empty h2 { font-size: 1.2rem; color: #2f3a44; }
+.saved-page .saved-cta { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 44px; margin-top: 1.25rem; padding: .7rem 1.25rem; border-radius: 999px; border: none; background: #b74357; color: #fff; text-decoration: none; font: inherit; font-weight: 600; cursor: pointer; }
+.saved-error { margin-bottom: 1rem; color: #7a2335; }
+@media (max-width: 480px) {
+  .saved-page { width: calc(100% - 1rem); padding: 1rem; border-radius: 22px; }
+  .saved-photo { width: 76px; height: 84px; }
+  .saved-recipe-link { gap: .7rem; }
+  .saved-page .saved-details h2 { font-size: .9rem; }
+}
+.saved-page .saved-cta:hover { background: #983447; color: #fff; }
+
+.saved-collection-label { flex-wrap: wrap; }
+.saved-filters { display: flex; flex-wrap: wrap; gap: .5rem; }
+.saved-page .saved-filters button { display: inline-flex; align-items: center; gap: .4rem; min-height: 44px; padding: .6rem 1rem; border: 1px solid #b74357; border-radius: 999px; background: #fff7f7; color: #8a394a; font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; }
+.saved-page .saved-filters button[aria-pressed="true"] { background: #b74357; color: #fff; }
+.saved-page .saved-filters button:hover { box-shadow: 0 0 0 2px #b7435733; }

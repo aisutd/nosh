@@ -1,0 +1,14 @@
+[
+  {"id":"guacamole","query":"A creamy mashed avocado dip with lime for tortilla chips","expected_titles":["World's Best Guacamole","Traditional Mexican Guacamole","Best Guacamole","Easy Never Forgotten Guacamole","Quick and Easy Guacamole","Mean Green Guacamole Salsa"]},
+  {"id":"banana_bread","query":"Bake a sweet loaf using overripe bananas","expected_titles":["Joy's Easy Banana Bread","Janet's Rich Banana Bread","The Best Banana Bread","Brown Sugar Banana Bread","Simple Banana Bread","Almost No Fat Banana Bread","Cream Cheese Banana Bread"]},
+  {"id":"lemonade","query":"A refreshing drink made with squeezed lemons water and sugar","expected_titles":["Old-Fashioned Lemonade","Refreshing Cucumber Lemonade"]},
+  {"id":"coconut_rice","query":"Rice simmered in coconut milk as a side dish","expected_titles":["Coconut Rice","Coconut Jasmine Rice","Coconut Lime Rice","Sweet Coconut Rice"]},
+  {"id":"mango_salsa","query":"Fresh Mango Salsa","expected_titles":["Fresh Mango Salsa"]},
+  {"id":"apple_crisp","query":"Baked apples with a crunchy oat and cinnamon topping","expected_titles":["Apple Crisp","Easy Apple Crisp with Oat Topping","Apple Crisp - Perfect and Easy","Apple Oatmeal Crisp"]},
+  {"id":"banana_smoothie","query":"Blend banana and peanut butter into a breakfast drink","expected_titles":["Peanut Butter Banana Smoothie"]},
+  {"id":"salmon","query":"Bake salmon with lemon in a foil packet","expected_titles":["Baked Salmon in Foil","Parchment Baked Salmon","Lemon Rosemary Salmon"]},
+  {"id":"stuffed_dates","query":"Sweet dates stuffed with cheese and wrapped in crispy bacon","expected_titles":["Bacon Wrapped Dates Stuffed with Blue Cheese","Bacon Wrapped Dates","Devils on Horseback","Bacon and Date Appetizer"]},
+  {"id":"avocado_toast","query":"Toast topped with avocado and an egg for breakfast","expected_titles":["Avocado Toast with Egg","Avocado Breakfast Sandwich"]},
+  {"id":"quick_guacamole","query":"Avocado lime dip","max_time":15,"expected_titles":["World's Best Guacamole","Traditional Mexican Guacamole","Best Guacamole","Easy Never Forgotten Guacamole","Quick and Easy Guacamole","Mean Green Guacamole Salsa"]},
+  {"id":"blueberry_muffins","query":"To Die For Blueberry Muffins","expected_titles":["To Die For Blueberry Muffins"]}
+]

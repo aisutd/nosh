@@ -1,0 +1,18 @@
+{
+    "customFileOrder.rules": {
+        "Backend": {
+            "order": [
+                "__pycache__",
+                "database",
+                "routes",
+                ".env",
+                "main.py",
+                "security.py",
+                "requirements.txt"
+            ]
+        }
+    },
+    "python.analysis.extraPaths": [
+        "./Backend"
+    ]
+}
