@@ -11,3 +11,5 @@
 .voice-messages { max-height: 22rem; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; scroll-behavior: smooth; }
 .voice-messages p { padding: 14px 16px; margin: 8px 0; border: 1px solid var(--border); border-radius: 14px; background: var(--bg); color: var(--text); line-height: 1.65; }
 .voice-messages strong { color: var(--accent); }
+
+.voice-controls select { max-width: min(15rem, 55vw); min-height: 40px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }

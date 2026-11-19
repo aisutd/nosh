@@ -16,11 +16,17 @@ from pydantic import BaseModel, Field
 router = APIRouter(prefix="/voice", tags=["voice"])
 
 
+class VoiceExchange(BaseModel):
+    question: str = Field(max_length=2000)
+    answer: str = Field(max_length=2000)
+
+
 class VoiceTurn(BaseModel):
     message: str = Field(min_length=1, max_length=2000)
     ingredients: list[Annotated[str, Field(max_length=200)]] = Field(default_factory=list, max_length=100)
     recipe: str = Field(default="", max_length=30000)
     step: int = Field(default=-1, ge=-1, le=500)
+    history: list[VoiceExchange] = Field(default_factory=list, max_length=4)
 
 
 def recipe_steps(recipe):
@@ -45,12 +51,14 @@ def handle_turn(turn, personalization=None):
     steps = recipe_steps(turn.recipe)
     step = min(turn.step, len(steps) - 1)
     navigation = command in {'next', 'next step', 'continue', 'repeat', 'repeat step', 'previous', 'previous step', 'back', 'start cooking', 'current step'}
-    target = re.fullmatch(r'(?:go to )?step (\d+)', command)
+    target = re.fullmatch(r'(?:go to )?step (\d+|one|two|three|four|five|six|seven|eight|nine|ten)', command)
     if navigation or target:
         if not steps:
             return {'answer': 'Choose a recipe with numbered instructions first.', 'step': -1}
         if target:
-            desired = int(target[1]) - 1
+            number = target[1]
+            words = ('one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten')
+            desired = int(number) - 1 if number.isdecimal() else words.index(number)
         elif command in {'next', 'next step', 'continue'}:
             desired = step + 1
         elif command in {'previous', 'previous step', 'back'}:
@@ -74,8 +82,9 @@ def handle_turn(turn, personalization=None):
     from llm.recipe_chat import answer_question, judge_answer
     from llm.nosh_generation import judge_passed
     context = {'approved_recipe': turn.recipe, 'source_context': turn.recipe, 'available_ingredients': turn.ingredients, 'personalization': personalization or {}}
-    decision = answer_question(context, turn.message, [])
-    if decision and (decision['status'] != 'answered' or judge_passed(judge_answer(context, turn.message, [], decision['answer']))):
+    history = [exchange.model_dump() for exchange in turn.history]
+    decision = answer_question(context, turn.message, history)
+    if decision and (decision['status'] != 'answered' or judge_passed(judge_answer(context, turn.message, history, decision['answer']))):
         return {'answer': decision['answer'], 'step': step}
     return {'answer': 'I could not verify an answer from this recipe. Please try a more specific cooking question.', 'step': step}
 

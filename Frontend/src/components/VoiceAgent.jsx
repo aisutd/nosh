@@ -1,3 +1,4 @@
+import NativeVoiceAgent from './NativeVoiceAgent.jsx';
 import { LuMic, LuSquare } from 'react-icons/lu';
 import { API, authHeaders } from '../lib/api';
 import { CookingFeedback } from './CookingMemory.jsx';
@@ -5,13 +6,29 @@ import { useEffect, useRef, useState } from 'react';
 import './VoiceAgent.css';
 
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const isNative = Boolean(window.ReactNativeWebView?.postMessage);
 
-function nativeMessage(message) {
-  window.ReactNativeWebView?.postMessage(JSON.stringify(message));
+const VOICE_KEY = 'nosh-reply-voice';
+
+function voiceQuality(voice) {
+  if (/natural|neural|premium/i.test(voice.name)) return 3;
+  if (/enhanced|google/i.test(voice.name)) return 2;
+  return voice.default ? 1 : 0;
 }
 
-export default function VoiceAgent({ ingredients = [], recipe = '' }) {
+function speechText(text) {
+  const fractions = { '1/2': 'half', '1/3': 'one third', '2/3': 'two thirds', '1/4': 'one quarter', '3/4': 'three quarters' };
+  return text
+    .replace(/\b(\d+)\s+([123]\/[234])\b/g, (match, whole, fraction) =>
+      fractions[fraction] ? `${whole} and ${fraction === '1/2' ? 'a half' : fractions[fraction]}` : match)
+    .replace(/(?<![\d/])(?:1\/2|1\/3|2\/3|1\/4|3\/4)(?![\d/])/g, fraction => fractions[fraction]);
+}
+
+export default function VoiceAgent(props) {
+  if (window.ReactNativeWebView?.postMessage) return <NativeVoiceAgent {...props} />;
+  return <VoiceConversation key={props.recipe ?? ''} {...props} />;
+}
+
+function VoiceConversation({ ingredients = [], recipe = '' }) {
   const [activeRecipe, setActiveRecipe] = useState(recipe);
   const [draft, setDraft] = useState('');
   const [interim, setInterim] = useState('');
@@ -19,85 +36,116 @@ export default function VoiceAgent({ ingredients = [], recipe = '' }) {
   const [error, setError] = useState('');
   const [messages, setMessages] = useState([]);
   const [spoken, setSpoken] = useState(true);
-  const [listening, setListening] = useState(false);
+  const [voices, setVoices] = useState([]);
+  const [voiceURI, setVoiceURI] = useState(() => {
+    try { return window.localStorage.getItem(VOICE_KEY) || ''; }
+    catch { return ''; }
+  });
+  useEffect(() => {
+    const synthesis = window.speechSynthesis;
+    if (!synthesis) return;
+    function loadVoices() {
+      setVoices(synthesis.getVoices().filter(voice => /^en(?:-|$)/i.test(voice.lang)).sort((a, b) =>
+        voiceQuality(b) - voiceQuality(a)
+        || Number(b.lang === 'en-US') - Number(a.lang === 'en-US')
+        || a.name.localeCompare(b.name)));
+    }
+    loadVoices();
+    synthesis.addEventListener('voiceschanged', loadVoices);
+    return () => synthesis.removeEventListener('voiceschanged', loadVoices);
+  }, []);
+  const selectedVoice = voices.find(voice => voice.voiceURI === voiceURI) ?? voices[0];
+  const [conversationOn, setConversationOn] = useState(false);
   const [busy, setBusy] = useState(false);
   const recognition = useRef(null);
   const request = useRef(null);
-  const session = useRef({ recipe, step: -1 });
-  const locked = useRef(false);
-  const enabled = useRef(true);
-  const latest = useRef({ ingredients, spoken });
-  const sendRef = useRef(null);
-  sendRef.current = send;
+  const reply = useRef(null);
+  const restart = useRef(null);
+  const emptyStarts = useRef(0);
+  const conversation = useRef(false);
+  const session = useRef({ recipe, step: -1, history: [] });
+  const latest = useRef({ ingredients, spoken, selectedVoice });
+  useEffect(() => { latest.current = { ingredients, spoken, selectedVoice }; }, [ingredients, spoken, selectedVoice]);
 
-  useEffect(() => {
-    if (!isNative) return;
-
-    function onNativeVoice(event) {
-      const {
-        status: nativeStatus,
-        transcript,
-        error: nativeError,
-      } = event.detail || {};
-
-      setListening(
-        nativeStatus === "listening" ||
-        nativeStatus === "transcribing"
-      );
-
-      setStatus(
-        nativeStatus === "listening"
-          ? "Listening… speak within 5 seconds."
-          : nativeStatus === "transcribing"
-            ? "Transcribing…"
-            : "Ready"
-      );
-
-      if (nativeError) setError(nativeError);
-
-      if (transcript?.trim()) {
-        void sendRef.current(transcript);
-      }
+  useEffect(() => () => {
+    conversation.current = false;
+    clearTimeout(restart.current);
+    const mic = recognition.current;
+    recognition.current = null;
+    mic?.abort();
+    const pending = request.current;
+    request.current = null;
+    pending?.abort();
+    if (reply.current) {
+      reply.current = null;
+      window.speechSynthesis.cancel();
     }
+  }, []);
 
-    window.addEventListener("nosh-native-voice", onNativeVoice);
+  function pauseMic() {
+    clearTimeout(restart.current);
+    const mic = recognition.current;
+    recognition.current = null;
+    mic?.abort();
+    setInterim('');
+  }
 
-    return () => {
-      window.removeEventListener("nosh-native-voice", onNativeVoice);
-      nativeMessage({ type: "native-listen-stop" });
+  function resumeMic() {
+    clearTimeout(restart.current);
+    if (!conversation.current) {
+      setStatus('Ready');
+      return;
+    }
+    if (request.current || reply.current || recognition.current) return;
+    setStatus('Getting the microphone ready…');
+    restart.current = setTimeout(openMic, 300);
+  }
+
+  function stopReply() {
+    if (!reply.current) return;
+    reply.current = null;
+    window.speechSynthesis.cancel();
+  }
+
+  function speakReply(text) {
+    pauseMic();
+    stopReply();
+    const utterance = new SpeechSynthesisUtterance(speechText(text));
+    const voice = latest.current.selectedVoice;
+    if (voice) utterance.voice = voice;
+    utterance.lang = voice?.lang || 'en-US';
+    utterance.rate = 0.96;
+    reply.current = utterance;
+    utterance.onend = utterance.onerror = () => {
+      if (reply.current !== utterance) return;
+      reply.current = null;
+      resumeMic();
     };
-  }, [recipe]);
-  useEffect(() => { latest.current = { ingredients, spoken }; }, [ingredients, spoken]);
+    setStatus('NOSH is speaking…');
+    try { window.speechSynthesis.speak(utterance); }
+    catch { utterance.onerror(); }
+  }
 
-  useEffect(() => {
-    enabled.current = true;
-    session.current = { recipe, step: -1 };
-    return () => {
-      enabled.current = false;
-      if (recognition.current) {
-        recognition.current.onend = null;
-        recognition.current.onerror = null;
-        recognition.current.onresult = null;
-        recognition.current.abort();
-        recognition.current = null;
-      }
-      request.current?.abort();
-      window.speechSynthesis?.cancel();
-    };
-  }, [recipe]);
+  function stopConversation() {
+    conversation.current = false;
+    setConversationOn(false);
+    pauseMic();
+    stopReply();
+    setStatus(request.current ? 'NOSH is thinking…' : 'Ready');
+  }
 
   async function send(text) {
-    const message = text.trim();
-    if (!message || locked.current) return;
-    locked.current = true;
-    recognition.current?.abort();
-    window.speechSynthesis?.cancel();
-    setListening(false); setBusy(true); setError(''); setDraft(''); setInterim('');
+    const message = text.trim().slice(0, 2000);
+    if (!message || request.current) return;
+    pauseMic();
+    stopReply();
+    emptyStarts.current = 0;
+    setBusy(true); setError(''); setDraft('');
     setStatus('NOSH is thinking…');
     setMessages(items => [...items, { who: 'You', text: message }]);
     const controller = new AbortController();
     request.current = controller;
-    const timeout = setTimeout(() => controller.abort(), 900000);
+    const timeout = setTimeout(() => controller.abort(), 45000);
     try {
       const response = await fetch(`${API}/voice/turn`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
@@ -107,147 +155,141 @@ export default function VoiceAgent({ ingredients = [], recipe = '' }) {
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(typeof data?.detail === 'string' ? data.detail : 'NOSH could not respond. Try again.');
       if (typeof data?.answer !== 'string' || !Number.isInteger(data.step)) throw new Error('Unexpected NOSH response. Try again.');
-      if (!enabled.current || controller.signal.aborted) return;
+      if (request.current !== controller || controller.signal.aborted) return;
+      const nextRecipe = data.recipe ?? session.current.recipe;
       if (data.recipe) setActiveRecipe(data.recipe);
-      session.current = { recipe: data.recipe ?? session.current.recipe, step: data.step };
+      const history = nextRecipe === session.current.recipe ? session.current.history : [];
+      session.current = {
+        recipe: nextRecipe,
+        step: data.step,
+        history: [...history, { question: message, answer: data.answer.slice(0, 2000) }].slice(-4),
+      };
       setMessages(items => [...items, { who: 'NOSH', text: data.answer }]);
-      setStatus('Ready');
-      if (latest.current.spoken && isNative) {
-        nativeMessage({
-          type: "native-speak",
-          text: data.answer,
-        });
-      } else if (latest.current.spoken && window.speechSynthesis) {
-        const utterance = new SpeechSynthesisUtterance(data.answer);
-        utterance.onstart = () => enabled.current && setStatus('NOSH is speaking…');
-        utterance.onend = utterance.onerror = () => enabled.current && setStatus('Ready');
-        window.speechSynthesis.speak(utterance);
+      if (latest.current.spoken && window.speechSynthesis && controller.allowSpeech !== false) {
+        speakReply(data.answer);
       }
     } catch (err) {
-      if (enabled.current) {
+      if (request.current === controller) {
+        stopReply();
         setDraft(message);
-        setError(err.name === 'AbortError' ? 'The request timed out. Try again.' : err instanceof TypeError ? 'The NOSH backend is unavailable. Check that it is running, then try again.' : err.message);
-        setStatus('Ready');
+        setError(err.name === 'AbortError' ? controller.cancelled ? 'Request cancelled.' : 'NOSH took too long to answer. Check that Ollama is running, then try again.' : err instanceof TypeError ? 'The NOSH backend is unavailable. Check that it is running, then try again.' : err.message);
       }
     } finally {
       clearTimeout(timeout);
-      locked.current = false;
-      if (enabled.current) setBusy(false);
+      if (request.current === controller) {
+        request.current = null;
+        setBusy(false);
+        if (!reply.current) resumeMic();
+      }
     }
   }
 
-  function startListening() {
-    if (isNative) {
-      if (busy || listening) return;
-
-      setError("");
-      setInterim("");
-      setListening(true);
-      setStatus("Opening microphone…");
-
-      nativeMessage({
-        type: "native-listen",
-        token: localStorage.getItem("access_token") || "",
-      });
-
-      return;
-    }
-    if (!Recognition || busy || listening) return;
-    window.speechSynthesis?.cancel();
-    setError(''); setInterim('');
+  function openMic() {
+    if (!conversation.current || request.current || reply.current || recognition.current) return;
     const mic = new Recognition();
     mic.lang = 'en-US'; mic.interimResults = true; mic.continuous = false;
     recognition.current = mic;
-    mic.onstart = () => { setListening(true); setStatus('Listening…'); };
+    let startedAt = 0;
+    let heardSpeech = false;
+    mic.onstart = () => {
+      if (recognition.current !== mic) return;
+      startedAt = Date.now();
+      setStatus('Listening…');
+    };
     mic.onresult = event => {
-      let partial = '';
+      if (recognition.current !== mic) return;
+      const final = [];
+      const partial = [];
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) { void send(event.results[i][0].transcript); return; }
-        partial += event.results[i][0].transcript;
+        const result = event.results[i];
+        (result.isFinal ? final : partial).push(result[0].transcript);
       }
-      setInterim(partial);
+      heardSpeech = true;
+      const transcript = final.join(' ').trim();
+      if (transcript) void send(transcript);
+      else setInterim(partial.join(' '));
     };
     mic.onerror = event => {
-      if (event.error === 'aborted') return;
-      setError(event.error === 'network' ? 'The browser could not connect to speech recognition. Try this page in Google Chrome, or type your question below.' : event.error === 'not-allowed' ? 'Microphone access was denied. Allow it in browser settings, or type below.' : `Speech recognition stopped (${event.error}). Try again or type below.`);
+      if (recognition.current !== mic || event.error === 'no-speech') return;
+      stopConversation();
+      setError(event.error === 'network' ? 'The browser could not connect to speech recognition. Try Google Chrome, or type below.' : event.error === 'not-allowed' || event.error === 'service-not-allowed' ? 'Microphone access was denied. Allow it in browser settings, or type below.' : `Speech recognition stopped (${event.error}). Start the conversation again or type below.`);
     };
-    mic.onend = () => { setListening(false); if (!locked.current) setStatus('Ready'); };
-    try { mic.start(); } catch { setError('Could not start the microphone. Try again or type below.'); }
+    mic.onend = () => {
+      if (recognition.current !== mic) return;
+      recognition.current = null;
+      setInterim('');
+      emptyStarts.current = !heardSpeech && (!startedAt || Date.now() - startedAt < 1000)
+        ? emptyStarts.current + 1 : 0;
+      if (emptyStarts.current >= 3) {
+        stopConversation();
+        setError('Speech recognition stopped repeatedly. Try Google Chrome, or type below.');
+      } else {
+        resumeMic();
+      }
+    };
+    try { mic.start(); } catch {
+      stopConversation();
+      setError('Could not start the microphone. Try again or type below.');
+    }
+  }
+
+  function toggleConversation() {
+    if (conversation.current) {
+      if (request.current) request.current.allowSpeech = false;
+      stopConversation();
+      return;
+    }
+    stopReply();
+    conversation.current = true;
+    setConversationOn(true);
+    emptyStarts.current = 0;
+    setError('');
+    setStatus('Getting the microphone ready…');
+    openMic();
   }
 
   return <section className="voice-agent" aria-label="NOSH voice assistant">
     <h2>Cook with NOSH</h2>
-    <p>A little help while your hands are busy. Ask a cooking question or say “next step”.</p>
+    <p>Start a conversation once, then ask cooking questions or say “next step” as you cook.</p>
     <div className="voice-controls">
-    <button
-      disabled={
-        busy ||
-        (!isNative && (!Recognition || !window.isSecureContext))
-      }
-      aria-pressed={listening}
-      onClick={() => {
-        if (listening) {
-          if (isNative) {
-            nativeMessage({ type: "native-listen-stop" });
-          } else {
-            recognition.current?.abort();
-          }
-
-          setListening(false);
-          setInterim("");
-          setStatus("Ready");
-        } else {
-          startListening();
-        }
-      }}
-    >
-      {listening ? (
-        <>
-          <LuSquare aria-hidden="true" />
-          Stop listening
-        </>
-      ) : (
-        <>
-          <LuMic aria-hidden="true" />
-          Start listening
-        </>
-      )}
-    </button>
-    <button
-      onClick={() => {
-        nativeMessage({ type: "native-speak-stop" });
-        window.speechSynthesis?.cancel();
-
-        setStatus(
-          busy
-            ? "NOSH is thinking…"
-            : listening
-              ? "Listening…"
-              : "Ready"
-        );
-      }}
-    >
-      Stop speaking
-    </button>
+      <button disabled={!Recognition || (!conversationOn && busy) || !window.isSecureContext} aria-pressed={conversationOn} onClick={toggleConversation}>
+        {conversationOn ? <><LuSquare aria-hidden="true" /> Stop conversation</> : <><LuMic aria-hidden="true" /> Start conversation</>}
+      </button>
+      <button onClick={() => {
+        if (reply.current) { stopReply(); resumeMic(); }
+      }}>Stop speaking</button>
       <label><input type="checkbox" checked={spoken} onChange={event => {
-        setSpoken(event.target.checked);
-        if (!event.target.checked) { window.speechSynthesis?.cancel(); setStatus('Ready'); }
+        const checked = event.target.checked;
+        latest.current.spoken = checked;
+        setSpoken(checked);
+        if (!checked && reply.current) { stopReply(); resumeMic(); }
       }} /> Speak replies</label>
     </div>
+    {window.speechSynthesis && <div className="voice-controls">
+      {voices.length > 0 && <label>Reply voice
+        <select value={voices.some(voice => voice.voiceURI === voiceURI) ? voiceURI : ''} onChange={event => {
+          const value = event.target.value;
+          setVoiceURI(value);
+          latest.current.selectedVoice = voices.find(voice => voice.voiceURI === value) ?? voices[0];
+          try { window.localStorage.setItem(VOICE_KEY, value); } catch { /* Use the selection for this visit. */ }
+        }}>
+          <option value="">Automatic ({voices[0].name})</option>
+          {voices.map(voice => <option key={voice.voiceURI} value={voice.voiceURI}>{voice.name} ({voice.lang})</option>)}
+        </select>
+      </label>}
+      <button disabled={busy} onClick={() => {
+        if (!request.current) speakReply('Hi, I’m NOSH. When you’re ready, say next step and we’ll keep cooking.');
+      }}>Preview voice</button>
+    </div>}
+    {busy && <button onClick={() => {
+      if (request.current) {
+        request.current.cancelled = true;
+        request.current.abort();
+      }
+    }}>Cancel request</button>}
     <p role="status">{status}{interim && ` You: ${interim}`}</p>
-    {!isNative && !Recognition && (
-      <p>
-        Voice recognition is unavailable in this browser.
-        You can type below.
-      </p>
-    )}
-
-    {!isNative && Recognition && !window.isSecureContext && (
-      <p>
-        Microphone access requires HTTPS or localhost.
-        You can type below.
-      </p>
-    )}
+    {!Recognition && <p>Voice recognition is unavailable in this browser. You can type below.</p>}
+    {Recognition && !window.isSecureContext && <p>Microphone access requires HTTPS or localhost. You can type below.</p>}
     {error && <p role="alert">{error}</p>}
     <div className="voice-messages" role="log" aria-label="Conversation with NOSH" aria-live="polite">
       {messages.map((item, index) => <p key={index}><strong>{item.who}: </strong>{item.text}</p>)}
@@ -258,7 +300,7 @@ export default function VoiceAgent({ ingredients = [], recipe = '' }) {
       <button disabled={busy || !draft.trim()}>Send</button></div>
     </form>
     <div className="voice-controls">
-      {['Start cooking', 'Previous step', 'Next step', 'Repeat'].map(command => <button key={command} disabled={busy || listening} onClick={() => void send(command)}>{command}</button>)}
+      {['Start cooking', 'Previous step', 'Next step', 'Repeat'].map(command => <button key={command} disabled={busy} onClick={() => void send(command)}>{command}</button>)}
     </div>
     {activeRecipe && <CookingFeedback key={activeRecipe} recipeTitle={activeRecipe.split("\n")[0].replace(/^Recipe Name:\s*/i, "").slice(0, 200)} />}
   </section>;
