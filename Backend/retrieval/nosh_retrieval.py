@@ -99,8 +99,11 @@ def retrieve_candidate_recipes(
     kwargs = {}
     if max_time is not None:
         kwargs["where"] = {"total_time_minutes": {"$lte": max_time}}
+    # A full-collection query exceeds SQLite's variable limit once the index
+    # grows past a few tens of thousands of recipes.
+    result_count = min(count, max(top_n, 400) if available is not None else top_n)
     results = collection.query(
-        query_texts=[user_query.strip()], n_results=count if available is not None else min(top_n, count),
+        query_texts=[user_query.strip()], n_results=result_count,
         include=["documents", "metadatas", "distances"], **kwargs,
     )
     if available is not None:

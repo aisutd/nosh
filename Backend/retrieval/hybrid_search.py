@@ -43,10 +43,19 @@ def _build_bm25(cache_key: str, collection):
     if cache_key in _bm25_cache:
         return _bm25_cache[cache_key]
 
-    data = collection.get(include=["documents", "metadatas"])
-    ids = data["ids"]
-    documents = data["documents"]
-    metadatas = data["metadatas"]
+    ids, documents, metadatas = [], [], []
+    offset, page = 0, 5000
+    while True:
+        data = collection.get(include=["documents", "metadatas"], limit=page, offset=offset)
+        batch_ids = data["ids"]
+        if not batch_ids:
+            break
+        ids.extend(batch_ids)
+        documents.extend(data["documents"])
+        metadatas.extend(data["metadatas"])
+        offset += len(batch_ids)
+        if len(batch_ids) < page:
+            break
 
     tokenized = [_tokenize(doc) for doc in documents]
     bm25 = BM25Okapi(tokenized)
