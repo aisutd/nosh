@@ -6,7 +6,7 @@ import { LuArrowLeft, LuUtensils, LuClock } from "react-icons/lu";
 import RecipeTabs from "../components/RecipeTabs";
 import RecipeIngredients from "../components/RecipeIngredients";
 import "./RagCook.css";
-
+import { notifyDemo } from "../lib/demo";
 
 export default function RagCook({ savedId = null, title = null, image = null, ingredients = [], sourceRecipe = null}) {
   const { id } = useParams();
@@ -150,14 +150,14 @@ export default function RagCook({ savedId = null, title = null, image = null, in
       <div className="cook-actions">
         {substitutions.length > 0 && !consumptionIngredients && <p className="cook-warning">
           Please update inventory manually for this substitution; its quantities could not be converted reliably.
-          {" "}<Link to="/inventory">View inventory</Link>
+          {" "}<Link to="/inventory" onClick={() => notifyDemo("inventory")}>View inventory</Link>
         </p>}
         {consumptionIngredients?.length > 0 && (
           cooked ? (
             <div className="cook-done">
               <p>Inventory updated.</p>
               {cooked.warnings.map((w, i) => <p key={i} className="cook-warning">{w}</p>)}
-              <Link to="/inventory">View inventory</Link>
+              <Link to="/inventory" onClick={() => notifyDemo("inventory")}>View inventory</Link>
             </div>
           ) : (
             <button className="btn-primary" onClick={handleCooked} disabled={cooking}>

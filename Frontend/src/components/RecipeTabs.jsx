@@ -1,5 +1,6 @@
 import { useId, useState } from "react";
 import "./RecipeTabs.css";
+import { notifyDemo } from "../lib/demo";
 
 export default function RecipeTabs({ ingredients, steps }) {
   const [active, setActive] = useState(0);
@@ -21,7 +22,11 @@ export default function RecipeTabs({ ingredients, steps }) {
       {labels.map((label, index) => <button key={label} type="button"
         role="tab" id={`${id}-tab-${index}`} aria-controls={`${id}-panel-${index}`}
         aria-selected={active === index} tabIndex={active === index ? 0 : -1}
-        onClick={() => setActive(index)} onKeyDown={(event) => navigate(event, index)}>
+        onClick={() => {
+          setActive(index);
+          if (index === 1) notifyDemo("voice");
+        }}
+        onKeyDown={(event) => navigate(event, index)}>
         {label}
       </button>)}
     </div>

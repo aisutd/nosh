@@ -32,7 +32,7 @@ select option, .inv-unit-edit option, .inv-unit option { background: var(--surfa
 .generated-recipe label { font-size: .9rem; font-weight: 600; }
 .generated-recipe .btn-primary { width: 100%; }
 .generated-recipe [role="status"], .generated-recipe [role="alert"] { margin-top: .8rem; font-size: .85rem; line-height: 1.5; }
-.home { max-width: 850px; padding: 1.5rem 2rem 7rem; }
+.home { max-width: 850px; padding: 1.5rem 2rem 1.5rem; }
 .home-top .logo { font-size: 1.7rem; }
 .hero { font-size: clamp(2rem, 5vw, 3rem); line-height: 1.15; }
 .hero-sub { color: var(--muted); line-height: 1.6; max-width: 420px; margin-inline: auto; }
@@ -46,6 +46,7 @@ select option, .inv-unit-edit option, .inv-unit option { background: var(--surfa
 .home .card { padding: .5rem; background: var(--surface); border-radius: 20px; border: 1px solid var(--border); }
 .home .card-img { height: 140px; background-color: #f6e5e7; }
 .home .card-title { color: var(--text); padding: .3rem; font-size: .85rem; }
+.home > .cta { margin-bottom: 0; }
 .auth { width: calc(100% - 2rem); max-width: 440px; margin: 2rem auto 7rem; padding: 1.75rem; background: var(--surface); border-radius: 28px; border: 1px solid var(--border); }
 .auth h1 { font-size: 1.8rem; }
 .auth .blob { margin: 1rem auto; width: 72px; height: 72px; box-shadow: none; }
@@ -121,3 +122,8 @@ select option, .inv-unit-edit option, .inv-unit option { background: var(--surfa
 @media (prefers-reduced-motion: reduce) {
   .swipe-card .swipe-details, .sheet-toggle svg { transition: none; }
 }
+html:has(.auth), body:has(.auth) { height: 100%; overflow: hidden; }
+.auth { margin: 1.5rem auto; }
+@media (max-width: 600px) { .home .row { width: calc(100% + 2rem); max-width: none; margin-inline: -1rem; padding-inline: 0; } }
+.voice-controls .voice-selector-row { display: flex !important; flex-direction: column; align-items: stretch; gap: 8px; flex: 1 1 100%; width: 100%; min-width: 0; white-space: nowrap; }
+.voice-controls .voice-selector-row select { width: 100%; min-width: 0; max-width: 100%; }

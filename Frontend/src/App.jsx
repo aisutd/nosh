@@ -16,6 +16,8 @@ import RagCook from "./pages/RagCook.jsx";
 import Inventory from "./pages/Inventory.jsx";
 import PantryIngredients from "./components/PantryIngredients";
 import GenerateRecipe from "./components/GenerateRecipe.jsx";
+import Presentation from "./pages/Presentation";
+import { notifyDemo } from "./lib/demo";
 
 // Backend address. Uses whatever host the page was opened from, so it works on localhost and on the LAN IP
 
@@ -245,6 +247,7 @@ function handleScanClick() {
     navigate("/auth");            // scanning needs an account
     return;
   }
+  notifyDemo("scan");
   if (window.ReactNativeWebView) {
     // inside the phone app: pass the login token to it
     window.ReactNativeWebView.postMessage(
@@ -443,6 +446,7 @@ async function handleVideoScan(event) {
         <Route path="/swipe" element={<Swipe key={JSON.stringify([recipes, ragSearch])} ragSearch={ragSearch} 
         recipes={recipes} onToggleSave={handleToggleSave} savedIds={savedIds} pantry={ingredients}/>} />
         <Route path="/inventory" element={<Inventory user={user} />} />
+        <Route path="/presentation" element={<Presentation />} />
       </Routes>
       {!hideNav && <NavBar user={user} />}                     {/* bottom nav bar, hidden on login/landing */}
     </>

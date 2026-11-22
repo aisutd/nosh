@@ -18,6 +18,7 @@ Technologies include:
 
 - Python and JavaScript
 - React and Vite
+- Three.js, React Three Fiber, and Drei
 - FastAPI and MongoDB
 - YOLO, OpenCV, and EasyOCR
 - Hybrid RAG and vector search
@@ -25,8 +26,8 @@ Technologies include:
 
 ## Project folders
 
-- `Backend/` — FastAPI + MongoDB API
-- `Frontend/` — React web app (Vite)
+- `Backend/` — FastAPI and MongoDB API
+- `Frontend/` — React web app and interactive presentation
 - `Mobile/` — Expo app showing the web app with native camera, microphone, and speech playback
 - `Docker Folder/` — Docker files; not yet updated for this layout
 
@@ -113,6 +114,36 @@ silently opening another app on 5174.
 
 `VITE_API_URL` can override the backend address. Restart Vite after changing it.
 
+## Presentation demo
+
+NOSH includes an interactive presentation with a live app displayed inside an
+animated 3D phone built with Three.js, React Three Fiber, and Drei.
+
+After starting the web app, open:
+
+http://localhost:5173/presentation
+
+Keep the backend running to use scanning, recipe generation, inventory, and voice.
+
+### Controls
+
+- Press **→** on the title screen to begin.
+- Use **← / →** to move between presentation sections.
+- Clicking supported features inside the phone updates the explanation beside it.
+- After interacting with the phone, click outside it to use the arrow keys.
+- Press **F11** to enter or exit browser fullscreen.
+
+The presentation covers ingredient detection, recipe retrieval, voice guidance,
+and inventory management, followed by a full-screen thank-you page.
+
+### Dependencies
+
+The presentation dependencies are included in `Frontend/package.json` and
+installed by `npm ci`.
+
+When changing dependencies, commit both `Frontend/package.json` and
+`Frontend/package-lock.json`. Do not commit `node_modules/`.
+
 ## Run the phone app
 
 In another terminal, from the repository root:
@@ -198,3 +229,5 @@ docker compose ps
 
 - Never commit `.env` files or API keys.
 - Keep private model weights and generated scan outputs out of commits.
+- Commit dependency manifests and lockfiles when dependencies change.
+- Do not commit virtual environments or `node_modules/`.

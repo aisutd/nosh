@@ -266,7 +266,7 @@ function VoiceConversation({ ingredients = [], recipe = '' }) {
       }} /> Speak replies</label>
     </div>
     {window.speechSynthesis && <div className="voice-controls">
-      {voices.length > 0 && <label>Reply voice
+      {voices.length > 0 && <label className="voice-selector-row">Reply voice
         <select value={voices.some(voice => voice.voiceURI === voiceURI) ? voiceURI : ''} onChange={event => {
           const value = event.target.value;
           setVoiceURI(value);

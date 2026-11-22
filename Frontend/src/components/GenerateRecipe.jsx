@@ -1,6 +1,6 @@
 import { API, authHeaders } from '../lib/api';
 import { useEffect, useRef, useState } from "react";
-
+import { notifyDemo } from "../lib/demo";
 
 
 export default function GenerateRecipe({ ingredients, onOptions }) {
@@ -14,6 +14,7 @@ export default function GenerateRecipe({ ingredients, onOptions }) {
   async function generate(event) {
     event.preventDefault();
     if (activeRequest.current || ingredients.length === 0) return;
+    notifyDemo("rag");
     const controller = new AbortController();
     activeRequest.current = controller;
     setLoading(true);

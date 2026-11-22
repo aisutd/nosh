@@ -1,0 +1,61 @@
+/* Presentation background */
+.presentation { position: fixed; inset: 0; z-index: 1000; width: 100%; height: 100dvh; overflow: hidden; isolation: isolate; background-color: #fcefdc; background-image: radial-gradient(ellipse at 90% 10%, rgba(247, 197, 159, .6), transparent 55%), radial-gradient(circle, rgba(107, 83, 80, .24) 1.2px, transparent 1.2px); background-size: 100% 100%, 24px 24px; color: #6b5350; font-family: inherit; }.presentation *, .presentation *::before, .presentation *::after { box-sizing: border-box; }
+.presentation:focus { outline: none; }
+
+/* Main layout */
+.presentation .presentation-layout { position: relative; display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 560px); align-items: center; justify-content: center; gap: clamp(28px, 5vw, 90px); width: 100%; height: 100%; padding: 0 48px; }
+.presentation:not(.presentation-started) .presentation-layout { visibility: hidden; pointer-events: none; }
+
+/* Phone container */
+.presentation .presentation-3d-phone { position: relative; display: flex; flex-direction: column; align-items: center; isolation: isolate; width: 100%; height: 100%; min-width: 0; min-height: 0; }
+
+/* Pink glow */
+.presentation .presentation-3d-phone::before { content: ""; position: absolute; top: 8%; left: 50%; width: 150%; height: 84%; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(ellipse, rgba(242, 107, 122, .4) 0%, rgba(242, 107, 122, .2) 42%, transparent 72%); filter: blur(24px); pointer-events: none; z-index: 0; }
+
+/* Ground shadow */
+.presentation .presentation-3d-phone::after { content: ""; position: absolute; bottom: 3%; left: 50%; width: 105%; height: 42px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(ellipse, rgba(55, 35, 25, .6) 0%, rgba(55, 35, 25, .3) 45%, transparent 75%); filter: blur(4px); pointer-events: none; z-index: 0; }
+
+/* Live 3D stage */
+.presentation .presentation-3d-stage { position: relative; z-index: 1; isolation: isolate; flex: 1; width: 100%; min-height: 0; background: transparent; }
+.presentation .presentation-3d-stage canvas { display: block; touch-action: none; }
+
+/* Keep the app viewport at its original dimensions */
+.presentation .presentation-3d-screen { width: 390px; height: 844px; overflow: hidden; border-radius: 32px; background: #fff7f7; backface-visibility: hidden; }
+.presentation .presentation-3d-screen iframe { display: block; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; background: #fff7f7; }
+
+/* Feature text */
+.presentation .presentation-content { position: relative; min-width: 0; width: 100%; text-align: left; }
+.presentation .presentation-eyebrow { display: flex; align-items: center; gap: 12px; color: #b74357; font-size: 13px; font-weight: 700; letter-spacing: 2px; line-height: 1.6; }
+.presentation .presentation-eyebrow::before { content: ""; flex: 0 0 26px; height: 2px; border-radius: 2px; background: #b74357; }
+.presentation .presentation-content h1 { margin: 22px 0 24px; color: #6b5350; font-size: clamp(36px, 4.6vw, 72px); font-weight: 800; line-height: 1.08; letter-spacing: -.04em; overflow-wrap: break-word; text-wrap: balance; }
+.presentation .presentation-description { max-width: 490px; margin: 0; color: #77615b; font-size: clamp(18px, 1.7vw, 24px); line-height: 1.65; text-wrap: pretty; }
+
+/* Feature pills */
+.presentation .presentation-features { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 32px; }
+.presentation .presentation-features span { display: inline-block; padding: 10px 16px; border: 1px solid #e8c6bb; border-radius: 999px; background: rgba(255, 248, 237, .9); box-shadow: 0 3px 10px rgba(107, 83, 80, .04); color: #843d51; font-size: 14px; line-height: 1.5; }
+
+/* Full title and thank-you screens */
+.presentation .presentation-title-screen { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; overflow: hidden; background-color: #fcefdc; background-image: radial-gradient(ellipse at 50% 45%, rgba(242, 107, 122, .15), transparent 60%), radial-gradient(circle, rgba(107, 83, 80, .1) 1px, transparent 1px); background-size: 100% 100%, 28px 28px; text-align: center; }
+.presentation .presentation-title-label { color: #b74357; font-size: clamp(11px, 1.2vw, 15px); font-weight: 700; letter-spacing: 4px; line-height: 1.6; }
+.presentation .presentation-title-logo { display: block; margin: 12px 0; color: #6b5350; font-size: clamp(100px, 17vw, 220px); font-weight: 800; line-height: 1.05; letter-spacing: -.06em; }
+.presentation .presentation-title-logo span { color: #b74357; }
+.presentation .presentation-title-tagline { margin: 12px 0 24px; color: #77615b; font-size: clamp(20px, 2.4vw, 32px); line-height: 1.5; }
+
+/* Smaller presentation windows */
+@media (max-width: 1000px) {
+  .presentation .presentation-layout { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 28px; padding-inline: 28px; }
+  .presentation .presentation-content h1 { font-size: clamp(30px, 4.6vw, 48px); }
+  .presentation .presentation-description { font-size: 18px; }
+  .presentation .presentation-features { gap: 8px; margin-top: 24px; }
+  .presentation .presentation-features span { padding: 8px 12px; font-size: 12px; }
+}
+
+@media (max-width: 600px) {
+  .presentation .presentation-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding-inline: 16px; }
+  .presentation .presentation-eyebrow { gap: 6px; font-size: 9px; letter-spacing: 1px; }
+  .presentation .presentation-eyebrow::before { flex-basis: 12px; }
+  .presentation .presentation-content h1 { margin: 14px 0; font-size: clamp(22px, 5vw, 30px); }
+  .presentation .presentation-description { font-size: 13px; line-height: 1.5; }
+  .presentation .presentation-features { gap: 6px; margin-top: 16px; }
+  .presentation .presentation-features span { padding: 6px 9px; font-size: 10px; }
+}
