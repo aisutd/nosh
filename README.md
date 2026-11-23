@@ -125,16 +125,40 @@ http://localhost:5173/presentation
 
 Keep the backend running to use scanning, recipe generation, inventory, and voice.
 
-### Controls
+### Guided walkthrough
 
-- Press **→** on the title screen to begin.
-- Use **← / →** to move between presentation sections.
-- Clicking supported features inside the phone updates the explanation beside it.
-- After interacting with the phone, click outside it to use the arrow keys.
-- Press **F11** to enter or exit browser fullscreen.
+Open **Preparation → Open live phone** to sign in before presenting. Use
+**Check / Retry readiness** to check backend reachability and sign-in. The health
+endpoint alone does not verify MongoDB, model files, or Ollama. Prepare a scan
+photo/video and test microphone permissions before the talk.
 
-The presentation covers ingredient detection, recipe retrieval, voice guidance,
-and inventory management, followed by a full-screen thank-you page.
+1. Begin the presentation and press **→** to introduce the problem.
+2. Open **Scan fridge** in the phone. Press → to explain training and video tracking.
+3. Scan ingredients, tap **Find Recipes**, and review substitutions. Press **→** to explain them.
+4. **Save** a recipe, open **Saved**, and select it.
+5. Adjust **Servings**, open **Steps**, and use a voice control or send a question.
+6. Mark the recipe cooked, then open **My inventory**. Only opening the inventory
+   screen reveals its presentation explanation.
+7. Press → for team challenges, future work, and the thank-you screen.
+
+**← / →** navigate explanations. At action checkpoints, →
+shows what to do in the phone instead of skipping ahead. Click outside the phone
+and controls before using arrow keys. Press **End** to jump to the wrap-up if you need to finish early.
+
+**Use sample demo** starts a separate, clearly labeled tomato-pasta walkthrough.
+Its scanning and voice replies are simulated; it makes no backend requests and
+never changes your account or real inventory. **Reset sample** clears sample
+state only. **Return to live app** restores the still-mounted live phone; any
+live voice conversation is paused when switching to samples. **Reset presentation**
+resets the talk without clearing the live app.
+
+### Presentation checks
+
+With Vite running, run `node Frontend/tests/presentation-smoke.cjs` from the repo
+root with `NODE_PATH` pointing to a Playwright installation and Chrome installed.
+The test uses isolated API fixtures, not a real account, and covers the live UI
+walkthrough, retry states, sample isolation/reset, inventory gating, keyboard
+navigation, and desktop/mobile layouts.
 
 ### Dependencies
 

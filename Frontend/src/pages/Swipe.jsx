@@ -1,7 +1,7 @@
-import { API } from '../lib/api';
-import { useEffect, useRef, useState } from "react";
+import { notifyDemo, demoStatus } from "../lib/demo";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { LuX, LuHeart, LuChevronUp, LuClock } from "react-icons/lu";
+import { LuX, LuHeart, LuClock } from "react-icons/lu";
 import RecipeIngredients from "../components/RecipeIngredients";
 
 
@@ -64,14 +64,17 @@ function Swipe({ recipes, onToggleSave, savedIds, ragSearch }) {
 
   async function like() {
     if (saving) return;
+    notifyDemo("saving");
+    demoStatus("Save recipe", "loading", "Saving recipe");
     setSaving(true); setError("");
     try {
       if (!savedIds.includes(recipe.id)) {
         const saved = await onToggleSave(recipe.id, ragSearch);
-        if (saved === false) return;
+        if (saved === false) { demoStatus("Save recipe", "error", "Sign in to save this recipe"); return; }
       }
+      demoStatus("Save recipe", "success");
       next();
-    } catch (err) { setError(err.message || "Could not save recipe."); }
+    } catch (err) { setError(err.message || "Could not save recipe."); demoStatus("Save recipe", "error", err.message); }
     finally { setSaving(false); }
   }
 

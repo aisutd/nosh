@@ -1,0 +1,8 @@
+/* Reserve space for the notice so it does not cover the app's controls. */
+.scan-confirmation-region { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 60; width: 100%; }
+.scan-confirmation { box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: calc(100% - 24px); max-width: 520px; margin: 8px auto; padding: 12px; border: 1px solid #b6cdb9; border-radius: 14px; background: #f0f8f0; color: #254c32; box-shadow: 0 4px 14px #254c3214; font: 14px/1.45 system-ui, sans-serif; }
+.scan-confirmation p { flex: 1; min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.scan-confirmation-icon { flex-shrink: 0; font-size: 20px; }
+.scan-confirmation button { flex: 0 0 36px; width: 36px; height: 36px; margin: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #254c32; font-size: 24px; line-height: 1; cursor: pointer; }
+.scan-confirmation button:hover { background: #dfeddf; }
+.scan-confirmation button:focus-visible { outline: 2px solid #254c32; outline-offset: 2px; }

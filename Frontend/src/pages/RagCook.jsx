@@ -6,7 +6,7 @@ import { LuArrowLeft, LuUtensils, LuClock } from "react-icons/lu";
 import RecipeTabs from "../components/RecipeTabs";
 import RecipeIngredients from "../components/RecipeIngredients";
 import "./RagCook.css";
-import { notifyDemo } from "../lib/demo";
+import { demoStatus } from "../lib/demo";
 
 export default function RagCook({ savedId = null, title = null, image = null, ingredients = [], sourceRecipe = null}) {
   const { id } = useParams();
@@ -33,6 +33,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
     if (!savedId && !context?.ingredients) return;
     const controller = new AbortController();
     async function generate() {
+      demoStatus("Recipe instructions", "loading", "Preparing instructions");
       setLoading(true); setResult(null); setError(""); setCooked(null);
       try {
         const savedUrl = `${API}/recipes/saved-generate/${encodeURIComponent(savedId)}${servings ? `?servings=${servings}` : ""}`;
@@ -44,9 +45,12 @@ export default function RagCook({ savedId = null, title = null, image = null, in
         const data = await response.json().catch(() => null);
         if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : "Could not generate instructions.");
         if (!data?.result?.status) throw new Error("Unexpected recipe response.");
-        if (!controller.signal.aborted) setResult(data.result);
+        if (!controller.signal.aborted) {
+          setResult(data.result);
+          demoStatus("Recipe instructions", data.result.status === "ok" ? "success" : "error", data.result.message || "Recipe validation did not pass");
+        }
       } catch (err) {
-        if (!controller.signal.aborted) setError(err.message);
+        if (!controller.signal.aborted) { setError(err.message); demoStatus("Recipe instructions", "error", err.message); }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
@@ -62,6 +66,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
   async function handleCooked() {
     if (cooking || cooked || !consumptionIngredients?.length) return;
     setCooking(true);
+    demoStatus("Inventory update", "loading", "Updating quantities");
     try {
       const res = await fetch(`${API}/inventory/consume`, {
         method: "POST",
@@ -71,10 +76,12 @@ export default function RagCook({ savedId = null, title = null, image = null, in
         },
         body: JSON.stringify({ ingredients: consumptionIngredients }),
       });
-      if (res.ok) setCooked(await res.json());
-      else setError("Could not update your inventory. Are you logged in?");
-    } catch {
-      setError("Could not update your inventory. Please try again.");
+      if (!res.ok) throw new Error("Could not update your inventory. Are you logged in?");
+      setCooked(await res.json());
+      demoStatus("Inventory update", "success");
+    } catch (error) {
+      setError(error.message || "Could not update your inventory. Please try again.");
+      demoStatus("Inventory update", "error", error.message);
     } finally {
       setCooking(false);
     }
@@ -97,7 +104,7 @@ export default function RagCook({ savedId = null, title = null, image = null, in
 
     {!savedId && !context?.ingredients && <p>Please <Link to="/pantry">search from your pantry</Link> to choose a recipe.</p>}
 
-    <div className="servings-selector">
+    <div data-demo-feature="servings" className="servings-selector">
       <label htmlFor="servings-select">Servings</label>
       <select
         id="servings-select"
@@ -150,14 +157,14 @@ export default function RagCook({ savedId = null, title = null, image = null, in
       <div className="cook-actions">
         {substitutions.length > 0 && !consumptionIngredients && <p className="cook-warning">
           Please update inventory manually for this substitution; its quantities could not be converted reliably.
-          {" "}<Link to="/inventory" onClick={() => notifyDemo("inventory")}>View inventory</Link>
+          {" "}<Link to="/inventory">View inventory</Link>
         </p>}
         {consumptionIngredients?.length > 0 && (
           cooked ? (
             <div className="cook-done">
               <p>Inventory updated.</p>
               {cooked.warnings.map((w, i) => <p key={i} className="cook-warning">{w}</p>)}
-              <Link to="/inventory" onClick={() => notifyDemo("inventory")}>View inventory</Link>
+              <Link to="/inventory">View inventory</Link>
             </div>
           ) : (
             <button className="btn-primary" onClick={handleCooked} disabled={cooking}>

@@ -1,3 +1,5 @@
+import ScanConfirmation from './components/ScanConfirmation';
+import useScanConfirmation from './hooks/useScanConfirmation';
 import { API } from './lib/api';
 import { useState, useEffect, useRef, useCallback} from 'react'
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
@@ -17,7 +19,7 @@ import Inventory from "./pages/Inventory.jsx";
 import PantryIngredients from "./components/PantryIngredients";
 import GenerateRecipe from "./components/GenerateRecipe.jsx";
 import Presentation from "./pages/Presentation";
-import { notifyDemo } from "./lib/demo";
+import { notifyDemo, installDemoInteractions, demoNavigation, demoStatus, onDemoIntroScreen } from "./lib/demo";
 
 // Backend address. Uses whatever host the page was opened from, so it works on localhost and on the LAN IP
 
@@ -29,6 +31,8 @@ function authHeaders() {
 }
 
 function App() {
+  const { confirmation, confirm: confirmScan, dismiss: dismissScan } = useScanConfirmation();
+  useEffect(() => installDemoInteractions(), []);
   // ----- state: values that make the screen update when they change -----
   const [input, setInput] = useState("");              // text typed in the ingredient box
   const [ingredients, setIngredients] = useState([]);  // the pantry list
@@ -36,17 +40,19 @@ function App() {
   const [recipes, setRecipes] = useState([]);          // results from "Find Recipes" (shown in Swipe)
   const [user, setUser] = useState(null);              // username, or null if logged out
   const navigate = useNavigate();                      // lets us change pages from code
+  useEffect(() => onDemoIntroScreen(() => navigate("/intro")), [navigate]);
   const [savedIds, setSavedIds] = useState([]);        // ids of the recipes this user saved
   const fileInput = useRef(null);                      // points at the hidden file picker
   const [scanning, setScanning] = useState(false);     // true while the scan is running
   const [mobileScanning, setMobileScanning] = useState(false);
   const location = useLocation();                      // which page we're on
+  useEffect(() => { demoNavigation(location.pathname); }, [location.pathname]);
   const videoFileInput = useRef(null);
   const [scanChoiceOpen, setScanChoiceOpen] = useState(false);
   const [ingredientError, setIngredientError] = useState("");
   const [scanError, setScanError] = useState("");
   const hideNav =                                      // hide the nav bar on login and on the visitor landing page
-    location.pathname === "/auth" ||
+    location.pathname === "/auth" || location.pathname === "/intro" ||
     (location.pathname === "/" && !user);
 
 
@@ -70,6 +76,7 @@ async function handleLogin(token) {
 
 // Forget the token and clear everything that belongs to the user
 function handleLogout() {
+  dismissScan();
   localStorage.removeItem("access_token");
   setUser(null);
   setIngredients([]);
@@ -136,16 +143,23 @@ const addItems = useCallback(async (items) => {
 
 // Phone app only: Mobile/App.js sends the scan result as a "nosh-scan" event
 useEffect(() => {
-  function onScanResult(e) {
-    addItems(e.detail);          // e.detail is the list of ingredients
+  async function onScanResult(e) {
+    if (!Array.isArray(e.detail) || !e.detail.every(item => typeof item === 'string')) return;
+    try {
+      await addItems(e.detail);
+      confirmScan(e.detail);
+    } catch {
+      setScanError("Scan completed, but the pantry could not be updated. Please retry.");
+    }
   }
   window.addEventListener("nosh-scan", onScanResult);
   return () => window.removeEventListener("nosh-scan", onScanResult);   // cleanup so we don't add duplicate listeners
-}, [addItems]);
+}, [addItems, confirmScan]);
 
 useEffect(() => {
   function onScanStatus(event) {
     setMobileScanning(Boolean(event.detail?.scanning));
+    if (event.detail?.scanning) { dismissScan(); setScanError(""); }
   }
 
   window.addEventListener("nosh-scan-status", onScanStatus);
@@ -153,7 +167,7 @@ useEffect(() => {
   return () => {
     window.removeEventListener("nosh-scan-status", onScanStatus);
   };
-}, []);
+}, [dismissScan]);
 
 
 // ----- pantry actions -----
@@ -242,12 +256,12 @@ async function handleRemoving(ingredient) {
 // Adds several ingredients at once (used by scan results)
 // Scan box clicked: phone app opens its camera, a normal browser opens the file picker
 function handleScanClick() {
+  notifyDemo("scan");
   if (scanning || mobileScanning) return;
   if (!user) {
     navigate("/auth");            // scanning needs an account
     return;
   }
-  notifyDemo("scan");
   if (window.ReactNativeWebView) {
     // inside the phone app: pass the login token to it
     window.ReactNativeWebView.postMessage(
@@ -261,18 +275,27 @@ function handleScanClick() {
 
 // A photo was picked in the browser: upload it to /scan and add the ingredients found
 async function handleScan(e) {
-  const file = e.target.files[0];
+  const picker = e.currentTarget;
+  const file = picker.files[0];
   if (!file) return;
-  setScanning(true);                       // shows "Scanning..."
-  const form = new FormData();
-  form.append("image", file);              // the name must match `image` in the backend
-  const response = await fetch(`${API}/scan`, { method: "POST", headers: authHeaders(), body: form });
-  if (response.ok) {
-    const data = await response.json();
+  dismissScan();
+  setScanning(true); setScanError("");
+  demoStatus("Scan", "loading", "Analyzing photo");
+  try {
+    const form = new FormData(); form.append("image", file);
+    const response = await fetch(`${API}/scan`, { method: "POST", headers: authHeaders(), body: form });
+    const data = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : "Photo scan failed.");
+    if (!Array.isArray(data?.ingredients) || !data.ingredients.every(item => typeof item === 'string')) {
+      throw new Error("The scan returned an invalid result. Please retry.");
+    }
     await addItems(data.ingredients);
-  }
-  setScanning(false);
-  e.target.value = "";                   // lets you pick the same photo again
+    confirmScan(data.ingredients, "image");
+    demoStatus("Scan", "success");
+  } catch (error) {
+    setScanError(error.message || "Could not upload the photo.");
+    demoStatus("Scan", "error", error.message);
+  } finally { setScanning(false); picker.value = ""; }
 }
 
 async function handleVideoScan(event) {
@@ -280,8 +303,10 @@ async function handleVideoScan(event) {
   const file = picker.files?.[0];
   if (!file) return;
 
+  dismissScan();
   setScanning(true);
   setScanError("");
+  demoStatus("Scan", "loading", "Analyzing video");
 
   try {
     const form = new FormData();
@@ -303,9 +328,15 @@ async function handleVideoScan(event) {
       );
     }
 
-    await addItems(data.ingredients || []);
+    if (!Array.isArray(data?.ingredients) || !data.ingredients.every(item => typeof item === 'string')) {
+      throw new Error("The scan returned an invalid result. Please retry.");
+    }
+    await addItems(data.ingredients);
+    confirmScan(data.ingredients, "video");
+    demoStatus("Scan", "success");
   } catch (error) {
     setScanError(error.message || "Could not upload the video.");
+    demoStatus("Scan", "error", error.message);
   } finally {
     setScanning(false);
     picker.value = "";
@@ -355,7 +386,7 @@ async function handleVideoScan(event) {
           {scanning || mobileScanning ? "Scanning..." : "Scan fridge"}
         </span>
       </button>
-      {scanError && <p role="alert">{scanError}</p>}
+      {scanError && <div role="alert"><p>{scanError}</p><button onClick={handleScanClick}>Retry scan</button></div>}
 
       {scanChoiceOpen && (
         <div
@@ -388,6 +419,7 @@ async function handleVideoScan(event) {
             <button
               type="button"
               onClick={() => {
+                notifyDemo("video");
                 setScanChoiceOpen(false);
                 videoFileInput.current?.click();
               }}
@@ -432,8 +464,10 @@ async function handleVideoScan(event) {
   // ----- which page shows at which URL -----
   return (    
     <>               
+      <ScanConfirmation confirmation={confirmation} onDismiss={dismissScan} />
       <Routes>
         <Route path="/" element={user ? home : <Home />} />   {/* logged in: pantry, visitor: landing page */}
+        <Route path="/intro" element={<Home />} />
         <Route path="/pantry" element={home} />
         <Route path="/auth" element={<Auth onLogin={handleLogin} />} />
         <Route

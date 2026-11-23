@@ -1,453 +1,145 @@
-import "./Presentation.css";
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
-import PresentationPhone from "../components/PresentationPhone";
-
-const presentationContent = {
-  intro: {
-    label: "NOSH · YOUR AI COOKING BUDDY",
-    title: "Your ingredients. Your next meal.",
-    description:
-      "Turn what’s already in your kitchen into something worth cooking.",
-    points: [
-      "Scan ingredients",
-      "Discover recipes",
-      "Cook with voice guidance",
-    ],
-  },
-  scan: {
-    label: "COMPUTER VISION",
-    title: "From your fridge to your pantry.",
-    description:
-      "NOSH uses a trained YOLO model to identify ingredients in an uploaded photo or video.",
-    points: [
-      "Detect ingredients and their locations",
-      "Return ingredient names and confidence scores",
-      "Use detections to help build your pantry",
-    ],
-  },
-  rag: {
-    label: "RECIPE RETRIEVAL · RAG",
-    title: "Ingredients become meal ideas.",
-    description:
-      "NOSH retrieves relevant recipes and uses them as context to help generate cooking guidance.",
-    points: [
-      "Search recipes using your ingredients",
-      "Ground suggestions in recipe data",
-      "Adapt guidance to your cooking request",
-    ],
-  },
-  voice: {
-    label: "VOICE ASSISTANT",
-    title: "Cooking help, hands free.",
-    description:
-      "Ask cooking questions and follow recipe steps through a voice conversation with NOSH.",
-    points: [
-      "Turn speech into a cooking question",
-      "Use the current recipe as context",
-      "Read responses aloud",
-    ],
-  },
-  inventory: {
-    label: "PANTRY & INVENTORY",
-    title: "Keep track of what’s left.",
-    description:
-      "NOSH tracks ingredient quantities and can deduct recipe amounts when you finish cooking.",
-    points: [
-      "Manage ingredient quantities and units",
-      "Identify low or empty ingredients",
-      "Warn when recipe units cannot be converted",
-    ],
-  },
-};
-
-const pages = [
-  "title",
-  "intro",
-  "scan",
-  "rag",
-  "voice",
-  "inventory",
-  "ending",
-];
-
-function isDemoPage(page) {
-  return Object.hasOwn(presentationContent, page);
-}
-
-function reducedMotion() {
-  return window.matchMedia(
-    "(prefers-reduced-motion: reduce)"
-  ).matches;
-}
+import './Presentation.css';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import PresentationPhone from '../components/PresentationPhone';
+import { request, authHeaders } from '../lib/api';
+import { presentationContent, nextStory, nextAction, topicForEvent } from '../lib/presentationContent';
 
 export default function Presentation() {
-  const presentationRef = useRef(null);
-  const layoutRef = useRef(null);
-  const textRef = useRef(null);
-  const coverRef = useRef(null);
+  const [{ page }, setNavigation] = useState({ page: 'title', history: [] });
+  const setPage = value => setNavigation(current => ({ ...current, page: value }));
+  const setHistory = value => setNavigation(current => ({ ...current, history: value }));
+  const [sample, setSample] = useState(false);
+  const [sampleKey, setSampleKey] = useState(0);
+  const [livePage, setLivePage] = useState('intro');
+  const [prompt, setPrompt] = useState('');
+  const [statuses, setStatuses] = useState({});
+  const [prepare, setPrepare] = useState(false);
+  const [checks, setChecks] = useState({ backend: 'Not checked', account: 'Not checked' });
+  const [checking, setChecking] = useState(false);
   const frameRef = useRef(null);
-
-  const pageRef = useRef("title");
-  const previousPageRef = useRef("title");
-  const busyRef = useRef(false);
-  const mountedRef = useRef(false);
-  const animationsRef = useRef([]);
-
-  const [page, setPage] = useState("title");
-  const [transitioning, setTransitioning] = useState(false);
-
-  const showDemo = isDemoPage(page);
+  const sampleFrameRef = useRef(null);
+  const checkController = useRef(null);
   const content = presentationContent[page];
+  const showPhone = page !== 'title' && page !== 'ending';
 
-  const cancelAnimations = useCallback(() => {
-    animationsRef.current.forEach((animation) => {
-      animation.cancel();
-    });
-    animationsRef.current = [];
+  const select = useCallback(next => {
+    setNavigation(current => current.page === next ? current : { page: next, history: [...current.history, current.page] });
+    setPrompt('');
   }, []);
-
-  const changePage = useCallback(
-    async (nextPage) => {
-      if (!pages.includes(nextPage)) return;
-      if (nextPage === pageRef.current || busyRef.current) return;
-
-      busyRef.current = true;
-      setTransitioning(true);
-      cancelAnimations();
-
-      const currentPage = pageRef.current;
-
-      // Animate the phone out before showing a full-screen cover.
-      if (
-        isDemoPage(currentPage) &&
-        !isDemoPage(nextPage) &&
-        !reducedMotion()
-      ) {
-        const phone = layoutRef.current?.querySelector(
-          ".presentation-3d-phone"
-        );
-
-        if (phone) {
-          const exit = phone.animate(
-            [
-              {
-                transform:
-                  "perspective(1400px) translateY(0) rotateY(0deg)",
-              },
-              {
-                transform:
-                  "perspective(1400px) translateY(110dvh) rotateY(-10deg)",
-              },
-            ],
-            {
-              duration: 650,
-              easing: "cubic-bezier(.55, 0, 1, .45)",
-              fill: "forwards",
-            }
-          );
-
-          animationsRef.current.push(exit);
-
-          if (textRef.current) {
-            const textExit = textRef.current.animate(
-              [
-                { opacity: 1, transform: "translateY(0)" },
-                { opacity: 0, transform: "translateY(24px)" },
-              ],
-              {
-                duration: 300,
-                easing: "ease-in",
-                fill: "forwards",
-              }
-            );
-
-            animationsRef.current.push(textExit);
-          }
-
-          try {
-            await exit.finished;
-          } catch {
-            busyRef.current = false;
-
-            if (mountedRef.current) {
-              setTransitioning(false);
-            }
-
-            return;
-          }
-        }
-      }
-
-      if (!mountedRef.current) return;
-
-      previousPageRef.current = currentPage;
-      pageRef.current = nextPage;
-      setPage(nextPage);
-    },
-    [cancelAnimations]
-  );
+  const back = useCallback(() => {
+    setNavigation(current => {
+      if (!current.history.length) return current;
+      const previous = current.history.at(-1);
+      return { page: previous === 'inventory' ? 'voice' : previous, history: current.history.slice(0, -1) };
+    });
+    setPrompt('');
+  }, []);
+  const next = useCallback(() => {
+    if (nextStory[page]) select(nextStory[page]);
+    else setPrompt(nextAction[page] || 'Use the app to continue, or press End to jump to the wrap-up.');
+  }, [page, select]);
 
   useEffect(() => {
-    mountedRef.current = true;
-    presentationRef.current?.focus({ preventScroll: true });
-
-    return () => {
-      mountedRef.current = false;
-      cancelAnimations();
-    };
-  }, [cancelAnimations]);
-
-  useLayoutEffect(() => {
-    cancelAnimations();
-
-    const previousPage = previousPageRef.current;
-    const enteringDemo = showDemo && !isDemoPage(previousPage);
-    let entrance;
-
-    if (!reducedMotion()) {
-      if (enteringDemo && layoutRef.current) {
-        // Phone and first text slide up together.
-        entrance = layoutRef.current.animate(
-          [
-            { transform: "translateY(100dvh)" },
-            { transform: "translateY(0)" },
-          ],
-          {
-            duration: 750,
-            easing: "cubic-bezier(.22, 1, .36, 1)",
-            fill: "backwards",
-          }
-        );
-      } else if (showDemo && textRef.current) {
-        // The phone stays still when changing topics.
-        entrance = textRef.current.animate(
-          [
-            { transform: "translateY(35px)", opacity: 0 },
-            { transform: "translateY(0)", opacity: 1 },
-          ],
-          {
-            duration: 400,
-            easing: "cubic-bezier(.22, 1, .36, 1)",
-            fill: "backwards",
-          }
-        );
-      } else if (
-        page !== previousPage &&
-        coverRef.current
-      ) {
-        entrance = coverRef.current.animate(
-          [
-            { opacity: 0, transform: "translateY(20px)" },
-            { opacity: 1, transform: "translateY(0)" },
-          ],
-          {
-            duration: 450,
-            easing: "ease-out",
-            fill: "backwards",
-          }
-        );
+    function message(event) {
+      const frame = sample ? sampleFrameRef : frameRef;
+      if (event.origin !== window.location.origin || event.source !== frame.current?.contentWindow) return;
+      if (event.data?.type !== 'nosh-demo') return;
+      if (event.data.kind === 'status') {
+        const { operation, status, message: detail } = event.data;
+        if (typeof operation !== 'string' || !['loading', 'success', 'error'].includes(status)) return;
+        setStatuses(previous => ({ ...previous, [operation]: { status, message: typeof detail === 'string' ? detail : '' } }));
+        return;
       }
+      const topic = topicForEvent(event.data);
+      if (topic && showPhone) select(topic);
     }
-
-    function finishTransition() {
-      busyRef.current = false;
-
-      if (mountedRef.current) {
-        setTransitioning(false);
-      }
-    }
-
-    if (entrance) {
-      animationsRef.current.push(entrance);
-      entrance.finished.then(
-        finishTransition,
-        finishTransition
-      );
-    } else {
-      finishTransition();
-    }
-
-    return () => entrance?.cancel();
-  }, [page, showDemo, cancelAnimations]);
-
+    window.addEventListener('message', message);
+    return () => window.removeEventListener('message', message);
+  }, [sample, showPhone, select]);
   useEffect(() => {
-    function handleKeyDown(event) {
-      if (
-        event.target instanceof Element &&
-        event.target.closest(
-          "input, textarea, select, button, [contenteditable]"
-        )
-      ) {
-        return;
-      }
-
-      if (event.altKey || event.ctrlKey || event.metaKey) return;
-
-      if (
-        event.key !== "ArrowLeft" &&
-        event.key !== "ArrowRight"
-      ) {
-        return;
-      }
-
-      event.preventDefault();
-
-      if (event.repeat || busyRef.current) return;
-
-      const direction = event.key === "ArrowRight" ? 1 : -1;
-      const index = pages.indexOf(pageRef.current);
-      const nextIndex = Math.max(
-        0,
-        Math.min(index + direction, pages.length - 1)
-      );
-
-      changePage(pages[nextIndex]);
+    function key(event) {
+      if (event.target.closest?.('button, input, select, textarea, a, [contenteditable]') || event.altKey || event.ctrlKey || event.metaKey || event.repeat) return;
+      if (event.key === 'ArrowRight') { event.preventDefault(); next(); }
+      if (event.key === 'End') { event.preventDefault(); select('challenges'); }
+      if (event.key === 'ArrowLeft') { event.preventDefault(); back(); }
     }
+    window.addEventListener('keydown', key);
+    return () => window.removeEventListener('keydown', key);
+  }, [next, back, select]);
+  useEffect(() => {
+    if (!['intro', 'problem', 'challenges'].includes(page)) return;
+    const frame = sample ? sampleFrameRef : frameRef;
+    frame.current?.contentWindow?.postMessage(
+      { type: 'nosh-demo-command', command: 'show-intro' }, window.location.origin);
+  }, [page, sample]);
+  useEffect(() => () => checkController.current?.abort(), []);
 
-    function handleMessage(event) {
-      if (!isDemoPage(pageRef.current)) return;
-      if (busyRef.current) return;
-      if (event.origin !== window.location.origin) return;
-      if (event.source !== frameRef.current?.contentWindow) return;
-      if (event.data?.type !== "nosh-demo-feature") return;
-
-      if (isDemoPage(event.data.feature)) {
-        changePage(event.data.feature);
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("message", handleMessage);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("message", handleMessage);
-    };
-  }, [changePage]);
-
-  function focusPresentation(event) {
-    if (
-      event.target.closest(
-        ".presentation-3d-phone, button, input, select, textarea, a"
-      )
-    ) {
-      return;
-    }
-
-    presentationRef.current?.focus({ preventScroll: true });
+  async function checkReadiness() {
+    checkController.current?.abort();
+    const controller = new AbortController();
+    checkController.current = controller;
+    setChecking(true);
+    const [health, account] = await Promise.allSettled([
+      request('/health', { timeout: 5000, signal: controller.signal }),
+      request('/me', { headers: authHeaders(), timeout: 5000, signal: controller.signal }),
+    ]);
+    if (controller.signal.aborted) return;
+    setChecks({ backend: health.status === 'fulfilled' ? 'Reachable' : 'Unavailable — start the backend and retry',
+      account: account.status === 'fulfilled' && account.value.username ? `Signed in as ${account.value.username}` : 'Sign in inside the live phone before presenting' });
+    setChecking(false);
   }
+  function changeMode() {
+    if (!sample) {
+      frameRef.current?.contentWindow?.postMessage({ type: "nosh-demo-pause" }, window.location.origin);
+      setLivePage(page);
+      setSampleKey(key => key + 1);
+      setPage('scan');
+    } else setPage(livePage);
+    setSample(!sample);
+    setStatuses({}); setHistory([]); setPrompt('');
+  }
+  function reset() {
+    setSampleKey(key => key + 1);
+    setPage(sample ? 'scan' : 'title');
+    setHistory([]); setStatuses({}); setPrompt('');
+  }
+  return <main className={`presentation guided-presentation${showPhone ? " presentation-started" : ""}`} tabIndex={-1} aria-label="NOSH guided presentation">
+    <header className="presenter-toolbar">
+      <strong>{sample ? 'SAMPLE DEMO · SIMULATED' : 'LIVE DEMO'}</strong>
+      <button onClick={() => { setPrepare(value => !value); }}>Preparation</button>
+      <button onClick={changeMode}>{sample ? 'Return to live app' : 'Use sample demo'}</button>
+      <button onClick={reset}>Reset {sample ? 'sample' : 'presentation'}</button>
+    </header>
+    {prepare && <aside className="presenter-preparation" aria-label="Presenter preparation">
+      <h2>Before you present</h2>
+      <p>Backend: {checks.backend}</p><p>Account: {checks.account}</p>
+      <p>A reachable health endpoint does not verify MongoDB, scanning models, or Ollama.</p>
+      <ul><li>Sign in inside the live phone before starting.</li><li>Have a fridge photo or video ready.</li><li>Allow microphone access and try a voice question.</li></ul>
+      <button disabled={checking} onClick={checkReadiness}>{checking ? 'Checking…' : 'Check / Retry readiness'}</button>
+      <button onClick={() => { if (sample) changeMode(); setPage('intro'); setPrepare(false); }}>Open live phone</button>
+      <button onClick={() => setPrepare(false)}>Close preparation</button>
+    </aside>}
+    {!showPhone && <section className="presentation-title-screen">
+      <span className="presentation-title-label">YOUR AI COOKING BUDDY</span>
+      <h1 className="presentation-title-logo">{page === 'title' ? 'nosh' : 'Thank you'}<span>.</span></h1>
+      <p className="presentation-title-tagline">{page === 'title' ? 'Present the story. Cook along with the demo.' : 'Questions?'}</p>
+      <button className="presentation-control" onClick={() => select('intro')}>{page === 'title' ? 'Begin presentation →' : 'Back to start'}</button>
+    </section>}
+    <div className="presentation-layout" style={{ visibility: showPhone ? 'visible' : 'hidden' }} inert={!showPhone} aria-hidden={!showPhone}>
+      <PresentationPhone frameRef={frameRef} sampleFrameRef={sampleFrameRef} started={showPhone} sample={sample} sampleKey={sampleKey} />
+      <section className="presentation-content">
+        {content && <div key={page} className="presentation-copy" aria-live="polite">
+          <span className="presentation-eyebrow">{content.label}</span><h1>{content.title}</h1>
+          <p className="presentation-description">{content.description}</p>
+          <div className="presentation-features">{content.points.map(point => <span key={point}>{point}</span>)}</div>
+          {content.note && <p className="presentation-note">{content.note}</p>}
+        </div>}
+        <div className="presentation-next-action" role="status"><strong>Next demo action</strong><p>{prompt || nextAction[page] || 'Press → to continue the explanation.'}</p></div>
+        {Object.entries(statuses).filter(([, value]) => value.status !== 'success').map(([operation, value]) => <p key={operation} role={value.status === 'error' ? 'alert' : 'status'} className="presentation-operation">
+          {operation}: {value.message || value.status}. {value.status === 'error' && 'Retry the action in the phone, or choose Use sample demo.'}
+        </p>)}
+      </section>
+    </div>
 
-  return (
-    <main
-      ref={presentationRef}
-      className={`presentation${
-        showDemo ? " presentation-started" : ""
-      }`}
-      tabIndex={-1}
-      onClick={focusPresentation}
-      aria-label="NOSH presentation. Use left and right arrow keys."
-    >
-      {page === "title" && (
-        <section
-          key="title"
-          ref={coverRef}
-          className="presentation-title-screen"
-        >
-          <span className="presentation-title-label">
-            YOUR AI COOKING BUDDY
-          </span>
-
-          <h1 className="presentation-title-logo">
-            nosh<span>.</span>
-          </h1>
-
-          <p className="presentation-title-tagline">
-            Turn what’s in your kitchen
-            <br />
-            into your next meal.
-          </p>
-        </section>
-      )}
-
-      {page === "ending" && (
-        <section
-          key="ending"
-          ref={coverRef}
-          className="presentation-title-screen"
-        >
-          <span className="presentation-title-label">
-            NOSH · YOUR AI COOKING BUDDY
-          </span>
-
-          <h1
-            style={{
-              display: "block",
-              margin: "24px 0",
-              color: "#6b5350",
-              fontSize: "clamp(64px, 10vw, 150px)",
-              fontWeight: 800,
-              lineHeight: 1.05,
-              letterSpacing: "-3px",
-              textAlign: "center",
-            }}
-          >
-            Thank you<span style={{ color: "#b74357" }}>.</span>
-          </h1>
-
-          <p className="presentation-title-tagline">
-            Questions?
-          </p>
-        </section>
-      )}
-
-      {/* Preserve the live app when moving between screens. */}
-      <div
-        ref={layoutRef}
-        className="presentation-layout"
-        style={{
-          visibility: showDemo ? "visible" : "hidden",
-          pointerEvents:
-            showDemo && !transitioning ? "auto" : "none",
-        }}
-        aria-hidden={!showDemo}
-        inert={!showDemo || transitioning}
-      >
-        <PresentationPhone
-          frameRef={frameRef}
-          started={showDemo}
-        />
-
-        <section
-          ref={textRef}
-          className="presentation-content"
-        >
-          {content && (
-            <>
-              <span className="presentation-eyebrow">
-                {content.label}
-              </span>
-
-              <h1>{content.title}</h1>
-
-              <p className="presentation-description">
-                {content.description}
-              </p>
-
-              <div className="presentation-features">
-                {content.points.map((point) => (
-                  <span key={point}>{point}</span>
-                ))}
-              </div>
-            </>
-          )}
-        </section>
-      </div>
-    </main>
-  );
+  </main>;
 }

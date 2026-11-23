@@ -1,0 +1,12 @@
+.sample-demo { background: #fff7f7; color: #553e3e; min-height: 100vh; padding: 18px; font: 15px/1.5 system-ui, sans-serif; }
+.sample-demo * { box-sizing: border-box; }
+.sample-demo header { background: #fbe2b9; border: 1px solid #d9ab6e; border-radius: 14px; padding: 12px; font-size: 12px; }
+.sample-demo header p { margin-bottom: 0; }
+.sample-demo nav { display: flex; gap: 6px; margin: 18px 0; }
+.sample-demo button, .sample-demo select { border: 1px solid #d5a1a8; padding: 12px; border-radius: 12px; color: #64313b; background: #fff; cursor: pointer; font: inherit; margin: 5px 5px 5px 0; }
+.sample-demo button:focus-visible, .sample-demo select:focus-visible { outline: 3px solid #a6354b; outline-offset: 2px; }
+.sample-demo .sample-primary { display: block; background: #b74357; color: white; width: 100%; }
+.sample-demo button:disabled { opacity: .65; cursor: default; }
+.sample-demo h1 { font-size: 28px; line-height: 1.2; }
+.sample-demo h2 { font-size: 20px; }
+.sample-demo li { margin: 10px 0; }

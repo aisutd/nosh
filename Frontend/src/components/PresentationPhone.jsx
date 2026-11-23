@@ -85,7 +85,10 @@ function PhoneScene({ screenRef, started }) {
 
     const remaining = Math.pow(1 - progress, 3);
     const angle = -0.15 * remaining;
-    const distance = 12 + 0.6 * remaining;
+    // Fit the phone horizontally as well as vertically in narrow layouts.
+    const aspect = size.width / Math.max(size.height, 1);
+    const fitWidthDistance = 1.75 / (Math.tan((camera.fov * Math.PI) / 360) * Math.max(aspect, 0.01));
+    const distance = Math.max(12, fitWidthDistance) + 0.6 * remaining;
 
     camera.position.set(
       Math.sin(angle) * distance,
@@ -147,7 +150,7 @@ function PhoneScene({ screenRef, started }) {
   );
 }
 
-export default function PresentationPhone({ frameRef, started }) {
+export default function PresentationPhone({ frameRef, sampleFrameRef, started, sample, sampleKey }) {
   const screenRef = useRef(null);
 
   return (
@@ -205,12 +208,14 @@ export default function PresentationPhone({ frameRef, started }) {
         >
           <iframe
             ref={frameRef}
-            src="/"
+            src="/intro"
             title="NOSH live app"
             allow="camera; microphone"
-            tabIndex={started ? 0 : -1}
+            tabIndex={started && !sample ? 0 : -1}
+            aria-hidden={sample}
+            inert={sample}
             style={{
-              display: "block",
+              display: sample ? "none" : "block",
               width: SCREEN_WIDTH,
               height: SCREEN_HEIGHT,
               margin: 0,
@@ -219,6 +224,8 @@ export default function PresentationPhone({ frameRef, started }) {
               background: "#fff7f7",
             }}
           />
+          {sample && <iframe key={sampleKey} ref={sampleFrameRef} src="/presentation-sample"
+            title="NOSH sample demo" style={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT, border: 0 }} />}
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { API, authHeaders } from '../lib/api';
 import { useEffect, useRef, useState } from "react";
-import { notifyDemo } from "../lib/demo";
+import { notifyDemo, demoStatus } from "../lib/demo";
 
 
 export default function GenerateRecipe({ ingredients, onOptions }) {
@@ -15,6 +15,7 @@ export default function GenerateRecipe({ ingredients, onOptions }) {
     event.preventDefault();
     if (activeRequest.current || ingredients.length === 0) return;
     notifyDemo("rag");
+    demoStatus("Recipes", "loading", "Finding matching recipes");
     const controller = new AbortController();
     activeRequest.current = controller;
     setLoading(true);
@@ -33,9 +34,13 @@ export default function GenerateRecipe({ ingredients, onOptions }) {
         throw new Error(typeof detail === "string" ? detail : "Could not generate a recipe. Please try again.");
       }
       if (!data?.status) throw new Error("The server returned an unexpected recipe response.");
+      demoStatus("Recipes", "success");
       onOptions(data, { ingredients: [...ingredients], user_query: "" });
     } catch (err) {
-      if (err.name !== "AbortError") setError(err.message || "Could not reach the recipe service.");
+      if (err.name !== "AbortError") {
+        setError(err.message || "Could not reach the recipe service.");
+        demoStatus("Recipes", "error", err.message);
+      }
     } finally {
       activeRequest.current = null;
       if (!controller.signal.aborted) setLoading(false);
@@ -45,14 +50,14 @@ export default function GenerateRecipe({ ingredients, onOptions }) {
   const safeSource = /^https?:\/\//i.test(result?.source_url || "") ? result.source_url : null;
 
   return (
-    <section className="generated-recipe">
+    <section className="generated-recipe" data-demo-feature="rag">
       <form onSubmit={generate}>
         <button className="btn-primary" type="submit" disabled={loading || ingredients.length === 0}>
           {loading ? "Finding a recipe…" : "Find Recipes"}
         </button>
       </form>
       {loading && <p role="status">Finding recipes that match your pantry. This may take a moment.</p>}
-      {error && <p role="alert">{error}</p>}
+      {error && <div role="alert"><p>{error}</p><button type="button" onClick={generate}>Retry recipes</button></div>}
       <div aria-live="polite">
         {result?.status === "ok" && result.recipe ? (
           <>

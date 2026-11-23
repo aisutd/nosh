@@ -1,3 +1,4 @@
+import { demoStatus } from "../lib/demo";
 import NativeVoiceAgent from './NativeVoiceAgent.jsx';
 import { LuMic, LuSquare } from 'react-icons/lu';
 import { API, authHeaders } from '../lib/api';
@@ -82,6 +83,23 @@ function VoiceConversation({ ingredients = [], recipe = '' }) {
     }
   }, []);
 
+  useEffect(() => {
+    function pauseForSample(event) {
+      if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== 'nosh-demo-pause') return;
+      conversation.current = false;
+      setConversationOn(false);
+      clearTimeout(restart.current);
+      const mic = recognition.current;
+      recognition.current = null;
+      mic?.abort();
+      if (request.current) { request.current.allowSpeech = false; request.current.cancelled = true; request.current.abort(); }
+      if (reply.current) { reply.current = null; window.speechSynthesis.cancel(); }
+      setInterim(''); setStatus('Paused for sample demo');
+    }
+    window.addEventListener('message', pauseForSample);
+    return () => window.removeEventListener('message', pauseForSample);
+  }, []);
+
   function pauseMic() {
     clearTimeout(restart.current);
     const mic = recognition.current;
@@ -137,6 +155,7 @@ function VoiceConversation({ ingredients = [], recipe = '' }) {
   async function send(text) {
     const message = text.trim().slice(0, 2000);
     if (!message || request.current) return;
+    demoStatus('Voice', 'loading', 'Waiting for a cooking reply');
     pauseMic();
     stopReply();
     emptyStarts.current = 0;
@@ -164,6 +183,7 @@ function VoiceConversation({ ingredients = [], recipe = '' }) {
         step: data.step,
         history: [...history, { question: message, answer: data.answer.slice(0, 2000) }].slice(-4),
       };
+      demoStatus('Voice', 'success');
       setMessages(items => [...items, { who: 'NOSH', text: data.answer }]);
       if (latest.current.spoken && window.speechSynthesis && controller.allowSpeech !== false) {
         speakReply(data.answer);
@@ -172,6 +192,7 @@ function VoiceConversation({ ingredients = [], recipe = '' }) {
       if (request.current === controller) {
         stopReply();
         setDraft(message);
+        demoStatus('Voice', 'error', 'Voice request failed. Retry your question in the phone.');
         setError(err.name === 'AbortError' ? controller.cancelled ? 'Request cancelled.' : 'NOSH took too long to answer. Check that Ollama is running, then try again.' : err instanceof TypeError ? 'The NOSH backend is unavailable. Check that it is running, then try again.' : err.message);
       }
     } finally {
@@ -248,7 +269,7 @@ function VoiceConversation({ ingredients = [], recipe = '' }) {
     openMic();
   }
 
-  return <section className="voice-agent" aria-label="NOSH voice assistant">
+  return <section data-demo-feature="voice" className="voice-agent" aria-label="NOSH voice assistant">
     <h2>Cook with NOSH</h2>
     <p>Start a conversation once, then ask cooking questions or say “next step” as you cook.</p>
     <div className="voice-controls">
